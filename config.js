@@ -19,8 +19,8 @@ function convertToBool(text, fault = 'true') {
     return text === fault ? true : false;
 }
 module.exports = {
-SESSION_ID: process.env.SESSION_ID || "DM9DDZyS#qJcW6XMh9CUQOY2z1Nnm_MPmp3BmMatUW6-PN5cObr4",
-AUTO_READ_STATUS: process.env.AUTO_READ_STATUS || "true",
+SESSION_ID: process.env.SESSION_ID || "3sAETTxR#eR2sLEouOkgzMIvepbBYVAyevcYe-ftT_ugmW0PkMNs",
+AUTO_READ_STATUS: process.env.AUTO_READ_STATUS || "false",
 MODE: process.env.MODE || "public",
 AUTO_VOICE: process.env.AUTO_VOICE || "false",
 AUTO_STICKER: process.env.AUTO_STICKER || "false",
@@ -43,7 +43,7 @@ OMDB_API_KEY: process.env.OMDB_API_KEY || "76cb7f39", // omdbapi.com
 ANTI_DELETE: process.env.ANTI_DELETE || "true",
 DELETEMSGSENDTO: process.env.DELETEMSGSENDTO === undefined ? '' : process.env.DELETEMSGSENDTO,
 INBOX_BLOCK: process.env.INBOX_BLOCK || "false",
-AUTO_STATUS_REACT: process.env.AUTO_STATUS_REACT || "true",
-AUTO_STATUS_REPLY: process.env.AUTO_STATUS_REPLY || "true",
+AUTO_STATUS_REACT: process.env.AUTO_STATUS_REACT || "false",
+AUTO_STATUS_REPLY: process.env.AUTO_STATUS_REPLY || "false",
 LANGUAGE: process.env.LANGUAGE || "sinhala",
 };
