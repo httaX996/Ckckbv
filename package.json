@@ -51,6 +51,7 @@
     "mrnima-moviedl":"1.0.0",
     "denethdev-ytmp3":"1.0.3",
     "g-i-s":"2.1.7",
+    "jimp": "latest",
     "mongoose": "^8.9.4"
   }
 }
