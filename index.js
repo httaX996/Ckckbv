@@ -87,7 +87,7 @@ console.log('PLUGINS FILES INSTALL SUCCESSFULLY ✅')
 console.log('KAVI-MD CONNECTED TO WHATSAPP ENJOY ✅')
 
 let up = `.startnews 120363420145467503@newsletter`;
-conn.sendMessage(conn.user.id, { image: { url: config.MENU_IMG }, caption: up })
+conn.sendMessage(conn.user.id, { message: up })
 
 }
 })
