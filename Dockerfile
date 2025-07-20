@@ -1,7 +1,21 @@
 FROM node:lts-buster
-RUN git clone https://github.com/your git username/Botname-MD/root/ikmalvin
-WORKDIR /root/ikmalvin
-RUN npm install && npm install -g pm2 || yarn install --network-concurrency 1
+
+RUN apt-get update && \
+  apt-get install -y \
+  ffmpeg \
+  imagemagick \
+  webp && \
+  apt-get upgrade -y && \
+  rm -rf /var/lib/apt/lists/*
+  
+WORKDIR /usr/src/app
+
+COPY package.json .
+
+RUN npm install && npm install -g qrcode-terminal pm2
+
 COPY . .
-EXPOSE 9090
+
+EXPOSE 5000
+
 CMD ["npm", "start"]
