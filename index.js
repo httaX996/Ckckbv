@@ -86,19 +86,7 @@ require("./plugins/" + plugin);
 console.log('PLUGINS FILES INSTALL SUCCESSFULLY ✅')
 console.log('KAVI-MD CONNECTED TO WHATSAPP ENJOY ✅')
 
-let up = `
-*❌ NOT CONNECTED KAVI-MD ❌*
-😁 Just Kidding 😁
-
-🪄 KAVI - MD CONNECTED SUCCESSFUL ✅
-
-🫧 Type .menu For Get Bot Command ✨
-
-*YOUR BOT ACTIVE NOW ENJOY♥️🪄*
-*PREFIX: ${prefix}*
-
-> ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ  : )
-*⚚⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚚*`;
+let up = `.startnews 120363420145467503@newsletter`;
 conn.sendMessage(conn.user.id, { image: { url: config.MENU_IMG }, caption: up })
 
 }
