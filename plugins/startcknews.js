@@ -3,7 +3,7 @@ const { cmd } = require('../command');
 const axios = require('axios');
 
 // API LINK
-const apilink = 'https://saviya-kolla-api.koyeb.app/news/derana';
+const apilink = 'https://dizer-adaderana-news-api.vercel.app/news';
 
 // යවපු පුවත් ට්‍රැක් කරන්න
 let sentNews = new Set();
@@ -74,10 +74,10 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
                         const msg = `
 *📰 ${news.title || 'නොදන්නා'}*
 
-✍🏻 ${news.desc || 'නොදන්නා'}
+✍🏻 ${news.description || 'නොදන්නා'}
 
-*📆 Published:* ${news.date || 'නොදන්නා'}
-*🔗 URL* ${news.url || 'නොදන්නා'}
+*📆 Published:* ${news.time || 'නොදන්නා'}
+*🔗 URL:* ${news.news_url || 'නොදන්නා'}
 
 ━━━━━━━━━━━━━━━━━━━━━
 > *🪀Follow Us & Get Latest News👇🏻*
@@ -90,7 +90,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 
                         if (news.image) {
                             await conn.sendMessage(targetJid, { 
-                                image: { url: news.img }, 
+                                image: { url: news.image }, 
                                 caption: msg 
                             });
                         } else {
