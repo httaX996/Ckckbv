@@ -59,9 +59,12 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 *👀VIEWS :* ${data.views}
 *📆UPLOAD ON :* ${data.ago}
 *🎞️AUTHOR :* ${data.author.name}
-*🔗LINK :* ${data.url}
 
-> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+> 🪀 *Follow us :* https://whatsapp.com/channel/0029VbBDRNsId7nROU89Sy0A
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+> ❝ *සිංදු ලන්තේ* ┃ 💆🏻‍♂️🎶🤍 ❞
 `;
         await conn.sendMessage(jid, {
             image: { url: data.thumbnail }, caption: desc }, { quoted: mek });
@@ -79,10 +82,10 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
             ptt: true,
             contextInfo: {
                 externalAdReply: {
-                    title: data.title,
-                    body: data.videoId,
+                    title: "❝ සිංදු ලන්තේ ┃ 💆🏻‍♂️🎶🤍 ❞",
+                    body: "👨🏻‍💻 ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ",
                     mediaType: 1,
-                    sourceUrl: data.url,
+                    sourceUrl: "https://whatsapp.com/channel/0029VbBDRNsId7nROU89Sy0A",
                     thumbnailUrl: data.thumbnail,
                     renderLargerThumbnail: false,
                     showAdAttribution: false
@@ -91,7 +94,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
         }, { quoted: null });
 
         // Notify the sender that the song was sent
-        await reply(`*🤖Song "${data.title}" was successfully sent to ${jid} as a voice note!*\n\n> *ᴘᴏᴡᴇʀᴅ ʙʏ  ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ : )*`);
+        await reply(`*🤖Song "${data.title}" was successfully sent to ${jid} as a voice note!`);
 
     } catch (e) {
         console.error(e);
