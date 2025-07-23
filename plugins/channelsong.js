@@ -54,35 +54,17 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 
         // Send initial message with video details to the specified JID
         let desc = `
-┏「✨𝐊𝐀𝐕𝐈 𝐌𝐃 𝐀𝐔𝐃𝐈𝐎✨」
-┃ 👨‍💻Owner: ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ
-┃ 🤖 Bot Name: ᴋᴀᴠɪ ᴍᴅ
-┗━━━━━━━━━━━━━━━𖣔𖣔
-┏━❮ 💜𝐒𝐎𝐍𝐆 𝐃𝐄𝐓𝐀𝐈𝐋𝐒💜 ❯━
-┃🤖 *Title:* ${data.title}
-┃📑 *Duration:* ${data.timestamp}
-┃🔖 *Views:* ${data.views}
-┃📟 *Uploaded On:* ${data.ago}
-┃👨‍💻 Owner: ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ
-┗━━━━━━━━━━━━━━𖣔𖣔
+*🔖TITLE :* ${data.title}
+*⏰DURATION :* ${data.timestamp}
+*👀VIEWS :* ${data.views}
+*📆UPLOAD ON :* ${data.ago}
+*🎞️AUTHOR :* ${data.author.name}
+*🔗LINK :* ${data.url}
 
-> *ᴘᴏᴡᴇʀᴅ ʙʏ  ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ : )*
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
 `;
         await conn.sendMessage(jid, {
-            image: { url: data.thumbnail },
-            caption: desc,
-            contextInfo: {
-                mentionedJid: ['94760698006@s.whatsapp.net'],
-                groupMentions: [],
-                forwardingScore: 1,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363417070951702@newsletter',
-                    newsletterName: "🎬𝐌𝐎𝐕𝐈𝐄 𝐂𝐈𝐑𝐂𝐋𝐄🎬",
-                    serverMessageId: 999
-                }
-            }
-        }, { quoted: null });
+            image: { url: data.thumbnail }, caption: desc }, { quoted: mek });
 
         // Download the audio as MP3
         await conn.sendMessage(jid, { react: { text: '⬇️', key: { remoteJid: jid, fromMe: true, id: mek.key.id } } });
@@ -102,8 +84,8 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
                     mediaType: 1,
                     sourceUrl: data.url,
                     thumbnailUrl: data.thumbnail,
-                    renderLargerThumbnail: true,
-                    showAdAttribution: true
+                    renderLargerThumbnail: false,
+                    showAdAttribution: false
                 }
             }
         }, { quoted: null });
