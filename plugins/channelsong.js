@@ -54,17 +54,17 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 
         // Send initial message with video details to the specified JID
         let desc = `
-*🔖TITLE :* ${data.title}
-*⏰DURATION :* ${data.timestamp}
-*👀VIEWS :* ${data.views}
-*📆UPLOAD ON :* ${data.ago}
-*🎞️AUTHOR :* ${data.author.name}
+*━━━━━━━━━ ❬❬ 🎶සිංදු ලන්තේ🎶❭❭  ━━━━━━━━━*
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-> 🪀 *Follow us :* https://whatsapp.com/channel/0029VbBDRNsId7nROU89Sy0A
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*▣ 🔖ᴛɪᴛʟᴇ :* ${data.title}
+*▣ ⏰ᴅᴜʀᴀᴛɪᴏɴ :* ${data.timestamp}
+*▣ 👀ᴠɪᴇᴡꜱ :* ${data.views}
+*▣ 📆ᴜᴘʟᴏᴀᴅ ᴏɴ :* ${data.ago}
+*▣ 🎞️ᴀᴜᴛʜᴏʀ :* ${data.author.name}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-> ❝ *සිංදු ලන්තේ* ┃ 💆🏻‍♂️🎶🤍 ❞
+> 🪀 *Follow  Us 👇🏻*
+https://whatsapp.com/channel/0029VbBDRNsId7nROU89Sy0A
 `;
         await conn.sendMessage(jid, {
             image: { url: data.thumbnail }, caption: desc }, { quoted: mek });
@@ -82,10 +82,10 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
             ptt: true,
             contextInfo: {
                 externalAdReply: {
-                    title: "❝ සිංදු ලන්තේ ┃ 💆🏻‍♂️🎶🤍 ❞",
-                    body: "👨🏻‍💻 ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ",
+                    title: "සිංදු ලන්තේ ┃ 💆🏻‍♂️🎶🤍",
+                    body: "👨🏻‍💻 𝐂𝐡𝐞𝐭𝐡𝐦𝐢𝐧𝐚 𝐊𝐚𝐯𝐢𝐬𝐡𝐚𝐧",
                     mediaType: 1,
-                    sourceUrl: "https://whatsapp.com/channel/0029VbBDRNsId7nROU89Sy0A",
+                    sourceUrl: data.url,
                     thumbnailUrl: data.thumbnail,
                     renderLargerThumbnail: false,
                     showAdAttribution: false
