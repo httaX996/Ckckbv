@@ -61,10 +61,11 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 *▣ 👀ᴠɪᴇᴡꜱ :* ${data.views}
 *▣ 📆ᴜᴘʟᴏᴀᴅ ᴏɴ :* ${data.ago}
 *▣ 🎞️ᴀᴜᴛʜᴏʀ :* ${data.author.name}
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-> 🪀 *Follow  Us 👇🏻*
-https://whatsapp.com/channel/0029VbBDRNsId7nROU89Sy0A
+> *මේ වගේ ලස්සන සිංදු අහන්න මෙන්න මෙහාට එන්න ලස්සන ළමයෝ 💗✨*
+> *🪀 https://whatsapp.com/channel/0029VbBDRNsId7nROU89Sy0A*
 `;
         await conn.sendMessage(jid, {
             image: { url: data.thumbnail }, caption: desc }, { quoted: mek });
@@ -83,7 +84,7 @@ https://whatsapp.com/channel/0029VbBDRNsId7nROU89Sy0A
             contextInfo: {
                 externalAdReply: {
                     title: "සිංදු ලන්තේ ┃ 💆🏻‍♂️🎶🤍",
-                    body: "👨🏻‍💻 𝐂𝐡𝐞𝐭𝐡𝐦𝐢𝐧𝐚 𝐊𝐚𝐯𝐢𝐬𝐡𝐚𝐧",
+                    body: "👨🏻‍💻 🄲🄷🄴🅃🄷🄼🄸🄽🄰 🄺🄰🅅🄸🅂🄷🄰🄽",
                     mediaType: 1,
                     sourceUrl: data.url,
                     thumbnailUrl: data.thumbnail,
