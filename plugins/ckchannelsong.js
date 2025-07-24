@@ -80,19 +80,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
         await conn.sendMessage(jid, {
             audio: { url: downloadLink },
             mimetype: "audio/mpeg",
-            ptt: true,
-            contextInfo: {
-                externalAdReply: {
-                    title: "සිංදු ලන්තේ ┃ 💆🏻‍♂️🎶🤍",
-                    body: "👨🏻‍💻 🄲🄷🄴🅃🄷🄼🄸🄽🄰 🄺🄰🅅🄸🅂🄷🄰🄽",
-                    mediaType: 1,
-                    sourceUrl: data.url,
-                    thumbnailUrl: data.thumbnail,
-                    renderLargerThumbnail: false,
-                    showAdAttribution: false
-                }
-            }
-        }, { quoted: null });
+            ptt: true }, { quoted: null });
 
         // Notify the sender that the song was sent
         await reply(`*🤖Song "${data.title}" was successfully sent to ${jid} as a voice note!`);
