@@ -54,7 +54,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 
         // Send initial message with video details to the specified JID
         let desc = `
-*━━━━━━━━━ ❬❬ 🎶සිංදු ලන්තේ🎶❭❭  ━━━━━━━━━*
+*━━━━━━ ❬❬ 🎶අධිමාත්‍රා ׀ ＳＯＮＧＳ🎶❭❭ ━━━━━━*
 
 *▣ 🔖ᴛɪᴛʟᴇ :* ${data.title}
 *▣ ⏰ᴅᴜʀᴀᴛɪᴏɴ :* ${data.timestamp}
