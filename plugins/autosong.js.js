@@ -216,18 +216,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
                 await conn.sendMessage(targetJid, {
                     audio: { url: downloadLink },
                     mimetype: "audio/mpeg",
-                    contextInfo: {
-                        externalAdReply: {
-                            title: data.title,
-                            body: data.videoId,
-                            mediaType: 1,
-                            sourceUrl: data.url,
-                            thumbnailUrl: data.thumbnail,
-                            renderLargerThumbnail: true,
-                            showAdAttribution: true
-                        }
-                    }
-                });
+                    ptt: true }, { quoted: null });
 
                 console.log(`Auto-uploaded song to JID: ${data.title} -> ${targetJid}`);
             } catch (e) {
