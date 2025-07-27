@@ -21,7 +21,7 @@ function convertYouTubeLink(q) {
 
 // Function to get a random Sinhala song
 async function getRandomSong() {
-    const sinhalaKeywords = ['Desawana Music', 'SGM Tunes', 'DILU Beats song', 'Kovizz Audio'];
+    const sinhalaKeywords = ['Desawana Music', 'SGM Tunes', 'DILU Beats song', 'Kovizz Audio', 'Roo Tunes', 'Unity Band'];
     const randomKeyword = sinhalaKeywords[Math.floor(Math.random() * sinhalaKeywords.length)];
     const search = await yts(randomKeyword);
     const videos = search.videos;
@@ -178,8 +178,8 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
         const targetJid = q.trim();
 
         // Check if JID is valid
-        if (!targetJid.includes('@s.whatsapp.net') && !targetJid.includes('@g.us')) {
-            return reply("*`වලංගු JID එකක් නොවේ! WhatsApp JID එකක් භාවිතා කරන්න (උදා: 94727163302@s.whatsapp.net හෝ කණ්ඩායම් ID)`*");
+        if (!targetJid.includes('@s.whatsapp.net') && !targetJid.includes('@g.us') && !targetJid.includes('@newsletter')) {
+            return reply("*`Invalid JID format. Use a valid WhatsApp JID (e.g., @1234567890@s.whatsapp.net, @1234567890@g.us, or 120363349375266377@newsletter)`*");
         }
 
         reply(`සෑම 15 විනාඩි 1කට වරක් සිංහල ගීත යැවීම ආරම්භ වෙනවා JID එකට: ${targetJid}! 🎵\n> *ᴘᴏᴡᴇʀᴅ ʙʏ  ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ : )*`);
@@ -225,7 +225,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
         };
 
         // Start auto-upload every 15 minutes
-        setInterval(autoUploadSong, 15 * 60 * 1000); // 15 minutes interval
+        setInterval(autoUploadSong, 30 * 60 * 1000); // 15 minutes interval
 
     } catch (e) {
         console.log(e);
