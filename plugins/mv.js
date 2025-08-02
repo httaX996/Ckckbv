@@ -38,7 +38,7 @@ cmd({
         const searchResults = movieData.slice(0, 10);
 
         // Format and send the search results message
-        let resultsMessage = `🤍 *𝐊𝐀𝐕𝐈-𝐌𝐃 𝐌𝐎𝐕𝐈𝐄 𝐑𝐄𝐒𝐔𝐋𝐓𝐒* 🤍
+        let resultsMessage = `🤍 *𝐂𝐊 𝐂𝐢𝐧𝐞𝐌𝐀𝐗 𝐌𝐎𝐕𝐈𝐄 𝐑𝐄𝐒𝐔𝐋𝐓𝐒* 🤍
                              
                           "${q}":\n\n`;
         searchResults.forEach((result, index) => {
@@ -102,8 +102,8 @@ cmd({
                                     url: directDownloadUrl
                                 },
                                 mimetype: 'video/mp4',
-                                fileName: `🎬𝗞𝗔𝗩𝗜-𝗠𝗗🎬${movieDetails.title} - ${selectedLink.quality}.mp4`,
-                                caption: `\n\n*~🔱𝗡𝗔𝗠𝗘:-~${movieDetails.title}*\n\n*~🔱𝗤𝗨𝗔𝗟𝗬𝗧𝗬:-~${selectedLink.quality}*\n> *Download Withing 14 Days.❗*\n> *Enjoy & Stay With Us✨*\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *𝐊𝐀𝐕𝐈𝐃𝐔 𝐑𝐀𝐒𝐀𝐍𝐆𝐀*  🌟`
+                                fileName: `🎬CK CineMAX🎬 - ${movieDetails.description}.mp4`,
+                                caption: `*🗂️ සිංහල උපසිරැසි එක් කර ඇත.*\n*🪄Quality :* ${selectedLink.quality}\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                             }, { quoted: pdReply });
 
                     await conn.sendMessage(from, { react: { text: '✅', key: mek.key } });
