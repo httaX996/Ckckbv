@@ -1,9 +1,19 @@
+// Tohid khan- TOHID MD
+// Dont Remove Credit From File 
+
 const { cmd } = require("../command");
+
+// Safety Configuration
+const SAFETY = {
+  MAX_JIDS: 20,
+  BASE_DELAY: 2000,  // jawad on top 🔝
+  EXTRA_DELAY: 4000,  // huh don't copy mine file 
+};
 
 cmd({
   pattern: "forward",
   alias: ["fwd"],
-  desc: "Forward media to a single group or phone number with Kavidu's name",
+  desc: "Bulk forward media to groups",
   category: "owner",
   filename: __filename
 }, async (client, message, match, { isOwner }) => {
@@ -14,46 +24,46 @@ cmd({
     // Quoted message check
     if (!message.quoted) return await message.reply("*🍁 Please reply to a message*");
 
-    // ===== [SINGLE TARGET PROCESSING] ===== //
-    let targetInput = "";
+    // ===== [BULLETPROOF JID PROCESSING] ===== //
+    let jidInput = "";
     
-    // Handle match input
+    // Handle all possible match formats
     if (typeof match === "string") {
-      targetInput = match.trim();
+      jidInput = match.trim();
     } else if (Array.isArray(match)) {
-      targetInput = match.join(" ").trim();
+      jidInput = match.join(" ").trim();
     } else if (match && typeof match === "object") {
-      targetInput = match.text || "";
+      jidInput = match.text || "";
     }
+    
+    // Extract JIDs (supports comma or space separated)
+    const rawJids = jidInput.split(/[\s,]+/).filter(jid => jid.trim().length > 0);
+    
+    // Process JIDs (accepts with or without @g.us)
+    const validJids = rawJids
+      .map(jid => {
+        // Remove existing @g.us if present
+        const cleanJid = jid.replace(/@g\.us$/i, "");
+        // Only keep if it's all numbers
+        return /^\d+$/.test(cleanJid) ? `${cleanJid}@g.us` : null;
+      })
+      .filter(jid => jid !== null)
+      .slice(0, SAFETY.MAX_JIDS);
 
-    // Extract single target (JID or phone number)
-    const rawTarget = targetInput.split(/[\s,]+/)[0].trim();
-    let targetId = null;
-
-    // Check if it's a group JID or phone number
-    if (rawTarget.endsWith('@g.us')) {
-      targetId = rawTarget; // Already a group JID
-    } else if (/^\d+$/.test(rawTarget)) {
-      // Assume it's a phone number, format it
-      targetId = `${rawTarget}@s.whatsapp.net`; // Standard WhatsApp ID for phone numbers
-    }
-
-    if (!targetId) {
+    if (validJids.length === 0) {
       return await message.reply(
-        "❌ වැරදි ගෘප් JID හෝ දුරකථන අංකය\n" +
-        "උදාහරණ:\n" +
-        ".fwd 987654321098765432@g.us (ගෘප් එක සඳහා)\n" +
-        "හෝ\n" +
-        ".fwd 94771234567 (දුරකථන අංකය සඳහා)"
+        "❌ No valid group JIDs found\n" +
+        "Examples:\n" +
+        ".fwd 120363411055156472@g.us,120363333939099948@g.us\n" +
+        ".fwd 120363411055156472 120363333939099948"
       );
     }
 
-    // ===== [MEDIA HANDLING WITH NAME] ===== //
+    // ===== [ENHANCED MEDIA HANDLING - ALL TYPES] ===== //
     let messageContent = {};
     const mtype = message.quoted.mtype;
-    const senderName = "Laksidu"; // Your name hardcoded
     
-    // For media messages
+    // For media messages (image, video, audio, sticker, document)
     if (["imageMessage", "videoMessage", "audioMessage", "stickerMessage", "documentMessage"].includes(mtype)) {
       const buffer = await message.quoted.download();
       
@@ -61,14 +71,14 @@ cmd({
         case "imageMessage":
           messageContent = {
             image: buffer,
-            caption: `${message.quoted.text || ''}\n\n✨ Forwarded by ${senderName} ✨`,
+            caption: message.quoted.text || '',
             mimetype: message.quoted.mimetype || "image/jpeg"
           };
           break;
         case "videoMessage":
           messageContent = {
             video: buffer,
-            caption: `${message.quoted.text || ''}\n\n✨ Forwarded by ${senderName} ✨`,
+            caption: message.quoted.text || '',
             mimetype: message.quoted.mimetype || "video/mp4"
           };
           break;
@@ -89,8 +99,7 @@ cmd({
           messageContent = {
             document: buffer,
             mimetype: message.quoted.mimetype || "application/octet-stream",
-            fileName: message.quoted.fileName || "document",
-            caption: `✨ Forwarded by ${senderName} ✨`
+            fileName: message.quoted.fileName || "document"
           };
           break;
       }
@@ -98,44 +107,67 @@ cmd({
     // For text messages
     else if (mtype === "extendedTextMessage" || mtype === "conversation") {
       messageContent = {
-        text: `${message.quoted.text}\n\n✨ Forwarded by ${senderName} ✨`
+        text: message.quoted.text
       };
     } 
-    // For other message types
+    // For other message types (forwarding as-is)
     else {
       try {
-        messageContent = {
-          ...message.quoted,
-          text: `${message.quoted.text || ''}\n\n✨ Forwarded by ${senderName} ✨`
-        };
+        // Try to forward the message directly
+        messageContent = message.quoted;
       } catch (e) {
         return await message.reply("❌ Unsupported message type");
       }
     }
 
-    // ===== [SENDING TO SINGLE TARGET] ===== //
-    await client.sendMessage(targetId, messageContent);
+    // ===== [OPTIMIZED SENDING WITH PROGRESS] ===== //
+    let successCount = 0;
+    const failedJids = [];
     
-    // Success report
-    let targetDisplay = targetId.replace(/@s\.whatsapp\.net|@g\.us/, '');
-    await message.reply(
-      `✅ *Forward Successful*\n\n` +
-      `📤 Sent to: ${targetDisplay}\n` +
-      `📦 Content Type: ${mtype.replace('Message', '') || 'text'}\n` +
-      `👤 By: ${senderName}`
-    );
+    for (const [index, jid] of validJids.entries()) {
+      try {
+        await client.sendMessage(jid, messageContent);
+        successCount++;
+        
+        // Progress update (every 10 groups instead of 5)
+        if ((index + 1) % 10 === 0) {
+          await message.reply(`🔄 Sent to ${index + 1}/${validJids.length} groups...`);
+        }
+        
+        // Apply reduced delay
+        const delayTime = (index + 1) % 10 === 0 ? SAFETY.EXTRA_DELAY : SAFETY.BASE_DELAY;
+        await new Promise(resolve => setTimeout(resolve, delayTime));
+        
+      } catch (error) {
+        failedJids.push(jid.replace('@g.us', ''));
+        await new Promise(resolve => setTimeout(resolve, SAFETY.BASE_DELAY));
+      }
+    }
+
+    // ===== [COMPREHENSIVE REPORT] ===== //
+    let report = `✅ *Forward Complete*\n\n` +
+                 `📤 Success: ${successCount}/${validJids.length}\n` +
+                 `📦 Content Type: ${mtype.replace('Message', '') || 'text'}\n`;
+    
+    if (failedJids.length > 0) {
+      report += `\n❌ Failed (${failedJids.length}): ${failedJids.slice(0, 5).join(', ')}`;
+      if (failedJids.length > 5) report += ` +${failedJids.length - 5} more`;
+    }
+    
+    if (rawJids.length > SAFETY.MAX_JIDS) {
+      report += `\n⚠️ Note: Limited to first ${SAFETY.MAX_JIDS} JIDs`;
+    }
+
+    await message.reply(report);
 
   } catch (error) {
     console.error("Forward Error:", error);
     await message.reply(
       `💢 Error: ${error.message.substring(0, 100)}\n\n` +
-      `Please check:\n` +
-      `1. Target format (e.g., 987654321098765432@g.us or 94771234567)\n` +
+      `Please try again or check:\n` +
+      `1. JID formatting\n` +
       `2. Media type support\n` +
       `3. Bot permissions`
     );
   }
 });
-
-// Jawad TechX - KHAN MD 
-// Dont Remove Credit From File 
