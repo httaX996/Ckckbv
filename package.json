@@ -54,6 +54,7 @@
     "denethdev-ytmp3":"1.0.3",
     "g-i-s":"2.1.7",
     "jimp": "latest",
+    "api-dylux": "1.8.5"
     "mongoose": "^8.9.4"
   }
 }
