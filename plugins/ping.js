@@ -22,20 +22,20 @@ async (conn, mek, m, { from, quoted, reply }) => {
 
         // Send the ping result
         await conn.sendMessage(from, {
-            text: `*KAVI MD SPEED ➟ ${ping}ms*`,
+            text: `*CK BOT SPEED ➟ ${ping}ms*`,
             contextInfo: {
                 mentionedJid: [m.sender],
                 forwardingScore: 999,
-                isForwarded: true,
+                isForwarded: false,
                 forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363417070951702@newsletter',
-                    newsletterName: '🎬𝐌𝐎𝐕𝐈𝐄 𝐂𝐈𝐑𝐂𝐋𝐄🎬',
+                    newsletterJid: '120363401805872716@newsletter',
+                    newsletterName: 'CK BOT',
                     serverMessageId: 143
                 }
             },
             externalAdReply: {
-                title: "✨𝐊𝐀𝐕𝐈 𝐌𝐃✨",
-                body: "> *ᴘᴏᴡᴇʀᴅ ʙʏ  ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ : )*",
+                title: "CK BOT",
+                body: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*",
                 thumbnailUrl: "https://raw.githubusercontent.com/LAKSIDUOFFICIAL/LAKSIDU-BOT/refs/heads/main/Screenshot_20250208-114759_Photo%20Editor.jpg",
                 sourceUrl: "https://github.com/laksidunimsara1/QUEEN-HASHI-MD",
                 mediaType: 1,
@@ -49,8 +49,8 @@ async (conn, mek, m, { from, quoted, reply }) => {
     }
 });
 
-const botname = "𝙺𝙰𝚅𝙸 𝙼𝙳"; //add your name
- const ownername = "𝙺𝙰𝚅𝙸𝙳𝚄 𝚁𝙰𝚂𝙰𝙽𝙶𝙰"; // add your name
+const botname = "𝙲𝙷𝙴𝚃𝙷𝙼𝙸𝙽𝙰"; //add your name
+ const ownername = "×_×"; // add your name
  const Supunwa = { 
  key: { 
   remoteJid: 'status@broadcast', 
@@ -58,9 +58,9 @@ const botname = "𝙺𝙰𝚅𝙸 𝙼𝙳"; //add your name
    }, 
 message:{ 
   newsletterAdminInviteMessage: { 
-    newsletterJid: '120363417070951702@newsletter', //add your channel jid
-    newsletterName: "MOVIE CIRCLE", //add your bot name
-    caption: botname + ` 𝚅𝙴𝚁𝙸𝙵𝙸𝙴𝙳 ` + ownername, 
+    newsletterJid: '120363401805872716@newsletter', //add your channel jid
+    newsletterName: "CK BOT", //add your bot name
+    caption: botname + ` 𝙺𝙰𝚅𝙸𝚂𝙷𝙰𝙽 ` + ownername, 
     inviteExpiration: 0
   }
  }
