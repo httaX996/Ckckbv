@@ -5,8 +5,8 @@ Please Give Credit 🙂❤️
 
 const { cmd, commands } = require('../command');
 const { fetchJson } = require('../lib/functions');
-const domain = `https://mr-manul-ofc-apis.vercel.app/`;
-const api_key = `Manul-Ofc-Sl-Sub-Key-9`;
+const domain = `https://anju-md-api.vercel.app/`;
+const api_key = `FreeMovie`;
 
 //===== Api-Key එක මට Message එකක් දාල ඉල්ලගන්න, +94 74 227 4855 සල්ලි ගන්න නෙවේ, කීයක් Use කරනවද දැනගන්න...❤️=====
 
@@ -26,7 +26,7 @@ cmd({
         
 
         // Fetch search results from API
-        const manu = await fetchJson(`${domain}/api/sl-sub-search?query=${q}&apikey=${api_key}`);
+        const manu = await fetchJson(`${domain}api/hdhub?q=${q}&apikey=${api_key}`);
         const movieData = manu.data.data; // Use the `data.data` array
 
         // Check if the API returned valid results (array of movies)
@@ -43,8 +43,8 @@ cmd({
                           "${q}":\n\n`;
         searchResults.forEach((result, index) => {
             const title = result.title || 'No title available';
-            const link = result.link || 'No link available';
-            const thumbnail = result.thumbnail || 'https://via.placeholder.com/150'; // Fallback if thumbnail is missing
+            const link = result.movieUrl || 'No link available';
+            const thumbnail = result.imageUrl || 'https://via.placeholder.com/150'; // Fallback if thumbnail is missing
             resultsMessage += `*${index + 1}.* ${title}\n🔗 Link: ${link}\n`;
 
             // You can also display the thumbnail in the results if needed
@@ -61,7 +61,7 @@ cmd({
         // Event listener for user's selection of a movie from search results
         const handleSearchReply = async (replyMek, selectedNumber) => {
             const selectedMovie = searchResults[selectedNumber - 1];
-            const response = await fetchJson(`${domain}/api/slsub-movie-info?url=${encodeURIComponent(selectedMovie.link)}&apikey=${api_key}`);
+            const response = await fetchJson(`${domain}api/hdhub?url=${encodeURIComponent(selectedMovie.link)}&apikey=${api_key}`);
             
             try {
                 const movieDetails = response.data;
@@ -73,7 +73,7 @@ cmd({
 
                 let downloadMessage = `🎥 *${movieDetails.title}*\n\n*Available Download Links:*\n`;
                 downloadLinks.forEach((link, index) => {
-                    downloadMessage += `*${index + 1}.* ${link.quality} - ${link.size}\n🔗 Link: ${link.link}\n\n`;
+                    downloadMessage += `*${index + 1}.* ${link.quality} - ${link.linkText}\n🔗 Link: ${link.url}\n\n`;
                 });
 
                 const pixelDrainMsg = await conn.sendMessage(m.chat, {
@@ -87,13 +87,11 @@ cmd({
                 const handleDownloadReply = async (pdReply, qualityNumber) => {
                     const selectedLink = downloadLinks[qualityNumber - 1];
                     const file = selectedLink.link;
-                    const fileResponse = await fetchJson(`${domain}/api/slsub-direct-link?url=${encodeURIComponent(file)}&apikey=${api_key}`);
-                    const downloadLink = fileResponse.data.downloadLink;
+                    const fileResponse = await fetchJson(`${domain}api/hdhub?dlLink=${encodeURIComponent(file)}&apikey=${api_key}`);
+                    const downloadLink = fileResponse.data.directDownloadLink;
                     const fileId = downloadLink.split('/').pop();
 
                     await conn.sendMessage(from, { react: { text: '⬇️', key: mek.key } });
-
-                    const directDownloadUrl = `https://pixeldrain.com/api/file/${fileId}`;
 
                     await conn.sendMessage(from, { react: { text: '⬆', key: mek.key } });
 
