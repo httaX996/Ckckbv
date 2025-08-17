@@ -16,14 +16,12 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 *🫧 Hey  ${pushname}. . !  How are you? 🫧*
 
 
-> *🪝 ᴍᴜʟᴛɪᴅᴇᴠɪᴄᴇ ᴡʜᴀᴛꜱᴀᴘᴘ ʙᴏᴛ*🪝
-
 *╭────── ❖ SYSTEM INFO ❖ ──────╮*
 *│  ${new Date().getHours() < 12 ? '🌄 Good Morning!' : '🌙 Good Evening!' }*
-*│  🍭 Bot Name: KAVI-MD*
-*│  🔖 Version: 2.0.1*
-*│  📟 Platform: Linux*
-*│  👨‍💻 Owner: Kavidu Rasanga*
+*│  🍭 Bot Name: CK BOT*
+*│  🔖 Version: 0.0.1*
+*│  📟 Platform: Super Fast*
+*│  👨‍💻 Owner: Chethmina Kavishan*
 *│  📆 Runtime: ${runtime(process.uptime())}* 
 *│  📊 RAM Usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
 *╰─────────────────────────╯*
@@ -46,7 +44,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 │  *[13]* ➜ *News Menu* 📰
 ╰─────────────────────╯
 
-> *ᴘᴏᴡᴇʀᴅ ʙʏ  ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ  : )*
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
 `;
 
         // Define All Menus with English, Emojis, and Decorative Fonts
@@ -54,12 +52,12 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
             menu1: `
 *⚚━━━👑 OWNER MENU 👑━━━⚚*
 
-*╭─「✨  𝐊𝐀𝐕𝐈 𝐌𝐃 𝐌𝐄𝐍𝐔  𝐋𝐈𝐒𝐓 ✨ 」*
+*╭─「✨  𝐂𝐊 𝐁𝐎𝐓 𝐌𝐄𝐍𝐔  𝐋𝐈𝐒𝐓 ✨ 」*
 *│ 🔥 Runtime: ${runtime(process.uptime())}*
 *│ 🔥 RAM Usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
 *│ 🔥 Platform: ${os.hostname()}*
-*│ 🔥 Version: 𝟏.𝟎*
-*│ 🔥 Owner: 𝐊𝐀𝐕𝐈𝐃𝐔 𝐑𝐀𝐒𝐀𝐍𝐆𝐀*
+*│ 🔥 Version: 0.0.1*
+*│ 🔥 Owner: 𝐂𝐡𝐞𝐭𝐡𝐦𝐢𝐧𝐚 𝐊𝐚𝐯𝐢𝐬𝐡𝐚𝐧*
 *╰────────────*
 
  ╭────────✵✵
@@ -131,7 +129,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
  │ 🏷️ᴜsᴇ: prefix version
  ╰────────────────────✵✵
 
-> *ᴘᴏᴡᴇʀᴅ ʙʏ  ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ  : )*
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
 `,
 
             menu2: `
@@ -1322,7 +1320,7 @@ const aliveMessage = await conn.sendMessage(from, {
                 mentionedJid: ['94762858448@s.whatsapp.net'],
                 groupMentions: [],
                 forwardingScore: 1,
-                isForwarded: true,
+                isForwarded: false,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: '120363417070951702@newsletter',
                     newsletterName: "🎬 𝐌𝐎𝐕𝐈𝐄 𝐂𝐈𝐑𝐂𝐋𝐄 🎬",
@@ -1369,7 +1367,7 @@ const aliveMessage = await conn.sendMessage(from, {
                             mentionedJid: ['94762858448@s.whatsapp.net'],
                             groupMentions: [],
                             forwardingScore: 1,
-                            isForwarded: true,
+                            isForwarded: false,
                             forwardedNewsletterMessageInfo: {
                                 newsletterJid: '120363417070951702@newsletter',
                                 newsletterName: "🎬 𝐌𝐎𝐕𝐈𝐄 𝐂𝐈𝐑𝐂𝐋𝐄 🎬",
