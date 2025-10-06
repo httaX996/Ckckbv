@@ -175,7 +175,6 @@ cmd({
     client.sendMessage(meta.from, {
       document: { url: info.downloadUrl },
       fileName: "🎬CK CineMAX🎬 - " + info.fileName,
-      caption: "*🎬 " + info.fileName + " - සිංහල උපසිරැසි සමග*\n*🌟 720P - " + info.fileSize + "*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*",
       jpegThumbnail: "https://files.catbox.moe/ei8q0d.jpg",
       mimetype: info.mimetype
     }, { quoted: message });
