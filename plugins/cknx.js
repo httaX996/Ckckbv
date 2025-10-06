@@ -5,7 +5,7 @@ const c_footer = "> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ �
 
 cmd(
     {
-        pattern: "cknx",
+        pattern: "xnxx",
         alias: ["xvdl", "xvideo"],
         use: ".xnxx <xnxx video name>",
         react: "🤤",
@@ -77,8 +77,8 @@ cmd(
                 `*📌 \`Title:\` ${infoMap.title}*\n` + 
                 `*⏰ \`Duration:\` ${infoMap.duration}*\n\n` +
                 `*🔢 \`Reply below number:\`*\n\n` +
-                `*1 |* ❭❭◦ Download video high quality*\n` +
-                `*2 |* ❭❭◦ Download video low quality*\n\n` + c_footer
+                `*1 |* ❭❭◦ Download video high quality\n` +
+                `*2 |* ❭❭◦ Download video low quality\n\n` + c_footer
             }, { quoted:msg }
         );
             
@@ -100,14 +100,14 @@ cmd(
                     from,
                     {
                       video: {url: downloadUrlhigh },
-                      caption: `*🔞 ${infoMap.title}*\n*🌟Qᴜᴀʟɪᴛʏ :* HIGH\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                      caption: `*🔞 ${infoMap.title}*\n*🌟Qᴜᴀʟɪᴛʏ :* HIGH🔋\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                     }, {quoted: tMsg}
                 )
             } else if (tText.trim() === "2") {
                 await conn.sendMessage(
                     from, {
                         video: {url: downloadUrllow },
-                        caption: `*🔞 ${infoMap.title}*\n*🌟Qᴜᴀʟɪᴛʏ :* LOW\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                        caption: `*🔞 ${infoMap.title}*\n*🌟Qᴜᴀʟɪᴛʏ :* LOW🪫\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
 
                     }, {quoted: tMsg}
                 )
