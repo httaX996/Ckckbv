@@ -1,7 +1,7 @@
 const { cmd, commands } = require('../command');
 const { fetchJson } = require('../lib/functions');
 
-const tharuzz_footer = "> © Powerd by tharuzz ofc";
+const c_footer = "> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*";
 
 cmd(
     {
@@ -38,13 +38,13 @@ cmd(
                 await reply("No result found you enter xnxx video name :(")
             }
             
-            let list = "🔞 THARUZZ-MD XNXX VIDEO SEARCH RESULT\n\n";
+            let list = "*🔞CK XNXX VIDEO SEARCH RESULT🔞*\n\n";
             
             xnxxSearchapi.result.xvideos.forEach((xnxx, i) => {
       list += `*\`${i + 1}\` | | ${xnxx.title || "No title info"}*\n`;
     });
           
-          const listMsg = await conn.sendMessage(from, { text: list + "\n🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ᴀ ɴᴜᴍʙᴇʀ ᴄʜᴏᴏꜱᴇ ᴀ ʀᴇᴀᴜʟᴛ.*\n\n" + tharuzz_footer }, { quoted: mek });
+          const listMsg = await conn.sendMessage(from, { text: list + "\n🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ᴀ ɴᴜᴍʙᴇʀ ᴄʜᴏᴏꜱᴇ ᴀ ʀᴇꜱᴜʟᴛ.*\n\n" + c_footer }, { quoted: mek });
           const listMsgId = listMsg.key.id;
           
           conn.ev.on("messages.upsert", async (update) => {
@@ -73,12 +73,12 @@ cmd(
               const askType = await conn.sendMessage(
             from,{
                 image: {url: infoMap.thumbnail },
-                caption: `*🔞 \`XNXX VIDEO INFO\`*\n\n` +
+                caption: `*🔞 \`CK XNXX DOWNLOADER\`*\n\n` +
                 `*📌 \`Title:\` ${infoMap.title}*\n` + 
                 `*⏰ \`Duration:\` ${infoMap.duration}*\n\n` +
                 `*🔢 \`Reply below number:\`*\n\n` +
-                `*1 | | Download video high quality*\n` +
-                `*2 | | Download video low quality*\n\n` + tharuzz_footer
+                `*1 |* ❭❭◦ Download video high quality*\n` +
+                `*2 |* ❭❭◦ Download video low quality*\n\n` + c_footer
             }, { quoted:msg }
         );
             
@@ -100,14 +100,14 @@ cmd(
                     from,
                     {
                       video: {url: downloadUrlhigh },
-                      caption: `*🔞 Here is your xnxx high quality video.*\n\n> ${infoMap.title}`
+                      caption: `*🔞 ${infoMap.title}*\n*🌟Qᴜᴀʟɪᴛʏ :* HIGH\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                     }, {quoted: tMsg}
                 )
             } else if (tText.trim() === "2") {
                 await conn.sendMessage(
                     from, {
                         video: {url: downloadUrllow },
-                        caption: `*🔞 Here is your xnxx low quality video.*\n\n> ${infoMap.title}`
+                        caption: `*🔞 ${infoMap.title}*\n*🌟Qᴜᴀʟɪᴛʏ :* LOW\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
 
                     }, {quoted: tMsg}
                 )
