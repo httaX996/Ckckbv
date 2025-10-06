@@ -1,9 +1,13 @@
-// packages / local modules
 const config = require("../config");
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { File } = require("megajs");
-const { sizeFormatter } = require("human-readable");
+const {
+  File
+} = require("megajs");
+const {
+  sizeFormatter
+} = require("human-readable");
+;
 const {
   getBuffer,
   getGroupAdmins,
@@ -16,158 +20,130 @@ const {
   sleep,
   fetchJson
 } = require("../lib/functions");
-const { cmd, commands } = require("../command");
+const {
+  cmd,
+  commands
+} = require("../command");
 const g_i_s = require('g-i-s');
-
-// dynamic import wrapper for node-fetch (keeps original behavior)
-const fetch = (...args) => import("node-fetch").then(({ default: fetchDefault }) => fetchDefault(...args));
-
+const fetch = (..._0x28700a) => import("node-fetch").then(({
+  default: _0x5cc38c
+}) => _0x5cc38c(..._0x28700a));
 const sharp = require('sharp');
-
-
-/**
- * resizeImage(bufferOrPath, width, height)
- * - Attempts to resize an image using sharp.
- * - If sharp fails, returns the original input unchanged.
- */
-async function resizeImage(imageInput, width, height) {
+async function resizeImage(_0x3011e7, _0x223696, _0x1f89b4) {
   try {
-    return await sharp(imageInput).resize(width, height).toBuffer();
-  } catch (err) {
-    console.error("Error resizing image:", err);
-    // return original so the caller can continue without throwing
-    return imageInput;
+    return await sharp(_0x3011e7).resize(_0x223696, _0x1f89b4).toBuffer();
+  } catch (_0x173ad1) {
+    console.error("Error resizing image:", _0x173ad1);
+    return _0x3011e7;
   }
 }
-
-/**
- * ytmp3(url)
- * - Calls an external API (p.oceansaver.in) to convert/download an MP3 from a YouTube-like URL.
- * - Returns the progress/result object from their API.
- * - Will throw on error (caller should catch).
- */
-
-/**
- * GDriveDl(gdriveUrl)
- * - Tries to extract a Google Drive file id and request a download link via
- *   drive.google.com's internal JSON response.
- * - Returns { error: true } on failure, or an object with downloadUrl, fileName, fileSize, mimetype.
- * - NOTE: uses fetch POST to drive.google.com/uc endpoint and expects a JSON-like response
- *   with a 4-character prefix that must be sliced off (the original code did `.slice(0x4)`).
- */
-async function GDriveDl(gdriveUrl) {
-  // default failure object
-  let result = { error: true };
-
-  // quick check: must contain "drive.google"
-  if (!gdriveUrl || !gdriveUrl.match(/drive\.google/i)) {
-    return result;
+let wm = config.FOOTER;
+async function GDriveDl(_0x129a91) {
+  let _0x3ef221;
+  let _0xb939d0 = {
+    'error': true
+  };
+  if (!(_0x129a91 && _0x129a91.match(/drive\.google/i))) {
+    return _0xb939d0;
   }
-
-  // sizeFormatter instance for human-readable sizes
-  const formatSize = sizeFormatter({
-    std: 'JEDEC',
-    decimalPlaces: 2,
-    keepTrailingZeroes: false,
-    render: (bytes, unit) => bytes + " " + unit + 'B'
+  const _0x20c6bd = sizeFormatter({
+    'std': 'JEDEC',
+    'decimalPlaces': 0x2,
+    'keepTrailingZeroes': false,
+    'render': (_0x2ed693, _0x224e57) => _0x2ed693 + " " + _0x224e57 + 'B'
   });
-
   try {
-    // extract ID either from ?id=ID or /d/ID/
-    const matchId = (gdriveUrl.match(/\/?id=(.+)/i) || gdriveUrl.match(/\/d\/(.*?)\//));
-    const fileId = matchId ? matchId[1] : null;
-
-    if (!fileId) {
+    _0x3ef221 = (_0x129a91.match(/\/?id=(.+)/i) || _0x129a91.match(/\/d\/(.*?)\//))[0x1];
+    if (!_0x3ef221) {
       throw "ID Not Found";
     }
-
-    // request a JSON-ish payload from drive
-    const driveRes = await fetch("https://drive.google.com/uc?id=" + fileId + '&authuser=0&export=download', {
-      method: "post",
-      headers: {
+    _0xb939d0 = await fetch("https://drive.google.com/uc?id=" + _0x3ef221 + '&authuser=0&export=download', {
+      'method': "post",
+      'headers': {
         'accept-encoding': "gzip, deflate, br",
-        'content-length': 0,
+        'content-length': 0x0,
         'Content-Type': "application/x-www-form-urlencoded;charset=UTF-8",
         'origin': 'https://drive.google.com',
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
-        // these x- headers are imitating Drive's client
         'x-client-data': "CKG1yQEIkbbJAQiitskBCMS2yQEIqZ3KAQioo8oBGLeYygE=",
         'x-drive-first-party': "DriveWebUi",
         'x-json-requested': "true"
       }
     });
-
-    // Drive sometimes prepends a few characters before the real JSON (original code sliced first 4 chars)
-    const rawText = await driveRes.text();
-    const jsonText = rawText.slice(4);
-    const parsed = JSON.parse(jsonText);
-
-    // destructure expected fields
-    let { fileName, sizeBytes, downloadUrl } = parsed;
-
-    if (!downloadUrl) {
+    let {
+      fileName: _0x48123a,
+      sizeBytes: _0x438089,
+      downloadUrl: _0x372204
+    } = JSON.parse((await _0xb939d0.text()).slice(0x4));
+    if (!_0x372204) {
       throw "Link Download Limit!";
     }
-
-    // fetch the download URL headers to get content-type and confirm availability
-    const dlResp = await fetch(downloadUrl);
-    if (dlResp.status !== 200) {
-      return dlResp.statusText;
+    let _0xd99930 = await fetch(_0x372204);
+    if (_0xd99930.status !== 0xc8) {
+      return _0xd99930.statusText;
     }
-
     return {
-      downloadUrl: downloadUrl,
-      fileName: fileName,
-      fileSize: formatSize(sizeBytes),
-      mimetype: dlResp.headers.get("content-type")
+      'downloadUrl': _0x372204,
+      'fileName': _0x48123a,
+      'fileSize': _0x20c6bd(_0x438089),
+      'mimetype': _0xd99930.headers.get("content-type")
     };
-
-  } catch (err) {
-    console.log(err);
-    return result;
+  } catch (_0x191391) {
+    console.log(_0x191391);
+    return _0xb939d0;
   }
 }
-
-/**
- * Register CLI/command handler "gdrive"
- * - The `cmd` function is application-specific and registers a handler likely for a WhatsApp bot.
- * - Handler extracts an argument (URL), calls GDriveDl, replies with file info and attempts to send the file as a document.
- */
 cmd({
-  pattern: "ckgx",
-  alias: ["googledrive'"],
-  react: '🗃️',
-  desc: "Download googledrive files.",
-  category: "download",
-  use: ".gdrive <googledrive link>",
-  filename: __filename
-}, async (client, message, connMsg, meta) => {
+  'pattern': "ckgx",
+  'alias': ["googledrive'"],
+  'react': '🗃️',
+  'desc': "Download googledrive files.",
+  'category': "download",
+  'use': ".gdrive <googledrive link>",
+  'filename': __filename
+}, async (_0x5a9019, _0x4c6a64, _0x38df9b, {
+  from: _0x3341a5,
+  l: _0x3b4a5e,
+  quoted: _0xe9a596,
+  body: _0x347f12,
+  isCmd: _0xd75965,
+  command: _0x58ee0f,
+  args: _0x2fa6b3,
+  q: _0x193afa,
+  isGroup: _0xb88398,
+  sender: _0x4145a4,
+  senderNumber: _0x4c75c3,
+  botNumber2: _0x5ecef9,
+  botNumber: _0x3b8a9a,
+  pushname: _0x55f61f,
+  isMe: _0xaae840,
+  isOwner: _0x4f04e6,
+  groupMetadata: _0x332669,
+  groupName: _0x5df9cd,
+  participants: _0x530267,
+  groupAdmins: _0x5e9b80,
+  isBotAdmins: _0x25b557,
+  isAdmins: _0x342873,
+  reply: _0x3be367
+}) => {
   try {
-    // meta.q is the user-provided URL in original code
-    if (!meta.q) {
-      return await meta.reply("*Please give me googledrive url !!*");
+    if (!_0x193afa) {
+      return await _0x3be367("*Please give me googledrive url !!*");
     }
-
-    const info = await GDriveDl(meta.q);
-
-    const text = "*`🗃️ CK GDRIVE DOWNLODER 🗃️`*\n\n" +
-      "*┌──────────────────*\n" +
-      "*├ 🗃️ Name :* " + info.fileName + "\n" +
-      "*├ ⏩ Type :* " + info.fileSize + "\n" +
-      "*├ 📁 Size :* " + info.mimetype + "\n" +
-      "*└──────────────────*";
-
-    await meta.reply(text);
-
-    // send document by URL (client.sendMessage specifics depend on bot framework)
-    client.sendMessage(meta.from, {
-      document: { url: info.downloadUrl },
-      fileName: info.fileName,
-      mimetype: info.mimetype
-    }, { quoted: message });
-
-  } catch (err) {
-    meta.reply("*Error !!*");
-    console.log(err);
+    let _0x65f2a1 = await GDriveDl(_0x193afa);
+    let _0x4b1e03 = "*`🗃️ CK GDRIVE DOWNLODER 🗃️`*\n\n*┌──────────────────*\n*├ 🗃️ Name :* " + _0x65f2a1.fileName + "\n*├ ⏩ Type :* " + _0x65f2a1.fileSize + "\n*├ 📁 Size :* " + _0x65f2a1.mimetype + "\n*└──────────────────*";
+    await _0x3be367(_0x4b1e03);
+    _0x5a9019.sendMessage(_0x3341a5, {
+      'document': {
+        'url': _0x65f2a1.downloadUrl
+      },
+      'fileName': _0x65f2a1.fileName,
+      'mimetype': _0x65f2a1.mimetype
+    }, {
+      'quoted': _0x4c6a64
+    });
+  } catch (_0x4ab9ef) {
+    _0x3be367("*Error !!*");
+    console.log(_0x4ab9ef);
   }
 });
