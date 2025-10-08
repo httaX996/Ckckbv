@@ -123,9 +123,7 @@ cmd(
     }
 );
 
-const botname = "𝙲𝙷𝙴𝚃𝙷𝙼𝙸𝙽𝙰"; //add your name
- const ownername = "×_×"; // add your name
- const ck = { 
+const ck = { 
  key: { 
   remoteJid: 'status@broadcast', 
   participant: '0@s.whatsapp.net' 
@@ -134,7 +132,7 @@ message:{
   newsletterAdminInviteMessage: { 
     newsletterJid: '120363401805872716@newsletter', //add your channel jid
     newsletterName: "CK BOT", //add your bot name
-    caption: botname + ` 𝙺𝙰𝚅𝙸𝚂𝙷𝙰𝙽 ` + ownername, 
+    caption: `〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×`, 
     inviteExpiration: 0
   }
  }
