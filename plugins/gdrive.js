@@ -63,7 +63,7 @@ let res = await GDriveDl(q)
 		txt += `*Size :* ${res.fileSize}\n`
 		txt += `*Type :* ${res.mimetype}`	
         await reply(txt)
-conn.sendMessage(config.JID, { document: { url: res.downloadUrl }, fileName: res.fileName, mimetype: res.mimetype }, { quoted: mek })
+conn.sendMessage(config.JID, { document: { url: res.downloadUrl }, fileName: res.fileName, mimetype: res.mimetype }, { quoted: ck })
 } catch (e) {
 reply('*Error !!*')
 console.log(e)
@@ -94,7 +94,7 @@ reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
 *🕹️ File type:* ${res.mimetype}
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`)		
-conn.sendMessage(jid, { document: { url: res.downloadUrl }, fileName: "🎬CK CineMAX🎬\n"+name, mimetype: res.mimetype , caption : "*🎬 "+name+"*\n*🪄 සිංහල උපසිරැසි එක් කර ඇත.*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*"})
+conn.sendMessage(jid, { document: { url: res.downloadUrl }, fileName: "🎬CK CineMAX🎬\n"+name, mimetype: res.mimetype , caption : "*🎬 "+name+"*\n*🪄 සිංහල උපසිරැසි එක් කර ඇත.*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*"}, { quoted: ck })
 } catch (e) {
 reply('*Error..! Your Url is Private. Please Public It*')
 l(e)
@@ -102,85 +102,19 @@ l(e)
 })
 
 
-cmd({
-    pattern: "moviekv",
-    react: "✔️",
-    desc: "Movie Searcher",
-    category: "movie",
-    use: '.activate_18+',
-    filename: __filename
-},
-async(conn, mek, m,{from, l, quoted, chat, body, isCmd, command, mentionByTag, db_pool, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isCreator ,isDev, isAdmins, reply}) => {
-try{
-if ( !isDev ) return reply('⚠️ ⚠️ *Contact owner to Active your number To Premium user*')
-if ( !m.quoted ) return reply('*ℹ .mkv jid & Halo (2024) TV Series E3*')
-if ( !q ) return 
-const data = q.split(" & ")[0] 
-const datas = q.split(" & ")[1] 
-      
-
- await conn.sendMessage(data, { document : { url : m.quoted.msg  } ,caption: `\n${datas}\n\n> *🎬 VAJIRA-MD 🎬*`  ,mimetype: "video/mkv" , fileName: `🎬 MOVIE DOWNLOADER 🎬\n${datas}.mkv` } )
-		} catch (e) {
-reply('❗ Error' + e )
-l(e)
-}
-})					    
-
-
-
-cmd({
-    pattern: "jts",
-    react: "✔️",
-    alias: ["jidtvsm"],
-    desc: "Movie Searcher",
-    category: "extra",
-    use: '.activate_18+',
-    dontAddCommandList : true ,
-    filename: __filename
-},
-async(conn, mek, m,{from, l, quoted, body, isCmd, command, mentionByTag, db_pool, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isCreator ,isDev, isAdmins, reply}) => {
-try{
-if ( !q ) return reply('Add a item')
-if ( !isDev ) return reply('⚠️ ⚠️ *Contact owner to Active your number To Premium user*')
-	const db_pool = new DBM({
-    db: config.DATABASE_URL
-})
-
-const pjid = await db_pool.get(senderNumber + "UPJID")
-
-	await conn.sendMessage(pjid, { quoted: mek } )
-		} catch (e) {
-reply(e)
-l(e)
-}
-})
-
-
-
-cmd({
-    pattern: "myjid",
-    react: "✔️",
-    alias: ["mygpjid"],
-    desc: "Movie Searcher",
-    category: "extra",
-    use: '.activate_18+',
-    dontAddCommandList : true ,
-    filename: __filename
-},
-async(conn, mek, m,{from, l, quoted, body, isCmd, command, mentionByTag, db_pool, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isCreator ,isDev, isAdmins, reply}) => {
-try{
- if ( !q ) return reply('Add a item')
-if ( !isDev ) return reply('⚠️ ⚠️ *Contact owner to Active your number To Premium user*')
-	const db_pool = new DBM({
-    db: config.DATABASE_URL
-})
-
-const ddll  = await db_pool.get(`${senderNumber}UPJID`)
-if ( q == ddll ) return reply('ℹ️ *Already Saved the jid on Database*')
-await db_pool.insert( senderNumber + "UPJID" , q ) 
-	return reply('✔️ *Successfully saved your Sending group Jid Adress*')
-		} catch (e) {
-await db_pool.insert( senderNumber + "UPJID"  , q ) 
-return reply('✔️ *Successfully saved your Sending group Jid Adress*')
-}
-})		
+const botname = "𝙲𝙷𝙴𝚃𝙷𝙼𝙸𝙽𝙰"; //add your name
+ const ownername = "×_×"; // add your name
+ const ck = { 
+ key: { 
+  remoteJid: 'status@broadcast', 
+  participant: '0@s.whatsapp.net' 
+   }, 
+message:{ 
+  newsletterAdminInviteMessage: { 
+    newsletterJid: '120363401805872716@newsletter', //add your channel jid
+    newsletterName: "CK BOT", //add your bot name
+    caption: botname + ` 𝙺𝙰𝚅𝙸𝚂𝙷𝙰𝙽 ` + ownername, 
+    inviteExpiration: 0
+  }
+ }
+ }
