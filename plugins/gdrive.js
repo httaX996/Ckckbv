@@ -94,7 +94,7 @@ reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
 *🕹️ File type:* ${res.mimetype}
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`)		
-conn.sendMessage(jid, { document: { url: res.downloadUrl }, fileName: "🎬CK CineMAX🎬\n"+name, mimetype: res.mimetype , caption : "*🎬 "+name+"*\n*🪄 සිංහල උපසිරැසි එක් කර ඇත.*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*"}, { quoted: ck })
+conn.sendMessage(jid, { document: { url: res.downloadUrl }, fileName: "🎬CK CineMAX🎬\n"+name, mimetype: res.mimetype , caption : "*🎬 "+name+"*\n*🪄 සිංහල උපසිරැසි එක් කර ඇත.*"}, { quoted: ck })
 } catch (e) {
 reply('*Error..! Your Url is Private. Please Public It*')
 l(e)
