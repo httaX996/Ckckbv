@@ -58,6 +58,7 @@
     "api-dylux": "1.8.5",
     "mongoose": "^8.9.4",
     "postgres_dbm": "^1.1.0",
+    "node-cache": "5.1.2",
     "human-readable": "0.2.1"
   }
 }
