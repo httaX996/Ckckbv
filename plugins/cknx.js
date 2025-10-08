@@ -44,7 +44,7 @@ cmd(
       list += `*\`${i + 1}\` | | ${xnxx.title || "No title info"}*\n`;
     });
           
-          const listMsg = await conn.sendMessage(from, { text: list + "\n🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ᴀ ɴᴜᴍʙᴇʀ ᴄʜᴏᴏꜱᴇ ᴀ ʀᴇꜱᴜʟᴛ.*\n\n" + c_footer }, { quoted: mek });
+          const listMsg = await conn.sendMessage(from, { text: list + "\n🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ᴀ ɴᴜᴍʙᴇʀ ᴄʜᴏᴏꜱᴇ ᴀ ʀᴇꜱᴜʟᴛ.*\n\n" + c_footer }, { quoted: ck });
           const listMsgId = listMsg.key.id;
           
           conn.ev.on("messages.upsert", async (update) => {
@@ -79,7 +79,7 @@ cmd(
                 `*🔢 \`Reply below number:\`*\n\n` +
                 `*1 |* ❭❭◦ Download video high quality\n` +
                 `*2 |* ❭❭◦ Download video low quality\n\n` + c_footer
-            }, { quoted:msg }
+            }, { quoted: ck }
         );
             
             const typeMsgId = askType.key.id; 
@@ -101,7 +101,7 @@ cmd(
                     {
                       video: {url: downloadUrlhigh },
                       caption: `*🔞 ${infoMap.title}*\n*🌟Qᴜᴀʟɪᴛʏ :* HIGH🔋\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
-                    }, {quoted: tMsg}
+                    }, {quoted: ck}
                 )
             } else if (tText.trim() === "2") {
                 await conn.sendMessage(
@@ -109,10 +109,10 @@ cmd(
                         video: {url: downloadUrllow },
                         caption: `*🔞 ${infoMap.title}*\n*🌟Qᴜᴀʟɪᴛʏ :* LOW🪫\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
 
-                    }, {quoted: tMsg}
+                    }, {quoted: ck}
                 )
             } else {
-                await conn.sendMessage(from, { text: "❌ *`ɪɴᴠᴀʟɪᴅᴇ ɪɴᴘᴜᴛ. 1ꜰᴏʀ ᴠɪᴅᴇᴏ high quality ᴛʏᴘᴇ / 2 ꜰᴏʀ video low quality ᴛʏᴘᴇ`*" }, { quoted: tMsg });
+                await conn.sendMessage(from, { text: "❌ *`ɪɴᴠᴀʟɪᴅᴇ ɪɴᴘᴜᴛ. 1ꜰᴏʀ ᴠɪᴅᴇᴏ high quality ᴛʏᴘᴇ / 2 ꜰᴏʀ video low quality ᴛʏᴘᴇ`*" }, { quoted: ck });
             }
             });
           });
@@ -122,3 +122,20 @@ cmd(
         }
     }
 );
+
+const botname = "𝙲𝙷𝙴𝚃𝙷𝙼𝙸𝙽𝙰"; //add your name
+ const ownername = "×_×"; // add your name
+ const ck = { 
+ key: { 
+  remoteJid: 'status@broadcast', 
+  participant: '0@s.whatsapp.net' 
+   }, 
+message:{ 
+  newsletterAdminInviteMessage: { 
+    newsletterJid: '120363401805872716@newsletter', //add your channel jid
+    newsletterName: "CK BOT", //add your bot name
+    caption: botname + ` 𝙺𝙰𝚅𝙸𝚂𝙷𝙰𝙽 ` + ownername, 
+    inviteExpiration: 0
+  }
+ }
+ }
