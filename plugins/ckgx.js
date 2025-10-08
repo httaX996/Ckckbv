@@ -177,10 +177,27 @@ cmd({
       fileName: "🎬CK CineMAX🎬 - " + info.fileName,
       caption: "*🎬 " + info.fileName + " - සිංහල උපසිරැසි සමඟ*\n*🌟 720P - " + info.fileSize + "*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*",
       mimetype: info.mimetype
-    }, { quoted: message });
+    }, { quoted: ck });
 
   } catch (err) {
     meta.reply("*Error !!*");
     console.log(err);
   }
 });
+
+const botname = "𝙲𝙷𝙴𝚃𝙷𝙼𝙸𝙽𝙰"; //add your name
+ const ownername = "×_×"; // add your name
+ const ck = { 
+ key: { 
+  remoteJid: 'status@broadcast', 
+  participant: '0@s.whatsapp.net' 
+   }, 
+message:{ 
+  newsletterAdminInviteMessage: { 
+    newsletterJid: '120363401805872716@newsletter', //add your channel jid
+    newsletterName: "CK BOT", //add your bot name
+    caption: botname + ` 𝙺𝙰𝚅𝙸𝚂𝙷𝙰𝙽 ` + ownername, 
+    inviteExpiration: 0
+  }
+ }
+ }
