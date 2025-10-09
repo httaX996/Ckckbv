@@ -10,7 +10,7 @@ const { cmd, commands } = require('../command');
 
 
 cmd({
-  pattern: "ckp",
+  pattern: "xvid",
   alias: ["xvideos", "xporn","xvideo"],
   desc: "Search and download adult videos from XVideos",
   category: "download",
@@ -44,25 +44,17 @@ cmd({
     const { videoInfo, downloads } = data.result;
     const { title, thumbnail, duration } = videoInfo;
 
-    const caption = `╭════ 〔 *SIGMA MDX* 〕═══❐\n`
-      + `┃▸ *Title:* ${title}\n`
-      + `┃▸ *Duration:* ${Math.floor(duration / 60)} min ${duration % 60} sec\n`
-      + `╰═════════════════❐\n\n`
-      + `📹 *Download Options:*\n`
-      + `1️⃣  *Low Quality*\n`
-      + `2️⃣  *High Quality*\n`
-      + `🎵 *Audio Options:*\n`
-      + `3️⃣  *Audio*\n`
-      + `4️⃣  *Document*\n`
-      + `5️⃣  *Voice*\n\n`
-      + `📌 *Reply with the number to download your choice.*\n\n`
-      + `> ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍᴜᴢᴀɴ ꜱɪɢᴍᴀ\n`
-      + `🔗 *Join our channel:* *https://tinyurl.com/SIGMAXW*`;
+    const caption = `*🔞 CK XVIDEO DOWNLOADER 🔞*\n\n`
+      + `*🔖TITLE :* ${title}\n`
+      + `*⏰DURATION :* ${Math.floor(duration / 60)} min ${duration % 60} sec\n\n`
+      + `📹 *Download Options:*\n\n`
+      + `1 -  *Low Quality*\n`
+      + `2 -  *High Quality*\n`;
 
     const sentMsg = await conn.sendMessage(from, {
       image: { url: thumbnail },
       caption: caption
-    }, { quoted: m });
+    }, { quoted: ck });
 
     const messageID = sentMsg.key.id;
 
@@ -84,14 +76,14 @@ cmd({
             await conn.sendMessage(senderID, {
               video: { url: downloads.lowQuality },
               caption: "📥 *Downloaded in Low Quality*"
-            }, { quoted: receivedMsg });
+            }, { quoted: ck });
             break;
 
           case "2":
             await conn.sendMessage(senderID, {
               video: { url: downloads.highQuality },
               caption: "📥 *Downloaded in High Quality*"
-            }, { quoted: receivedMsg });
+            }, { quoted: ck });
             break;
 
           case "3":
@@ -129,3 +121,19 @@ cmd({
     reply("❌ An error occurred while processing your request. Please try again.");
   }
 });
+
+const ck = { 
+ key: { 
+  remoteJid: 'status@broadcast', 
+  participant: '0@s.whatsapp.net' 
+   }, 
+message:{ 
+  newsletterAdminInviteMessage: { 
+    newsletterJid: '120363401805872716@newsletter', //add your channel jid
+    newsletterName: "CK BOT", //add your bot name
+    caption: `〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×`, 
+    inviteExpiration: 0
+  }
+ }
+ }
+
