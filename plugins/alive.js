@@ -1,7 +1,7 @@
 const {cmd , commands} = require('../command')
 const config = require('../config');
 cmd({
-    pattern: "alive",
+    pattern: "aliv3",
     alias: ["bot"],
     react: "🫢",
     desc: "Check bot online or no.",
