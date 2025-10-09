@@ -3,8 +3,8 @@ const os = require("os");
 const { runtime } = require('../lib/functions');
 
 cmd({
-    pattern: "menu",
-    alias: ["list", "cmd", "panel"],
+    pattern: "m3nu",
+    alias: ["listt", "cmdd", "panel"],
     desc: "commands panel",
     react: "🫢",
     filename: __filename
