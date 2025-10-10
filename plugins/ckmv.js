@@ -1,8 +1,8 @@
 const axios = require('axios');
 const { cmd } = require('../command');
 
-const ckmv = "120363406383917495@g.us";
-const cktv = "120363406383917495@g.us";
+const ckmv = "120363298587511714@g.us";
+const cktv = "120363319444098961@g.us";
 
 cmd({
     pattern: "ckmvd",
@@ -119,7 +119,7 @@ async (conn, mek, m, { from, reply, sender, args }) => {
 });
 
 cmd({
-    pattern: "ckmvd3",
+    pattern: "cktvd",
     desc: "Fetch detailed information about a movie.",
     category: "utility",
     react: "🎬",
@@ -160,7 +160,7 @@ async (conn, mek, m, { from, reply, sender, args }) => {
 
         // Send message with the requested format
         await conn.sendMessage(
-            from,
+            cktv,
             {
                 image: { 
                     url: movie.poster && movie.poster !== 'N/A' ? movie.poster : 'https://files.catbox.moe/m5drmn.png'
