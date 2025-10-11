@@ -31,7 +31,7 @@ cmd({
         for (let v = 0; v < response.length; v++) {
             info += `*${formatNumber(v + 1)} ||* ${response[v].title}\n`;
         }
-        info += `\n${config.FOOTER}`;
+        info += `\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(from, {
             text: info,
@@ -83,7 +83,8 @@ cmd({
                         `│\n` +
                         `│ 🗣️ ${oce}Input:${oce} *${q}*\n` +
                         `╰─────────────────────╯\n\n` +
-                        `${s_m_g}`;
+                        `${s_m_g}\n\n` +
+                        `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                     const mass = await conn.sendMessage(from, {
                         image: { url: data.cover },
@@ -115,7 +116,7 @@ cmd({
                                 await conn.sendMessage(from, {
                                     video: { url: selectedVideo.url },
                                     mimetype: "video/mp4",
-                                    caption: `*${data.title}*`
+                                    caption: `*${data.title}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                                 }, { quoted: ck });
 
                                 await conn.sendMessage(from, {
