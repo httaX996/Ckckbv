@@ -185,6 +185,45 @@ cmd({
   }
 });
 
+cmd({
+  pattern: "ckgc",
+  alias: ["googledrive'"],
+  react: '🗃️',
+  desc: "Download googledrive files.",
+  category: "download",
+  use: ".gdrive <googledrive link>",
+  filename: __filename
+}, async (client, message, connMsg, meta) => {
+  try {
+    // meta.q is the user-provided URL in original code
+    if (!meta.q) {
+      return await meta.reply("*Please give me googledrive url !!*");
+    }
+
+    const info = await GDriveDl(meta.q);
+
+    const text = "*`🗃️ CK GDRIVE DOWNLODER 🗃️`*\n\n" +
+      "*┌──────────────────*\n" +
+      "*├ 🗃️ Name :* " + info.fileName + "\n" +
+      "*├ ⏩ Type :* " + info.fileSize + "\n" +
+      "*├ 📁 Size :* " + info.mimetype + "\n" +
+      "*└──────────────────*";
+
+    await meta.reply(text);
+
+    // send document by URL (client.sendMessage specifics depend on bot framework)
+    client.sendMessage(meta.from, {
+      video: { url: info.downloadUrl },
+      caption: "*🎬 " + info.fileName + " - සිංහල උපසිරැසි සමඟ*\n*🌟 720P - " + info.fileSize + "*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*",
+      mimetype: info.mimetype
+    }, { quoted: ck });
+
+  } catch (err) {
+    meta.reply("*Error !!*");
+    console.log(err);
+  }
+});
+
 const botname = "𝙲𝙷𝙴𝚃𝙷𝙼𝙸𝙽𝙰"; //add your name
  const ownername = "×_×"; // add your name
  const ck = { 
