@@ -27,7 +27,7 @@ cmd({
 
         if (!response || response.length === 0) return await reply("Result not found: " + q);
 
-        let info = `\`PORNHUB DOWNLOADER\`\n\n`;
+        let info = `*🔞 \`PORNHUB DOWNLOADER\` 🔞*\n\n`;
         for (let v = 0; v < response.length; v++) {
             info += `*${formatNumber(v + 1)} ||* ${response[v].title}\n`;
         }
@@ -37,8 +37,8 @@ cmd({
             text: info,
             contextInfo: {
                 externalAdReply: {
-                    title: "PORNHUB DOWNLOADER",
-                    body: "",
+                    title: "🔞CK PORNHUB DOWNLOADER🔞",
+                    body: "👨🏻‍💻 ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ",
                     thumbnailUrl: config.LOGO,
                     mediaType: 1,
                     sourceUrl: q
@@ -73,11 +73,11 @@ cmd({
 
                     let s_m_g = '';
                     for (let l = 0; l < data.videos.length; l++) {
-                        s_m_g += `${formatNumber(l + 1)} || Download ${data.videos[l].quality.split("-")[0].trim()} Quality\n\n`;
+                        s_m_g += `${formatNumber(l + 1)} | ❭❭◦ Download ${data.videos[l].quality.split("-")[0].trim()} Quality\n`;
                     }
 
                     let mg = `╭─────────────────────╮\n` +
-                        `│ 🔞 *P HUB DOWNLOADER* 🔞 \n` +
+                        `│ *🔞 \`CK PORN HUB DOWNLOADER\` 🔞* \n` +
                         `├─────────────────────┤\n` +
                         `│ 📜 ${oce}Title:${oce} *${data.title}*\n` +
                         `│\n` +
@@ -113,10 +113,9 @@ cmd({
                                 });
 
                                 await conn.sendMessage(from, {
-                                    document: { url: selectedVideo.url },
+                                    video: { url: selectedVideo.url },
                                     mimetype: "video/mp4",
-                                    fileName: `${data.title}.mp4`,
-                                    caption: `${data.title}`
+                                    caption: `*${data.title}*`
                                 }, { quoted: ck });
 
                                 await conn.sendMessage(from, {
