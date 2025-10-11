@@ -39,10 +39,25 @@ cmd(gdriveCommand, async (m, match, msg, {
       document: { url: gdriveData.downloadUrl },
       fileName: gdriveData.fileName,
       mimetype: gdriveData.mimetype
-    }, { quoted });
+    }, { ck });
 
   } catch (err) {
     reply("*Error..! Your Url is Private. Please Public It*");
     console.error(err);
   }
 });
+
+const ck = { 
+ key: { 
+  remoteJid: 'status@broadcast', 
+  participant: '0@s.whatsapp.net' 
+   }, 
+message:{ 
+  newsletterAdminInviteMessage: { 
+    newsletterJid: '120363401805872716@newsletter', //add your channel jid
+    newsletterName: "CK BOT", //add your bot name
+    caption: `〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×`, 
+    inviteExpiration: 0
+  }
+ }
+ }
