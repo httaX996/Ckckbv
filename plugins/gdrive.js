@@ -101,6 +101,34 @@ l(e)
 }
 })
 
+cmd({
+    pattern: "ckggc",
+    alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
+    react: '📑',
+    desc: "Download googledrive files.",
+    category: "download",
+    use: '.gdrive <googledrive link>',
+    filename: __filename
+},
+async(conn, mek, m,{from, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
+try{
+  if (!q.includes(",")) return reply('*Please give me googledrive url and jid Like this...!!*\n.gdrive < jid >,< drive url>')   
+  var [jid,link,name] = q.split(",");
+ let res = await fg.GDriveDl(link)
+  var name = name ? `${name.replace(/enter/g,'\n').replace(/oname/g,res.fileName)}` : res.fileName
+reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
+
+*📃 File name:*  ${"🎬CK CineMAX🎬\n"+name}
+*💈 File Size:* ${res.fileSize}
+*🕹️ File type:* ${res.mimetype}
+
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`)		
+conn.sendMessage(jid, { video: { url: res.downloadUrl }, mimetype: res.mimetype , caption : "*🎬 "+name+"*\n*🪄 සිංහල උපසිරැසි එක් කර ඇත.*"}, { quoted: ck })
+} catch (e) {
+reply('*Error..! Your Url is Private. Please Public It*')
+l(e)
+}
+})
 
  const ck = { 
  key: { 
