@@ -83,7 +83,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
                         if (news.image) {
                             await conn.sendMessage(targetJid, { 
                                 image: { url: news.image }, 
-                                caption: msg,
+                                caption: msg ,
                                 contextInfo: {
                 externalAdReply: {
                     title: "𝐒𝐈𝐍𝐇𝐀𝐋𝐀 𝐍𝐄𝐖𝐒 𝟐𝟒𝐱𝟕"📰⚡",
@@ -96,7 +96,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
                             });
                         } else {
                             await conn.sendMessage(targetJid, { 
-                                text: msg,
+                                text: msg ,
                                 contextInfo: {
                 externalAdReply: {
                     title: "𝐒𝐈𝐍𝐇𝐀𝐋𝐀 𝐍𝐄𝐖𝐒 𝟐𝟒𝐱𝟕"📰⚡",
