@@ -11,7 +11,7 @@ const newsIntervals = new Map(); // JID එකට interval ට්‍රැක්
 
 // Start Derana News Command
 cmd({
-    pattern: "startnews",
+    pattern: "startnewz",
     alias: ["breckingnews"],
     react: "📑",
     desc: "අලුත් Derana පුවත් ආපු විගස යවයි, එකම පුවත ආයෙ එන්නේ නැත.",
