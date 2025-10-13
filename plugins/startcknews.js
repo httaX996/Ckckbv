@@ -78,24 +78,34 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 
 📆 \`PUBLISHED:\` *${news.time || 'Not Found'}*
 🔗 \`URL:\` *${news.news_url || 'Not Found'}*
-
-> ━━━━━━━━━━━━━━━━━━━━━
-> *🪀Follow Us & Get Latest News👇🏻*
-> https://whatsapp.com/channel/0029VbB7y6yHgZWlCfhxup1b
-
-> © 𝐒𝐈𝐍𝐇𝐀𝐋𝐀 𝐍𝐄𝐖𝐒 𝟐𝟒𝐱𝟕"📰⚡
-> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
-> ━━━━━━━━━━━━━━━━━━━━━
                         `;
 
                         if (news.image) {
                             await conn.sendMessage(targetJid, { 
                                 image: { url: news.image }, 
-                                caption: msg 
+                                caption: msg,
+                                contextInfo: {
+                externalAdReply: {
+                    title: "𝐒𝐈𝐍𝐇𝐀𝐋𝐀 𝐍𝐄𝐖𝐒 𝟐𝟒𝐱𝟕"📰⚡",
+                    body: "👨🏻‍💻 ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ",
+                    thumbnailUrl: "https://files.catbox.moe/8cn5qn.jpg",
+                    mediaType: 1,
+                    sourceUrl: q
+                   }
+                                }
                             });
                         } else {
                             await conn.sendMessage(targetJid, { 
-                                text: msg 
+                                text: msg,
+                                contextInfo: {
+                externalAdReply: {
+                    title: "𝐒𝐈𝐍𝐇𝐀𝐋𝐀 𝐍𝐄𝐖𝐒 𝟐𝟒𝐱𝟕"📰⚡",
+                    body: "👨🏻‍💻 ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ",
+                    thumbnailUrl: "https://files.catbox.moe/8cn5qn.jpg",
+                    mediaType: 1,
+                    sourceUrl: q
+                   }
+                                }
                             });
                         }
 
