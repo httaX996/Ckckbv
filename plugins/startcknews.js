@@ -11,7 +11,7 @@ const newsIntervals = new Map(); // JID එකට interval ට්‍රැක්
 
 // Start Derana News Command
 cmd({
-    pattern: "startnewss",
+    pattern: "startnews",
     alias: ["breckingnews"],
     react: "📑",
     desc: "අලුත් Derana පුවත් ආපු විගස යවයි, එකම පුවත ආයෙ එන්නේ නැත.",
@@ -72,20 +72,20 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
                         sentNews.add(newsId);
 
                         const msg = `
-*📰 ${news.title || 'නොදන්නා'}*
+*📰 \`${news.title || 'Not Found'}\`*
 
-✍🏻 ${news.description || 'නොදන්නා'}
+✍🏻 ${news.description || 'Not Found'}
 
-*📆 Published:* ${news.time || 'නොදන්නා'}
-*🔗 URL:* ${news.news_url || 'නොදන්නා'}
+📆 \`PUBLISHED:\` *${news.time || 'Not Found'}*
+🔗 \`URL:\` *${news.news_url || 'Not Found'}*
 
-━━━━━━━━━━━━━━━━━━━━━
+> ━━━━━━━━━━━━━━━━━━━━━
 > *🪀Follow Us & Get Latest News👇🏻*
 > https://whatsapp.com/channel/0029VbB7y6yHgZWlCfhxup1b
 
 > © 𝐒𝐈𝐍𝐇𝐀𝐋𝐀 𝐍𝐄𝐖𝐒 𝟐𝟒𝐱𝟕"📰⚡
 > 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
-━━━━━━━━━━━━━━━━━━━━━
+> ━━━━━━━━━━━━━━━━━━━━━
                         `;
 
                         if (news.image) {
