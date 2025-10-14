@@ -77,11 +77,11 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 ✍🏻 ${news.description || 'Not Found'}
 
 📆 \`PUBLISHED:\` *${news.time || 'Not Found'}*
-🔗 \`URL:\` *${news.news_url || 'Not Found'}*
+🔗 \`LINK:\` *${news.news_url || 'Not Found'}*
 
 > ━━━━━━━━━━━━━━━━━━━━━
-> © 𝐒𝐈𝐍𝐇𝐀𝐋𝐀 𝐍𝐄𝐖𝐒 𝟐𝟒𝐱𝟕"📰⚡
-> https://whatsapp.com/channel/0029VbB7y6yHgZWlCfhxup1b
+> \`© 𝗦𝗜𝗡𝗛𝗔𝗟𝗔 𝗡𝗘𝗪𝗦 𝟮𝟰𝘅𝟳 🇱🇰⚡\`
+> *🪀 https://whatsapp.com/channel/0029VbB7y6yHgZWlCfhxup1b*
 > ━━━━━━━━━━━━━━━━━━━━━
                         `;
 
