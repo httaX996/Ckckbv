@@ -90,10 +90,6 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
                                 image: { url: news.image }, 
                                 caption: msg 
                             });
-                        } else {
-                            await conn.sendMessage(targetJid, { 
-                                text: msg 
-                            });
                         }
 
                         console.log(`අලුත් Derana පුවත යැව්වා: ${news.title} -> ${targetJid}`);
