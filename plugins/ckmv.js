@@ -31,15 +31,15 @@ async (conn, mek, m, { from, reply, sender, args }) => {
         
         // Format the caption
         const dec = `
-🎬 *${movie.title} (${movie.year}) - සිංහල උපසිරැසි සමඟ*
+🎬 \`${movie.title} (${movie.year}) - සිංහල උපසිරැසි සමඟ\`
 
-🌟 *IMDb :* ${movie.imdbRating || 'N/A'}  
-💰 *BOX OFFICE :* ${movie.boxoffice || 'N/A'}
-📅 *RELEASED :* ${new Date(movie.released).toLocaleDateString()}
-⏰ *RUNTIME :* ${movie.runtime}
-🎭 *GENRES :* ${movie.genres}
-🌍 *COUNTRY :* ${movie.country}
-🔊 *LANGUAGE :* ${movie.languages}
+🌟 \`IMDb :\` *${movie.imdbRating || 'N/A'}*  
+💰 \`BOX OFFICE :\` *${movie.boxoffice || 'N/A'}*
+📅 \`RELEASED :\` *${new Date(movie.released).toLocaleDateString()}*
+⏰ \`RUNTIME :\` *${movie.runtime}*
+🎭 \`GENRES :\` *${movie.genres}*
+🌍 \`COUNTRY :\` *${movie.country}*
+🔊 \`LANGUAGE :\` *${movie.languages}*
 
 > ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*
 `;
@@ -88,15 +88,15 @@ async (conn, mek, m, { from, reply, sender, args }) => {
         
         // Format the caption
         const dec = `
-🎬 *${movie.title} (${movie.year}) - සිංහල උපසිරැසි සමඟ*
+🎬 \`${movie.title} (${movie.year}) - සිංහල උපසිරැසි සමඟ\`
 
-🌟 *IMDb :* ${movie.imdbRating || 'N/A'}  
-💰 *BOX OFFICE :* ${movie.boxoffice || 'N/A'}
-📅 *RELEASED :* ${new Date(movie.released).toLocaleDateString()}
-⏰ *RUNTIME :* ${movie.runtime}
-🎭 *GENRES :* ${movie.genres}
-🌍 *COUNTRY :* ${movie.country}
-🔊 *LANGUAGE :* ${movie.languages}
+🌟 \`IMDb :\` *${movie.imdbRating || 'N/A'}*  
+💰 \`BOX OFFICE :\` *${movie.boxoffice || 'N/A'}*
+📅 \`RELEASED :\` *${new Date(movie.released).toLocaleDateString()}*
+⏰ \`RUNTIME :\` *${movie.runtime}*
+🎭 \`GENRES :\` *${movie.genres}*
+🌍 \`COUNTRY :\` *${movie.country}*
+🔊 \`LANGUAGE :\` *${movie.languages}*
 
 > ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*
 `;
@@ -145,15 +145,15 @@ async (conn, mek, m, { from, reply, sender, args }) => {
         
         // Format the caption
         const dec = `
-🎬 *${movie.title} (${movie.year}) - සිංහල උපසිරැසි සමඟ*
+🎬 \`${movie.title} (${movie.year}) - සිංහල උපසිරැසි සමඟ\`
 
-🌟 *IMDb :* ${movie.imdbRating || 'N/A'}  
-💰 *BOX OFFICE :* ${movie.boxoffice || 'N/A'}
-📅 *RELEASED :* ${new Date(movie.released).toLocaleDateString()}
-⏰ *RUNTIME :* ${movie.runtime}
-🎭 *GENRES :* ${movie.genres}
-🌍 *COUNTRY :* ${movie.country}
-🔊 *LANGUAGE :* ${movie.languages}
+🌟 \`IMDb :\` *${movie.imdbRating || 'N/A'}*  
+💰 \`BOX OFFICE :\` *${movie.boxoffice || 'N/A'}*
+📅 \`RELEASED :\` *${new Date(movie.released).toLocaleDateString()}*
+⏰ \`RUNTIME :\` *${movie.runtime}*
+🎭 \`GENRES :\` *${movie.genres}*
+🌍 \`COUNTRY :\` *${movie.country}*
+🔊 \`LANGUAGE :\` *${movie.languages}*
 
 > ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*
 `;
