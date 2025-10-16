@@ -108,7 +108,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
         };
 
         // සෑම තත්පර 30කට වරක් API චෙක් කරනවා
-        const intervalId = setInterval(checkAndSendNews, 30 * 1000);
+        const intervalId = setInterval(checkAndSendNews, 3000 * 1000);
         newsIntervals.set(targetJid, intervalId); // Interval එක store කරනවා
 
     } catch (e) {
