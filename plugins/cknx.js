@@ -38,13 +38,15 @@ cmd(
                 await reply("No result found you enter xnxx video name :(")
             }
             
-            let list = "*🔞CK XNXX VIDEO SEARCH RESULT🔞*\n\n";
+            let list = "\`🔞CK XNXX VIDEO SEARCH RESULT🔞\`\n\n";
             
             xnxxSearchapi.result.xvideos.forEach((xnxx, i) => {
-      list += `*\`${i + 1}\` | | ${xnxx.title || "No title info"}*\n`;
+      list += `*\`${i + 1}\` *|* ❭❭◦ ${xnxx.title || "No title info"}*\n`;
     });
           
-          const listMsg = await conn.sendMessage(from, { text: list + "\n🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ᴀ ɴᴜᴍʙᴇʀ ᴄʜᴏᴏꜱᴇ ᴀ ʀᴇꜱᴜʟᴛ.*\n\n" + c_footer }, { quoted: ck });
+          const listMsg = await conn.sendMessage(from, { 
+              image: { url: "https://files.catbox.moe/h6t2am.jpg"},
+              caption: list + "\n🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ᴀ ɴᴜᴍʙᴇʀ ᴄʜᴏᴏꜱᴇ ᴀ ʀᴇꜱᴜʟᴛ.*\n\n" + c_footer }, { quoted: ck });
           const listMsgId = listMsg.key.id;
           
           conn.ev.on("messages.upsert", async (update) => {
@@ -123,9 +125,7 @@ cmd(
     }
 );
 
-const botname = "𝙲𝙷𝙴𝚃𝙷𝙼𝙸𝙽𝙰"; //add your name
- const ownername = "×_×"; // add your name
- const ck = { 
+const ck = { 
  key: { 
   remoteJid: 'status@broadcast', 
   participant: '0@s.whatsapp.net' 
@@ -134,8 +134,8 @@ message:{
   newsletterAdminInviteMessage: { 
     newsletterJid: '120363401805872716@newsletter', //add your channel jid
     newsletterName: "CK BOT", //add your bot name
-    caption: botname + ` 𝙺𝙰𝚅𝙸𝚂𝙷𝙰𝙽 ` + ownername, 
+    caption: `〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×`, 
     inviteExpiration: 0
   }
  }
-}
+ }
