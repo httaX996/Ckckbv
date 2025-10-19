@@ -102,7 +102,7 @@ l(e)
 })
 
 cmd({
-    pattern: "ckggc",
+    pattern: "gjidx",
     alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
     react: '📑',
     desc: "Download googledrive files.",
@@ -123,24 +123,30 @@ reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
 *🕹️ File type:* ${res.mimetype}
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`)		
-conn.sendMessage(jid, { video: { url: res.downloadUrl }, mimetype: res.mimetype , caption : "*🎬 "+name+"*\n*🪄 සිංහල උපසිරැසි එක් කර ඇත.*"}, { quoted: ck })
+conn.sendMessage(jid, { document: { url: res.downloadUrl }, fileName: name, mimetype: res.mimetype , caption : "🍄 \`NAME:\` *"+name+"*\n📊 \`SIZE:\` "+"*"${res.fileSize}+"*"}, { quoted: ck })
 } catch (e) {
 reply('*Error..! Your Url is Private. Please Public It*')
 l(e)
 }
 })
 
- const ck = { 
- key: { 
-  remoteJid: 'status@broadcast', 
-  participant: '0@s.whatsapp.net' 
-   }, 
-message:{ 
-  newsletterAdminInviteMessage: { 
-    newsletterJid: '120363401805872716@newsletter', //add your channel jid
-    newsletterName: "CK BOT", //add your bot name
-    caption: `〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×`, 
-    inviteExpiration: 0
-  }
- }
- }
+
+
+ const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
