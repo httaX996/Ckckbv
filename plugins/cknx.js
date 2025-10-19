@@ -41,7 +41,7 @@ cmd(
             let list = "\`🔞CK XNXX VIDEO SEARCH RESULT🔞\`\n\n";
             
             xnxxSearchapi.result.xvideos.forEach((xnxx, i) => {
-      list += `*\`${i + 1}\` *|* ❭❭◦ ${xnxx.title || "No title info"}*\n`;
+      list += `*\`${i + 1}\` *|* ❭❭◦ *${xnxx.title || "No title info"}*\n`;
     });
           
           const listMsg = await conn.sendMessage(from, { 
