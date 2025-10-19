@@ -13,11 +13,10 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
     try {
         // Main Menu Caption with English and Emojis
         const cap = `
-*🫧 Hey*  \`${pushname}\` *!  How are you? 🫧*
+*🫧 Hey*  \`${pushname}\` *!  ${new Date().getHours() < 12 ? 'Good Morning 🌄' : 'Good Evening 🌙' } How are you? 🫧*
 
 
 *╭───── ❖ SYSTEM INFO ❖ ─────╮*
-*│  ${new Date().getHours() < 12 ? '🌄 Good Morning!' : '🌙 Good Evening!' }*
 *│*  🍭 \`Bot Name:\` *CHETHMINA MD*
 *│*  🔖 \`Version:\` *1.O V*
 *│*  📟 \`Platform:\` *VPS*
@@ -29,7 +28,8 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 ╭─── *_✨MENU OPTIONS ✨_*───╮
 │ 💡 *Reply with a number to explore!*
 │ *─────────────────────*
-│ \`1\` *|* ❭❭◦ *18+ Downloader🔞*
+│ \`1\` *|* ❭❭◦ *YT Downloader ⬇️*
+│ \`2\` *|* ❭❭◦ *18+ Downloader 🔞*
 ╰─────────────────────╯
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
@@ -38,6 +38,29 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
         // Define All Menus with English, Emojis, and Decorative Fonts
         const menus = {
             menu1: `
+*⚚━━━⬇️YT DOWNLOADER⬇️━━━⚚*
+
+*╭────────────────────────╮*
+*│* 
+*│*  🍭 \`Bot Name:\` *CHETHMINA MD*
+*│*  🔖 \`Version:\` *1.0 V*
+*│*  📟 \`Platform:\` *VPS*
+*│*  👨‍💻 \`Owner:\` *Chethmina Kavishan*
+*│*  📆 \`Runtime:\` *${runtime(process.uptime())}* 
+*│*  📊 \`RAM Usage:\` *${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
+*│* 
+*╰────────────────────────╯*
+
+ ╭────────✵✵
+ │ 📚ᴄᴏᴍᴍᴀɴᴅ: \`.song\`
+ │ 🏷️ᴜsᴇ: .song Lelena
+ ╰────────────────────✵✵
+
+
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
+`,
+ 
+            menu2: `
 *⚚━━━🔞 18+ DOWNLOADER 🔞━━━⚚*
 
 *╭────────────────────────╮*
@@ -68,22 +91,6 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
 `,
 
-            menu2: `
-*❖━━━🎥 MOVIE MENU 🎥━━━❖*
-
-*╭─「✨ KAVI MD MENU LIST ✨」*
-*│ 🔥 Runtime: ${runtime(process.uptime())}*
-*│ 🔥 RAM Usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
-*│ 🔥 Platform: ${os.hostname()}*
-*│ 🔥 Version: 𝟏.𝟎*
-*│ 🔥 Owner: 𝐊𝐀𝐕𝐈𝐃𝐔 𝐑𝐀𝐒𝐀𝐍𝐆𝐀*
-*╰────────────*
- ╭────────✵✵
- │ 🍭 Contact Owner (.owner)
- ╰────────────────────✵✵
- 
-> *ᴘᴏᴡᴇʀᴅ ʙʏ  ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ  : )*
-`,
 
             menu3: `
 *❖━━━🧠 AI MENU 🧠━━━❖*
