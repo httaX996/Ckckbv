@@ -13,23 +13,23 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
     try {
         // Main Menu Caption with English and Emojis
         const cap = `
-*🫧 Hey  ${pushname}. . !  How are you? 🫧*
+*🫧 Hey*  \`${pushname}\` *!  How are you? 🫧*
 
 
-*╭────── ❖ SYSTEM INFO ❖ ──────╮*
+*╭───── ❖ SYSTEM INFO ❖ ─────╮*
 *│  ${new Date().getHours() < 12 ? '🌄 Good Morning!' : '🌙 Good Evening!' }*
-*│*  🍭 \`Bot Name:\` *CK BOT*
-*│*  🔖  \`Version: \` *1V*
-*│*  📟  \`Platform: \` *VPS*
-*│*  👨‍💻  \`Owner: \` *Chethmina Kavishan*
-*│*  📆  \`Runtime: \` *${runtime(process.uptime())}* 
-*│*  📊  \`RAM Usage: \` *${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
-*╰─────────────────────────╯*
+*│*  🍭 \`Bot Name:\` *CHETHMINA MD*
+*│*  🔖 \`Version:\` *1.O V*
+*│*  📟 \`Platform:\` *VPS*
+*│*  👨‍💻 \`Owner:\` *Chethmina Kavishan*
+*│*  📆 \`Runtime:\` *${runtime(process.uptime())}* 
+*│*  📊 \`RAM Usage:\` *${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
+*╰────────────────────────╯*
 
 ╭─── *_✨MENU OPTIONS ✨_*───╮
 │ 💡 *Reply with a number to explore!*
 │ *─────────────────────*
-│ *1 |* ❭❭◦ *18+ Downloader🔞*
+│ \`1\` *|* ❭❭◦ *18+ Downloader🔞*
 ╰─────────────────────╯
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
@@ -40,27 +40,27 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
             menu1: `
 *⚚━━━🔞 18+ DOWNLOADER 🔞━━━⚚*
 
-*╭─「✨  𝐂𝐊 𝐁𝐎𝐓 𝐌𝐄𝐍𝐔  𝐋𝐈𝐒𝐓 ✨ 」*
+*╭────────────────────────╮*
 *│* 
-*│*  🍭 \`Bot Name:\` *CK BOT*
-*│*  🔖  \`Version: \` *1V*
-*│*  📟  \`Platform: \` *VPS*
-*│*  👨‍💻  \`Owner: \` *Chethmina Kavishan*
-*│*  📆  \`Runtime: \` *${runtime(process.uptime())}* 
-*│*  📊  \`RAM Usage: \` *${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
+*│*  🍭 \`Bot Name:\` *CHETHMINA MD*
+*│*  🔖 \`Version:\` *1.0 V*
+*│*  📟 \`Platform:\` *VPS*
+*│*  👨‍💻 \`Owner:\` *Chethmina Kavishan*
+*│*  📆 \`Runtime:\` *${runtime(process.uptime())}* 
+*│*  📊 \`RAM Usage:\` *${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
 *│* 
-*╰────────────*
+*╰────────────────────────╯*
 
  ╭────────✵✵
- │ 📚ᴄᴏᴍᴍᴀɴᴅ: *.xnxx*
+ │ 📚ᴄᴏᴍᴍᴀɴᴅ: \`.xnxx\`
  │ 🏷️ᴜsᴇ: .xnxx mia khalifa
  ╰────────────────────✵✵
  ╭────────✵✵
- │ 📚ᴄᴏᴍᴍᴀɴᴅ: *.ckph*
+ │ 📚ᴄᴏᴍᴍᴀɴᴅ: \`.ckph\`
  │ 🏷️ᴜsᴇ: .ckph mia khalifa
  ╰────────────────────✵✵
  ╭────────✵✵
- │ 📚ᴄᴏᴍᴍᴀɴᴅ: *.xvid*
+ │ 📚ᴄᴏᴍᴍᴀɴᴅ: \`.xvid\`
  │ 🏷️ᴜsᴇ: .xvid mia khalifa 
  ╰────────────────────✵✵
 
