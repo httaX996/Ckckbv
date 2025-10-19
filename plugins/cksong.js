@@ -3,7 +3,7 @@ const yts = require('yt-search');
 const ddownr = require('denethdev-ytmp3'); // Importing the denethdev-ytmp3 package for downloading
 
 cmd({
-  pattern: "song",
+  pattern: "songx",
   desc: "Download songs.",
   category: "download",
   react: '🎧',
