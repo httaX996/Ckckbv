@@ -56,6 +56,11 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
  │ 🏷️ᴜsᴇ: .song Lelena
  ╰────────────────────✵✵
 
+  ╭────────✵✵
+ │ 📚ᴄᴏᴍᴍᴀɴᴅ: \`.video\`
+ │ 🏷️ᴜsᴇ: .video Lelena
+ ╰────────────────────✵✵
+
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
 `,
