@@ -9,7 +9,6 @@ function replaceYouTubeID(url) {
     return match ? match[1] : null;
 }
 
-// Fake ChatGPT vCard
 const fakevCard = {
     key: {
         fromMe: false,
@@ -18,7 +17,7 @@ const fakevCard = {
     },
     message: {
         contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
             vcard: `BEGIN:VCARD
 VERSION:3.0
 FN:Meta
