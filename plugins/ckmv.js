@@ -175,17 +175,21 @@ async (conn, mek, m, { from, reply, sender, args }) => {
     }
 });
 
-const ck = { 
- key: { 
-  remoteJid: 'status@broadcast', 
-  participant: '0@s.whatsapp.net' 
-   }, 
-message:{ 
-  newsletterAdminInviteMessage: { 
-    newsletterJid: '120363401805872716@newsletter', //add your channel jid
-    newsletterName: "CK BOT", //add your bot name
-    caption: `〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×`, 
-    inviteExpiration: 0
-  }
- }
- }
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
