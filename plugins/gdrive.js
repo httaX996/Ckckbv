@@ -7,7 +7,7 @@ const { sizeFormatter} = require('human-readable');;
 const { cmd, commands } = require('../command')
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson} = require('../lib/functions')
 
-const thumbnailUrl = "https://files.catbox.moe/69jw2a.jpg"
+const thumbnailUrl = "https://files.catbox.moe/69jw2a.jpg";
 
 
 async function GDriveDl(url) {
@@ -99,7 +99,7 @@ conn.sendMessage(jid, {
 	                   document: { url: res.downloadUrl }, 
 					   caption : "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`", 
 					   mimetype: res.mimetype,
-	                   jpegThumbnail: await (await fetch(thumbnailUrl)).buffer(),
+	                   jpegThumbnail: thumbnailUrl,
 	                   fileName: "🎬CK CineMAX🎬\n"+name
 					  }, { quoted: ck })
 } catch (e) {
@@ -130,7 +130,12 @@ reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
 *🕹️ File type:* ${res.mimetype}
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`)		
-conn.sendMessage(jid, { document: { url: res.downloadUrl }, fileName: "🎬CK CineMAX🎬\n"+name, mimetype: res.mimetype , caption : "*🍄 "+name+"*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*"}, { quoted: ck })
+conn.sendMessage(jid, { 
+	                    document: { url: res.downloadUrl }, 
+	                    fileName: "🎬CK CineMAX🎬\n"+name, 
+	                    mimetype: res.mimetype , 
+	                    caption : "🍄 \`"+name+"\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*"
+                        }, { quoted: ck })
 } catch (e) {
 reply('*Error..! Your Url is Private. Please Public It*')
 l(e)
