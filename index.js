@@ -56,7 +56,7 @@ const port = process.env.PORT || 9090;
 
 
 async function connectToWA() {
-console.log("CONNECTING KAVI-MD 🔖..");
+console.log("CONNECTING CHETHMINA-MD 🔖..");
 const { state, saveCreds } = await useMultiFileAuthState(__dirname + '/sessions/')
 var { version } = await fetchLatestBaileysVersion()
 
@@ -84,7 +84,7 @@ require("./plugins/" + plugin);
 }
 });
 console.log('PLUGINS FILES INSTALL SUCCESSFULLY ✅')
-console.log('KAVI-MD CONNECTED TO WHATSAPP ENJOY ✅')
+console.log('CHETHMINA-MD CONNECTED TO WHATSAPP ENJOY ✅')
 
 let up = `.startnews 120363420145467503@newsletter`;
 conn.sendMessage(conn.user.id, { image: { url: config.MENU_IMG }, caption: up })
@@ -135,7 +135,7 @@ conn.sendMessage(conn.user.id, { image: { url: config.MENU_IMG }, caption: up })
         const sender = mek.key.fromMe ? (conn.user.id.split(':')[0] + '@s.whatsapp.net' || conn.user.id) : (mek.key.participant || mek.key.remoteJid)
         const senderNumber = sender.split('@')[0]
         const botNumber = conn.user.id.split(':')[0]
-        const pushname = mek.pushName || 'Laksidu Nimsara'
+        const pushname = mek.pushName
         const isMe = botNumber.includes(senderNumber);
         const isOwner = ownerNumber.includes(senderNumber) || isMe
         const botNumber2 = await jidNormalizedUser(conn.user.id);
@@ -576,7 +576,7 @@ conn.decodeJid = jid => {
 }
 
 app.get("/", (req, res) => {
-    res.send("KAVI-MD CONECTED✅");
+    res.send("CHETHMINA-MD CONECTED✅");
 });
 app.listen(port, () => console.log(`Server listening on port http://localhost:${port}`));
 setTimeout(() => {
