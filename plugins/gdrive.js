@@ -74,7 +74,7 @@ console.log(e)
 
 
 cmd({
-    pattern: "ckgg",
+    pattern: "jidm",
     alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
     react: '📑',
     desc: "Download googledrive files.",
@@ -96,12 +96,11 @@ reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`)		
 conn.sendMessage(jid, { 
-	                   document: { url: res.downloadUrl }, 
-					   caption : "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`", 
-					   mimetype: res.mimetype,
-	                   jpegThumbnail: thumbnailUrl,
-	                   fileName: "🎬CK CineMAX🎬\n"+name
-					  }, { quoted: ck })
+	                    document: { url: res.downloadUrl }, 
+	                    fileName: "🎬CK CineMAX🎬\n"+name, 
+	                    mimetype: res.mimetype , 
+	                    caption : "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`\n\n> *© CK CineMAX*"
+                        }, { quoted: ck })
 } catch (e) {
 reply('*Error..! Your Url is Private. Please Public It*')
 l(e)
@@ -109,7 +108,7 @@ l(e)
 })
 
 cmd({
-    pattern: "gjidx",
+    pattern: "gjid",
     alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
     react: '📑',
     desc: "Download googledrive files.",
