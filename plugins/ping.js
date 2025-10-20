@@ -41,7 +41,7 @@ async (conn, mek, m, { from, quoted, reply }) => {
                 mediaType: 1,
                 renderLargerThumbnail: true
             }
-        }, { quoted: Supunwa }); // 🔁 mek → Supunwa
+        }, { quoted: ck }); 
 
     } catch (e) {
         console.error(e);
