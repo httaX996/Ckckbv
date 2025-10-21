@@ -183,7 +183,7 @@ gduhikkfjvjgi
 
             menu13: `
 *❖━━━📰 NEWS MENU 📰━━━❖*
-`
+`,
 
             menu99: `
 *⚚━━━⬇️MY MENU⬇️━━━⚚*
