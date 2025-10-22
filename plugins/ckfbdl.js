@@ -1,4 +1,4 @@
-const { cmd, commands } = require('../lib/rcommand');
+const { cmd } = require("../command");
 const { fetchJson } = require('../lib/rfunctions');
 const domain = `https://bk9.fun`;
 
