@@ -39,7 +39,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
         // Define All Menus with English, Emojis, and Decorative Fonts
         const menus = {
             menu1: `
-*⚚━━━⬇️YT DOWNLOADER⬇️━━━⚚*
+*⚚━━━⬇️MEDIA DOWNLOADER⬇️━━━⚚*
 
 *╭────────────────────────╮*
 *│* 
