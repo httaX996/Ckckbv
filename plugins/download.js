@@ -127,7 +127,7 @@ conn.ev.on("messages.upsert", async message => {
 
 // Facebook-dl
 
-cmd({ pattern: "fb", alias: ["facebook"], desc: "Download Facebook videos", category: "download", filename: __filename }, async (conn, m, store, { from, quoted, args, q, reply }) => { try { if (!q || !q.startsWith("https://")) { return conn.sendMessage(from, { text: "Need URL" }, { quoted: m }); }
+cmd({ pattern: "fbb", alias: ["facebook"], desc: "Download Facebook videos", category: "download", filename: __filename }, async (conn, m, store, { from, quoted, args, q, reply }) => { try { if (!q || !q.startsWith("https://")) { return conn.sendMessage(from, { text: "Need URL" }, { quoted: m }); }
 
 await conn.sendMessage(from, {
   react: { text: '⏳', key: m.key }
