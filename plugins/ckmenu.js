@@ -28,8 +28,9 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 ╭─── *_✨MENU OPTIONS ✨_*───╮
 │ 💡 *Reply with a number to explore!*
 │ *─────────────────────*
-│ \`1\` *|* ❭❭◦ *YT Downloader ⬇️*
-│ \`2\` *|* ❭❭◦ *18+ Downloader 🔞*
+│ \`1\` *|* ❭❭◦ *MEDIA DOWNLOADER ⬇️*
+│ *─────────────────────*
+│ \`2\` *|* ❭❭◦ *18+ DOWNLOADER 🔞*
 ╰─────────────────────╯
 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
@@ -56,9 +57,14 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
  │ 🏷️ᴜsᴇ: .song Lelena
  ╰────────────────────✵✵
 
-  ╭────────✵✵
+ ╭────────✵✵
  │ 📚ᴄᴏᴍᴍᴀɴᴅ: \`.video\`
  │ 🏷️ᴜsᴇ: .video Lelena
+ ╰────────────────────✵✵
+ 
+ ╭────────✵✵
+ │ 📚ᴄᴏᴍᴍᴀɴᴅ: \`.fb\`
+ │ 🏷️ᴜsᴇ: .fb link
  ╰────────────────────✵✵
 
 
