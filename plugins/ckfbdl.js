@@ -1,6 +1,32 @@
 const { cmd } = require("../command");
-const { fetchJson } = require('../lib/rfunctions');
+const { exec } = require("child_process");
+const util = require("util");
+const execPromise = util.promisify(exec);
 
+// yt-dlp Video Downloader function
+async function downloadFbVideo(url) {
+  try {
+    // yt-dlp command to fetch video information
+    const { stdout, stderr } = await execPromise(`yt-dlp -j ${url}`);
+    if (stderr) throw new Error(stderr);
+    
+    // Parse the JSON output of yt-dlp to extract video data
+    const data = JSON.parse(stdout);
+    
+    return {
+      title: data.title,
+      thumbnail: data.thumbnail,
+      sd: data.formats?.find(f => f.format_note === "144p")?.url, // SD quality
+      hd: data.formats?.find(f => f.height === 720)?.url, // HD quality
+      audio: data.formats?.find(f => f.acodec === "mp4a.40.2")?.url, // Audio (mp4a)
+    };
+  } catch (err) {
+    console.log("Error fetching video:", err);
+    throw new Error("Error downloading video.");
+  }
+}
+
+// WhatsApp Bot Command Handler
 cmd({
   pattern: "fb",
   alias: ["facebook"],
@@ -8,79 +34,71 @@ cmd({
   desc: "Download Facebook videos",
   category: "download",
   filename: __filename
-}, async (conn, m, store, { from, args, q, reply }) => {
+}, async (conn, m, store, { from, quoted, args, q, reply }) => {
   try {
     if (!q || !q.startsWith("https://")) {
       return reply("🔗 *Please send a valid Facebook URL!*");
     }
 
-    await conn.sendMessage(from, { react: { text: '⏳', key: m.key }});
+    await conn.sendMessage(from, { react: { text: '⏳', key: m.key } });
 
-    // ✅ Working API
-    const response = await fetchJson(`https://api.akuari.my.id/downloader/fb?link=${encodeURIComponent(q)}`);
-    if (!response?.Videos) return reply("❌ Error fetching video (maybe it's private).");
+    // Fetch video data from yt-dlp
+    const fbData = await downloadFbVideo(q);
+    
+    if (!fbData || !fbData.sd) {
+      return reply("❌ Error fetching the video. Please try again.");
+    }
 
-    const fbData = {
-      title: response.title,
-      thumbnail: response.thumbnail,
-      sd: response.Videos[0]?.url,
-      hd: response.Videos[1]?.url,
-    };
-
-    const caption = `📥 *Facebook Downloader*
+    const caption = `📥 *Facebook Video Downloader* 🎬
 🔖 *Title:* ${fbData.title}
 
 1️⃣ SD Video
 2️⃣ HD Video
-3️⃣ Audio (mp3)
+3️⃣ Audio
 
 👉 *Reply with 1 / 2 / 3 to download.*`;
 
-    const sent = await conn.sendMessage(from, {
+    // Send video options
+    const sentMsg = await conn.sendMessage(from, {
       image: { url: fbData.thumbnail },
       caption
-    }, { quoted: ck });
+    }, { quoted: m });
 
-    // 🎯 Reply Listener
-    conn.ev.on("messages.upsert", async (msg) => {
-      const r = msg.messages[0];
-      if (!r.message) return;
-      if (r.message.extendedTextMessage?.contextInfo?.stanzaId !== sent.key.id) return;
+    const messageID = sentMsg.key.id;
 
-      const text = r.message.conversation || r.message.extendedTextMessage?.text;
+    // Message listener to capture user's reply for download options
+    conn.ev.on("messages.upsert", async (msgData) => {
+      const receivedMsg = msgData.messages[0];
+      if (!receivedMsg.message) return;
 
-      if (text === "1") {
-        await conn.sendMessage(from, { video: { url: fbData.sd }}, { quoted: ck });
-      } else if (text === "2") {
-        await conn.sendMessage(from, { video: { url: fbData.hd }}, { quoted: ck });
-      } else if (text === "3") {
-        await conn.sendMessage(from, { audio: { url: fbData.sd }, mimetype: "audio/mpeg" }, { quoted: ck });
-      } else {
-        reply("❌ Invalid option!");
+      const receivedText = receivedMsg.message.conversation || receivedMsg.message.extendedTextMessage?.text;
+      const senderID = receivedMsg.key.remoteJid;
+      const isReplyToBot = receivedMsg.message.extendedTextMessage?.contextInfo?.stanzaId === messageID;
+
+      if (isReplyToBot) {
+        await conn.sendMessage(senderID, { react: { text: '⬇️', key: receivedMsg.key } });
+
+        switch (receivedText) {
+          case "1":
+            // Send SD Video
+            await conn.sendMessage(senderID, { video: { url: fbData.sd } }, { quoted: m });
+            break;
+          case "2":
+            // Send HD Video
+            await conn.sendMessage(senderID, { video: { url: fbData.hd } }, { quoted: m });
+            break;
+          case "3":
+            // Send Audio (MP4A format)
+            await conn.sendMessage(senderID, { audio: { url: fbData.audio }, mimetype: "audio/mp4" }, { quoted: m });
+            break;
+          default:
+            reply("❌ Invalid option! Please reply with 1, 2, or 3.");
+        }
       }
     });
-
-  } catch (e) {
-    console.log(e);
-    reply("❌ Error fetching the video. Try again.");
+    
+  } catch (error) {
+    console.error("Error:", error);
+    reply("❌ Error fetching the video. Please try again.");
   }
 });
-
-const ck = {
-    key: {
-        fromMe: false,
-        participant: "0@s.whatsapp.net",
-        remoteJid: "status@broadcast"
-    },
-    message: {
-        contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
-        }
-    }
-};
