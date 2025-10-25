@@ -26,7 +26,7 @@ cmd({
 }, async (conn, mek, m, { args, reply }) => {
   try {
     const query = args.join(" ").trim();
-    if (!query) return reply("⚡ Query එකක් දෙන්න.\nඋදා: *.xhsearch indian milf*");
+    if (!query) return reply("⚡ Query එකක් දෙන්න.\nඋදා: *.ckxham new*");
 
     await reply("🔎 Searching xHamster...");
 
@@ -61,10 +61,10 @@ cmd({
     const arr = Array.from(links.entries()).slice(0, 10);
     if (arr.length === 0) return reply("❌ Search results හමු නොවුණා.");
 
-    let text = `🔞 *xHamster Search Results for:* ${query}\n\n`;
+    let text = `🔞 \`CK XHAMSTER DOWNLOADER\` 🔞\n\n🔎 *Search Results for:* \`${query}\`\n\n`;
     arr.forEach(([url, title], i) => {
-      const t = title.length > 80 ? title.slice(0, 77) + "..." : title;
-      text += `*${i + 1}.* ${t}\n🔗 ${url}\n\n`;
+      const t = title.replace(/[^a-zA-Z0-9 ]/g, "_").slice(0, 64);
+      text += `\`${i + 1}\` *|* ❭❭◦ ${t}\n🔗 *${url}*\n\n`;
     });
     text += `➡️ Use: *.ckxhamdl <video link>* to download (or reply with number to get link)`;
 
