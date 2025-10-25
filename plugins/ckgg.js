@@ -7,7 +7,7 @@ const { sizeFormatter} = require('human-readable');
 const { cmd, commands } = require('../command');
 const { buffer } = require("buffer");
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson} = require('../lib/functions2')
-
+const thumbnailUrl = "https://files.catbox.moe/8o4q88.jpg";
 
 async function GDriveDl(url) {
     let id, res = { "error": true }
@@ -168,7 +168,7 @@ async (conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, 
             document: { url: res.downloadUrl },
             caption: "🍿 \`" + name + " - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*",
 			mimetype: res.mimetype,
-			jpegThumbnail: await (await fetch("https://files.catbox.moe/69jw2a.jpg")).buffer(),
+			jpegThumbnail: await (await fetch(thumbnailUrl)).buffer(),
 			fileName: "🎬CK CineMAX🎬\n" + name
         }, { quoted: ck });
 
