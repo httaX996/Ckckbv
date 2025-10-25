@@ -1,11 +1,12 @@
-const config = require('../config')
-const fetch = require('node-fetch')
+const config = require('../config');
+const fetch = require('node-fetch');
 const fg = require('api-dylux');
-const cheerio = require('cheerio')
-const { DBM } = require('postgres_dbm')
-const { sizeFormatter} = require('human-readable');;
-const { cmd, commands } = require('../command')
-const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson} = require('../lib/functions')
+const cheerio = require('cheerio');
+const { DBM } = require('postgres_dbm');
+const { sizeFormatter} = require('human-readable');
+const { cmd, commands } = require('../command');
+const { buffer } = require("buffer");
+const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson} = require('../lib/functions2')
 
 
 async function GDriveDl(url) {
