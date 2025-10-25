@@ -164,11 +164,11 @@ async (conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, 
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`);
 
         conn.sendMessage(jid, { 
-            document: { url: res.downloadUrl }, 
-            fileName: "🎬CK CineMAX🎬\n" + name, 
-            mimetype: res.mimetype, 
+            document: { url: res.downloadUrl },
             caption: "🍿 \`" + name + " - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*",
-            thumbnail: { url: 'https://files.catbox.moe/69jw2a.jpg' }
+			mimetype: res.mimetype,
+			jpegThumbnail: await (await fetch("https://files.catbox.moe/69jw2a.jpg")).buffer(),
+			fileName: "🎬CK CineMAX🎬\n" + name
         }, { quoted: ck });
 
     } catch (e) {
