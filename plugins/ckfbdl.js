@@ -1,135 +1,86 @@
 const { cmd } = require("../command");
 const { fetchJson } = require('../lib/rfunctions');
-const domain = `https://fbdown.net`;
 
-cmd({ 
+cmd({
   pattern: "fb",
+  alias: ["facebook"],
   react: "📥",
-  alias: ["facebook"], 
-  desc: "Download Facebook videos", 
+  desc: "Download Facebook videos",
   category: "download",
-  filename: __filename 
-}, async (conn, m, store, { from, quoted, args, q, reply }) => { 
-  try { 
-    if (!q || !q.startsWith("https://")) { 
-      return conn.sendMessage(from, { text: "Need URL" }, { quoted: m }); 
+  filename: __filename
+}, async (conn, m, store, { from, args, q, reply }) => {
+  try {
+    if (!q || !q.startsWith("https://")) {
+      return reply("🔗 *Please send a valid Facebook URL!*");
     }
 
-    await conn.sendMessage(from, {
-      react: { text: '⏳', key: m.key }
-    });
+    await conn.sendMessage(from, { react: { text: '⏳', key: m.key }});
 
-    // Use the fbdown.net API to fetch Facebook video data
-    const response = await fetchJson(`https://fbdown.net/api/download?url=${encodeURIComponent(q)}`);
-    
-    if (!response.success) {
-      return reply("❌ Error fetching the video. Please try again.");
-    }
+    // ✅ Working API
+    const response = await fetchJson(`https://api.akuari.my.id/downloader/fb?link=${encodeURIComponent(q)}`);
+    if (!response?.Videos) return reply("❌ Error fetching video (maybe it's private).");
 
-    const fbData = response.data;
+    const fbData = {
+      title: response.title,
+      thumbnail: response.thumbnail,
+      sd: response.Videos[0]?.url,
+      hd: response.Videos[1]?.url,
+    };
 
-    const caption = `🧩 \`𝗖𝗞 𝗙𝗕 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗘𝗥\` 🧩
+    const caption = `📥 *Facebook Downloader*
+🔖 *Title:* ${fbData.title}
 
-🔖 \`TITLE:\` *${fbData.title}*
-📒 \`DESCRIPTION:\` *${fbData.description}*
+1️⃣ SD Video
+2️⃣ HD Video
+3️⃣ Audio (mp3)
 
-*⬇️ꜱᴇʟᴇᴄᴛ ʏᴏᴜ ᴡᴏɴᴛ⬇️*
+👉 *Reply with 1 / 2 / 3 to download.*`;
 
-\`1\` *|* ❭❭◦ *SD Quality ⭐*
-\`2\` *|* ❭❭◦ *HD Quality 🌟*
-
-\`3\` *|* ❭❭◦ *Audio (SD) 🎧*
-\`4\` *|* ❭❭◦ *Document (MP3) 📄*
-\`5\` *|* ❭❭◦ *Voice Note (PTT) 🎤*
-
-> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
-
-    const sentMsg = await conn.sendMessage(from, {
+    const sent = await conn.sendMessage(from, {
       image: { url: fbData.thumbnail },
-      caption: caption
+      caption
     }, { quoted: ck });
 
-    const messageID = sentMsg.key.id;
+    // 🎯 Reply Listener
+    conn.ev.on("messages.upsert", async (msg) => {
+      const r = msg.messages[0];
+      if (!r.message) return;
+      if (r.message.extendedTextMessage?.contextInfo?.stanzaId !== sent.key.id) return;
 
-    conn.ev.on("messages.upsert", async (msgData) => {
-      const receivedMsg = msgData.messages[0];
-      if (!receivedMsg.message) return;
+      const text = r.message.conversation || r.message.extendedTextMessage?.text;
 
-      const receivedText = receivedMsg.message.conversation || receivedMsg.message.extendedTextMessage?.text;
-      const senderID = receivedMsg.key.remoteJid;
-      const isReplyToBot = receivedMsg.message.extendedTextMessage?.contextInfo?.stanzaId === messageID;
-
-      if (isReplyToBot) {
-        await conn.sendMessage(senderID, {
-          react: { text: '⬇️', key: receivedMsg.key }
-        });
-
-        switch (receivedText) {
-          case "1":
-            await conn.sendMessage(senderID, {
-              video: { url: fbData.sd },
-              caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*"
-            }, { quoted: ck });
-            break;
-
-          case "2":
-            await conn.sendMessage(senderID, {
-              video: { url: fbData.hd },
-              caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*"
-            }, { quoted: ck });
-            break;
-
-          case "3":
-            await conn.sendMessage(senderID, {
-              audio: { url: fbData.sd },
-              mimetype: "audio/mpeg"
-            }, { quoted: ck });
-            break;
-
-          case "4":
-            await conn.sendMessage(senderID, {
-              document: { url: fbData.sd },
-              mimetype: "audio/mpeg",
-              fileName: "Facebook_Audio.mp3",
-              caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*"
-            }, { quoted: ck });
-            break;
-
-          case "5":
-            await conn.sendMessage(senderID, {
-              audio: { url: fbData.sd },
-              mimetype: "audio/mp4",
-              ptt: true
-            }, { quoted: ck });
-            break;
-
-          default:
-            reply("❌ Invalid option! Please reply with 1, 2, 3, 4, or 5.");
-        }
+      if (text === "1") {
+        await conn.sendMessage(from, { video: { url: fbData.sd }}, { quoted: ck });
+      } else if (text === "2") {
+        await conn.sendMessage(from, { video: { url: fbData.hd }}, { quoted: ck });
+      } else if (text === "3") {
+        await conn.sendMessage(from, { audio: { url: fbData.sd }, mimetype: "audio/mpeg" }, { quoted: ck });
+      } else {
+        reply("❌ Invalid option!");
       }
     });
 
-  } catch (error) { 
-    console.error("Error:", error); 
-    reply("❌ Error fetching the video. Please try again."); 
+  } catch (e) {
+    console.log(e);
+    reply("❌ Error fetching the video. Try again.");
   }
 });
 
 const ck = {
-  key: {
-    fromMe: false,
-    participant: "0@s.whatsapp.net",
-    remoteJid: "status@broadcast"
-  },
-  message: {
-    contactMessage: {
-      displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
-      vcard: `BEGIN:VCARD
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            vcard: `BEGIN:VCARD
 VERSION:3.0
 FN:Meta
 ORG:META AI;
 TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
 END:VCARD`
+        }
     }
-  }
 };
