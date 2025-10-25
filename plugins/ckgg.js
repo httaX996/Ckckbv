@@ -7,8 +7,6 @@ const { sizeFormatter} = require('human-readable');;
 const { cmd, commands } = require('../command')
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson} = require('../lib/functions')
 
-const thumbnailUrl = "https://files.catbox.moe/69jw2a.jpg";
-
 
 async function GDriveDl(url) {
     let id, res = { "error": true }
@@ -99,7 +97,7 @@ conn.sendMessage(jid, {
 	                    document: { url: res.downloadUrl }, 
 	                    fileName: "🎬CK CineMAX🎬\n"+name, 
 	                    mimetype: res.mimetype , 
-	                    caption : "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`\n\n> *© CK CineMAX*"
+	                    caption : "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
                         }, { quoted: ck })
 } catch (e) {
 reply('*Error..! Your Url is Private. Please Public It*')
@@ -143,56 +141,42 @@ l(e)
 
 cmd({
     pattern: "jidm2",
-    alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
+    alias: ["nsgoogledrive", "nsgdrive", "nscyber_gd"],
     react: '📑',
     desc: "Download googledrive files.",
     category: "download",
     use: '.gdrive <googledrive link>',
     filename: __filename
 },
-async(conn, mek, m,{from, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-  if (!q.includes(",")) return reply('*Please give me googledrive url and jid Like this...!!*\n.gdrive < jid >,< drive url>')   
-  var [jid,link,name] = q.split(",");
- let res = await fg.GDriveDl(link)
-  var name = name ? `${name.replace(/enter/g,'\n').replace(/oname/g,res.fileName)}` : res.fileName
-reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
+async (conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
+    try {
+        if (!q.includes(",")) return reply('*Please give me googledrive url and jid Like this...!!*\n.gdrive < jid >,< drive url>')   
+        var [jid, link, name] = q.split(",");
+        let res = await fg.GDriveDl(link);
+        var name = name ? `${name.replace(/enter/g,'\n').replace(/oname/g,res.fileName)}` : res.fileName;
+        
+        reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
 
 *📃 File name:*  ${"🎬CK CineMAX🎬\n"+name}
 *💈 File Size:* ${res.fileSize}
 *🕹️ File type:* ${res.mimetype}
 
-> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`)		
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`);
 
-const fileNamee = name.mp4;
-const captionn = "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`\n\n> *© CK CineMAX*";
+        conn.sendMessage(jid, { 
+            document: { url: res.downloadUrl }, 
+            fileName: "🎬CK CineMAX🎬\n" + name, 
+            mimetype: res.mimetype, 
+            caption: "🍿 \`" + name + " - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*",
+            thumbnail: { url: 'https://files.catbox.moe/69jw2a.jpg' }
+        }, { quoted: ck });
 
-    // send as document (Baileys supports streaming from URL)
-    const sendObj = {
-      document: { url: res.downloadUrl },
-      mimetype: res.mimetype,
-      fileName: fileNamee,
-      caption: captionn
-    };
-
-const thumb = 'https://files.catbox.moe/8o4q88.jpg';
-    // include thumbnail if available
-    if (thumb) {
-      try {
-        const tRes = await axios.get(thumb, { responseType: "arraybuffer", timeout: 15000 });
-        sendObj.jpegThumbnail = Buffer.from(tRes.data);
-      } catch (e) {
-        // ignore thumb fetch failures
-      }
+    } catch (e) {
+        reply('*Error..! Your Url is Private. Please Public It*');
+        l(e);
     }
+});
 
-    await conn.sendMessage(jid, sendObj, { quoted: ck })
-	
-} catch (e) {
-reply('*Error..! Your Url is Private. Please Public It*')
-l(e)
-}
-})
 
 
  const ck = {
