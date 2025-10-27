@@ -60,38 +60,52 @@ async function GDriveDl(url) {
   }
 }
 
+
 cmd({
-  pattern: "jidm3",
-  alias: ["nsgoogledrive", "nsgdrive", "nscyber_gd"],
-  react: '📑',
-  desc: "Download googledrive files.",
-  category: "download",
-  use: '.gdrive <googledrive link>',
-  filename: __filename
+pattern: "jidm",
+alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
+react: '📑',
+desc: "Download googledrive files.",
+category: "download",
+use: '.gdrive <googledrive link>',
+filename: __filename
 },
-async (conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
-  try {
-    if (!q.includes(",")) return reply('Please give me googledrive url and jid Like this...!!\n.gdrive < jid >,< drive url>')
-    var [jid, link, name] = q.split(",")
-    let res = await fg.GDriveDl(link)
+async(conn, mek, m,{from, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
+try {
+if (!q.includes(",")) return reply('Please give me googledrive url and jid Like this...!!\n.gdrive < jid >,< drive url>')
+var [jid,link,name] = q.split(",");
+let res = await fg.GDriveDl(link)
+var name = name ? `${name.replace(/enter/g,'\n').replace(/oname/g,res.fileName)}` : res.fileName;
 
-    var name = name ? `${name.replace(/enter/g, '\n').replace(/oname/g, res.fileName)}` : res.fileName
-    reply(`\n*🎬CK CineMAX MOVIE DOWNLOADER🎬*
+// image URL
+const imageUrl = "https://files.catbox.moe/8o4q88.jpg";
 
-📃 File name:  ${"🎬CK CineMAX🎬\n" + name}
-💈 File Size: ${res.fileSize}
-🕹️ File type: ${res.mimetype}`)
+let thumbnailBuffer;
 
-    // Send the document with resized thumbnail
-    conn.sendMessage(jid, { 
-      document: { url: res.downloadUrl }, 
-      fileName: `🎬CK CineMAX🎬\n${name}`, 
-      mimetype: res.mimetype, 
-      jpegThumbnail: res.thumbnail,  // Add thumbnail here
-      caption: `🍿 \`${name} - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ CK CineMAX`
-    }, { quoted: mek })
-  } catch (e) {
-    reply('Error..! Your Url is Private. Please Public It')
-    l(e)
-  }
+// resize image to thumbnail
+await Jimp.read(imageUrl)
+    .then(image => {
+        return image.resize(300, Jimp.AUTO) // size 300px width, auto height
+                    .getBufferAsync(Jimp.MIME_JPEG);
+    })
+    .then(buffer => {
+        thumbnailBuffer = buffer;
+    })
+    .catch(err => {
+        console.log('Error resizing image:', err);
+        thumbnailBuffer = null; // fallback if error
+    });
+
+// now, send message with thumbnail
+conn.sendMessage(jid, { 
+    document: { url: res.downloadUrl },
+    fileName: "🎬CK CineMAX🎬\n"+name,
+    mimetype: res.mimetype,
+    caption: "🍿 "+name+" - සිංහල උපසිරැසි සමඟ",
+    thumbnail: thumbnailBuffer // thumbnail attach
+}, { quoted: mek });
+} catch (e) {
+    reply('Error..! Your Url is Private. Please Public It');
+    console.log(e);
+}
 })
