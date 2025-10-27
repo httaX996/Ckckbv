@@ -1,10 +1,12 @@
-const config = require('../config')
-const fetch = require('node-fetch')
+const config = require('../config');
+const fetch = require('node-fetch');
 const fg = require('api-dylux');
-const cheerio = require('cheerio')
-const { DBM } = require('postgres_dbm')
-const { sizeFormatter} = require('human-readable');;
-const { cmd, commands } = require('../command')
+const cheerio = require('cheerio');
+const sharp = require('sharp');
+const axios = require('axios');
+const { DBM } = require('postgres_dbm');
+const { sizeFormatter} = require('human-readable');
+const { cmd, commands } = require('../command');
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson} = require('../lib/functions')
 
 
@@ -44,35 +46,37 @@ async function GDriveDl(url) {
 }
 
 
-cmd({
-    pattern: "gdrive",
-    alias: ["googledrive'"],
-    react: '📑',
-    desc: "Download googledrive files.",
-    category: "download",
-    use: '.gdrive <googledrive link>',
-    filename: __filename
-},
-async(conn, mek, m,{from, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-  if (!q) return await  reply('*Please give me googledrive url !!*')   
-let res = await GDriveDl(q)
-		let txt = `*[ Downloading file ]*\n\n`
-		txt += `*Name :* ${res.fileName}\n`
-		txt += `*Size :* ${res.fileSize}\n`
-		txt += `*Type :* ${res.mimetype}`	
-        await reply(txt)
-conn.sendMessage(config.JID, { document: { url: res.downloadUrl }, fileName: res.fileName, mimetype: res.mimetype }, { quoted: mek })
-} catch (e) {
-reply('*Error !!*')
-console.log(e)
-//reply(${e})
+// Thumbnail එකක් resize කිරීමේ function එක
+async function createThumbnail(imageUrl, width, height) {
+  try {
+    // Image එක buffer එකක් ලෙස ලබා ගැනීම
+    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const imageBuffer = Buffer.from(response.data);
+
+    // Image එක resize කිරීම
+    const thumbnailBuffer = await sharp(imageBuffer)
+      .resize(width, height)
+      .toBuffer();
+
+    return thumbnailBuffer;
+  } catch (error) {
+    console.error('Error creating thumbnail:', error);
+    throw error;
+  }
 }
-})
+
+// Document එකක් සමඟ thumbnail එකක් යැවීමේ function එක
+async function sendDocumentWithThumbnail(conn, from, documentUrl, caption) {
+  try {
+    const thumbnailUrl = 'https://files.catbox.moe/8o4q88.jpg';  // Default thumbnail URL
+
+    // Thumbnail එකක් සාදා ගැනීම
+    const thumbnailBuffer = await createThumbnail(thumbnailUrl, 150, 150);
+
 
 
 cmd({
-    pattern: "jidm",
+    pattern: "jidm3",
     alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
     react: '📑',
     desc: "Download googledrive files.",
@@ -95,6 +99,7 @@ conn.sendMessage(jid, {
 	                    document: { url: res.downloadUrl }, 
 	                    fileName: "🎬CK CineMAX🎬\n"+name, 
 	                    mimetype: res.mimetype , 
+	                    jpegThumbnail: thumbnailBuffer,
 	                    caption: "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
                         }, { quoted: mek })
 } catch (e) {
