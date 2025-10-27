@@ -51,7 +51,7 @@ async function GDriveDl(url) {
 
 
 cmd({
-    pattern: "gdrive",
+    pattern: "gdriv3",
     alias: ["googledrive'"],
     react: '📑',
     desc: "Download googledrive files.",
@@ -78,7 +78,7 @@ console.log(e)
 
 
 cmd({
-    pattern: "jidm",
+    pattern: "jidm3",
     alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
     react: '📑',
     desc: "Download googledrive files.",
@@ -101,7 +101,7 @@ conn.sendMessage(jid, {
 	                    document: { url: res.downloadUrl }, 
 	                    fileName: "🎬CK CineMAX🎬\n"+name, 
 	                    mimetype: res.mimetype , 
-	                    jpegThumbnail: "test-small.jpg",
+	                    jpegThumbnail: image,
 	                    caption: "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
                         }, { quoted: mek })
 } catch (e) {
