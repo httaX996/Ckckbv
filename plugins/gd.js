@@ -1,12 +1,18 @@
-const config = require('../config')
-const fetch = require('node-fetch')
+const config = require('../config');
+const fetch = require('node-fetch');
 const fg = require('api-dylux');
-const cheerio = require('cheerio')
-const { DBM } = require('postgres_dbm')
-const { sizeFormatter} = require('human-readable');;
-const { cmd, commands } = require('../command')
+const cheerio = require('cheerio');
+const { DBM } = require('postgres_dbm');
+const { sizeFormatter} = require('human-readable');
+const { cmd, commands } = require('../command');
+const { Jimp } = require("jimp");
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson} = require('../lib/functions')
 
+const image = await Jimp.read("https://files.catbox.moe/8o4q88.jpg");
+
+image.resize(256, 256); // resize
+
+await image.write("test-small.jpg");
 
 async function GDriveDl(url) {
     let id, res = { "error": true }
@@ -95,6 +101,7 @@ conn.sendMessage(jid, {
 	                    document: { url: res.downloadUrl }, 
 	                    fileName: "🎬CK CineMAX🎬\n"+name, 
 	                    mimetype: res.mimetype , 
+	                    jpegThumbnail: "test-small.jpg",
 	                    caption: "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
                         }, { quoted: mek })
 } catch (e) {
