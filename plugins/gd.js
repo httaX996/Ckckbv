@@ -87,8 +87,8 @@ async (conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, 
       document: { url: res.downloadUrl }, 
       fileName: `🎬CK CineMAX🎬\n${name}`, 
       mimetype: res.mimetype, 
-      thumbnail: res.thumbnail,  // Add thumbnail here
-      caption: `🍿 ${name} - සිංහල උපසිරැසි සමඟ\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ CK CineMAX`
+      jpegThumbnail: res.thumbnail,  // Add thumbnail here
+      caption: `🍿 \`${name} - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ CK CineMAX`
     }, { quoted: mek })
   } catch (e) {
     reply('Error..! Your Url is Private. Please Public It')
