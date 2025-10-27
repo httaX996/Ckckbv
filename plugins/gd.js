@@ -45,35 +45,9 @@ async function GDriveDl(url) {
 }
 
 
-cmd({
-    pattern: "gdrive",
-    alias: ["googledrive'"],
-    react: '📑',
-    desc: "Download googledrive files.",
-    category: "download",
-    use: '.gdrive <googledrive link>',
-    filename: __filename
-},
-async(conn, mek, m,{from, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-  if (!q) return await  reply('*Please give me googledrive url !!*')   
-let res = await GDriveDl(q)
-		let txt = `*[ Downloading file ]*\n\n`
-		txt += `*Name :* ${res.fileName}\n`
-		txt += `*Size :* ${res.fileSize}\n`
-		txt += `*Type :* ${res.mimetype}`	
-        await reply(txt)
-conn.sendMessage(config.JID, { document: { url: res.downloadUrl }, fileName: res.fileName, mimetype: res.mimetype }, { quoted: mek })
-} catch (e) {
-reply('*Error !!*')
-console.log(e)
-//reply(${e})
-}
-})
-
 
 cmd({
-pattern: "jidm",
+pattern: "jidm3",
 alias: ["nsgoogledrive","nsgdrive","nscyber_gd"],
 react: '📑',
 desc: "Download googledrive files.",
