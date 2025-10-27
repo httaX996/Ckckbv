@@ -8,11 +8,6 @@ const { cmd, commands } = require('../command');
 const { Jimp } = require("jimp");
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson} = require('../lib/functions')
 
-const image = await Jimp.read("https://files.catbox.moe/8o4q88.jpg");
-
-image.resize(256, 256); // resize
-
-await image.write("test-small.jpg");
 
 async function GDriveDl(url) {
     let id, res = { "error": true }
@@ -101,7 +96,7 @@ conn.sendMessage(jid, {
 	                    document: { url: res.downloadUrl }, 
 	                    fileName: "🎬CK CineMAX🎬\n"+name, 
 	                    mimetype: res.mimetype , 
-	                    jpegThumbnail: image,
+	                    jpegThumbnail: "https://files.catbox.moe/fbegki.jpg",
 	                    caption: "🍿 \`"+name+" - සිංහල උපසිරැසි සමඟ\`\n\n> ⚡ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
                         }, { quoted: mek })
 } catch (e) {
