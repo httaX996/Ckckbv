@@ -139,10 +139,29 @@ async(conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, s
             fileName: "🎬CK CineMAX🎬\n" + fileName,
             mimetype: res.mimetype,
             jpegThumbnail: await createThumbnail('https://files.catbox.moe/8o4q88.jpg', 150, 150),  // Add thumbnail here
-            caption: "🍿 `" + fileName + " - Sinhala Subtitles`\n\n> ⚡Powered by *CK CineMAX*"
-        }, { quoted: mek });
+            caption: "🍿 `" + fileName + " - සිංහල උපසිරැසි සමඟ`\n\n> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
+        }, { quoted: ck });
     } catch (e) {
         reply('*Error..! Your URL is Private. Please Public It*');
         console.error(e);
     }
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
