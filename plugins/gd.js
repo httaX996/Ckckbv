@@ -91,7 +91,7 @@ cmd({
             fileName: "🎬CK CineMAX🎬\n" + name,
             mimetype: res.mimetype,
             caption: "🍿 " + name + " - සිංහල උපසිරැසි සමඟ",
-            thumbnail: thumbnailBufferFinal // Add thumbnail to the message
+            jpegThumbnail: thumbnailBufferFinal // Add thumbnail to the message
         }, { quoted: mek });
 
     } catch (e) {
