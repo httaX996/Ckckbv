@@ -9,11 +9,15 @@
     "restart": "pm2 restart KAVI-MD"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "github:nstar-y/bail",
+    "@whiskeysockets/baileys": "^7.0.0-rc.6",
+    "api-dylux": "latest",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@dark-yasiya/yt-dl.js": "latest",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@vitalets/google-translate-api": "^9.2.0",
+    "got": "^14.6.1",
+    "http": "^0.0.1-security",
+    "https": "^1.0.0",
     "pino": "^7.0.5",
     "pm2": "6.0.13",
     "buffer": "6.0.3",
