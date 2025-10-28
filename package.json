@@ -9,7 +9,7 @@
     "restart": "pm2 restart KAVI-MD"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:@riflowsxz/baileys",
+    "@whiskeysockets/baileys": "@riflowsxz/baileys",
     "api-dylux": "latest",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@dark-yasiya/yt-dl.js": "latest",
