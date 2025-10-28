@@ -9,7 +9,7 @@
     "restart": "pm2 restart KAVI-MD"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:baileys-mod",
+    "@whiskeysockets/baileys": "github:nstar-y/bail",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@dark-yasiya/yt-dl.js": "latest",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
