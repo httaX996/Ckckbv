@@ -453,37 +453,6 @@ conn.sendMessage(conn.user.id, { image: { url: config.MENU_IMG }, caption: up })
                 await conn.sendMessage(from, buttonMessage, { quoted: mek });
             }
         }
-//==================================Button================================
-	      
-      const body = (type === 'conversation') ? mek.message.conversation 
-    : mek.message?.extendedTextMessage?.contextInfo?.hasOwnProperty('quotedMessage') 
-        ? mek.message.extendedTextMessage.text 
-    : (type == 'interactiveResponseMessage') 
-        ? mek.message.interactiveResponseMessage?.nativeFlowResponseMessage 
-            && JSON.parse(mek.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson)?.id 
-    : (type == 'templateButtonReplyMessage') 
-        ? mek.message.templateButtonReplyMessage?.selectedId 
-    : (type === 'extendedTextMessage') 
-        ? mek.message.extendedTextMessage.text 
-    : (type == 'imageMessage') && mek.message.imageMessage.caption 
-        ? mek.message.imageMessage.caption 
-    : (type == 'videoMessage') && mek.message.videoMessage.caption 
-        ? mek.message.videoMessage.caption 
-    : (type == 'buttonsResponseMessage') 
-        ? mek.message.buttonsResponseMessage?.selectedButtonId 
-    : (type == 'listResponseMessage') 
-        ? mek.message.listResponseMessage?.singleSelectReply?.selectedRowId 
-    : (type == 'messageContextInfo') 
-        ? (mek.message.buttonsResponseMessage?.selectedButtonId 
-            || mek.message.listResponseMessage?.singleSelectReply?.selectedRowId 
-            || mek.text) 
-    : (type === 'viewOnceMessage') 
-        ? mek.message[type]?.message[getContentType(mek.message[type].message)] 
-    : (type === "viewOnceMessageV2") 
-        ? (mek.msg.message.imageMessage?.caption || mek.msg.message.videoMessage?.caption || "") 
-    : '';
- 
- //==================================================================
 
         //________________________________________INBOX BLOCK_________________________________
         if (config.INBOX_BLOCK === "true" && mek.key.remoteJid.endsWith('@s.whatsapp.net')) {
