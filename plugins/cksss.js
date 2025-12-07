@@ -88,7 +88,8 @@ cmd({
     reply('❌ Error: ' + e.message)
   }
 })
-.const ck = {
+
+const ck = {
     key: {
         fromMe: false,
         participant: "0@s.whatsapp.net",
