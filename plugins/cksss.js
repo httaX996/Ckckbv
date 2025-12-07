@@ -1,120 +1,79 @@
-const { cmd, commands } = require('../command');
-const axios = require("axios");
-const yts = require("yt-search"); 
+const {cmd} = require('../command');
+const {fetchJson} = require('../lib/functions')
+
+
 
 cmd({
     pattern: "song",
-    alias: ["play"],
-    desc: "Download songs from YouTube.",
-    react: "🎵",
+    alias: ["play", "ytsong"],
+    react: "🎧",
+    desc: "Search and download you tube songs.",
     category: "download",
+    use: ".song <SONG NAME>",
     filename: __filename
-}, async (conn, mek, m, { from, args, q, reply }) => {
-    try {
-        if (!q) return reply("❌ Please provide a YouTube link or search query!");
-
-        let ytUrl;
-        if (q.includes("youtube.com") || q.includes("youtu.be")) {
-            ytUrl = q;
-        } else {
-            reply("🔎 Searching YouTube...");
-            const search = await yts(q);
-            if (!search.videos || search.videos.length === 0) {
-                return reply("❌ No results found!");
-            }
-            ytUrl = search.videos[0].url;
-        }
-
-        reply("⏳ Fetching song...");
-
-        const apiBase = "https://www.laksidunimsara.com/song";
-        const apiKey = "Lk8*Vf3!sA1pZ6Hd"; // api key එක බන්
-        const apiUrl = `${apiBase}?url=${encodeURIComponent(ytUrl)}&api_key=${encodeURIComponent(apiKey)}`;
-
-        let response;
-        try {
-            response = await axios.get(apiUrl);
-        } catch (err) {
-            console.error("🚨 API request failed:", err);
-            return reply("❌ Failed to contact song API.");
-        }
-
-        if (!response.data || response.data.status !== "success") {
-            console.log("API RESPONSE:", response.data);
-            return reply("❌ API did not return a valid response.");
-        }
-
-        const video = response.data.video;
-        const downloadUrl = response.data.download;
-
-        let desc = `
-🎶 CK SONG DOWNLOADER 🎶
-
-➤ 🎧 *Title:* ${video.title}
-➤ ⏱️ *Duration:* ${video.duration}
-➤ 📅 *Uploaded:* ${video.author}
-
-   ⬇️ *DOWNLOAD OPTIONS* ⬇️
-
-│ ① 🎵 *Audio*          
-│ ② 📄 *Document*       
-│ ③ 🎙️ *Voice Note*     
-
-> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
-`;
-
-        const sentMsg = await conn.sendMessage(from, {
-            image: { url: video.thumbnail },
-            caption: desc
-        }, { quoted: ck });
-
-        const messageID = sentMsg.key.id;
-
-        conn.ev.on('messages.upsert', async (messageUpdate) => {
-            const mek2 = messageUpdate.messages[0];
-            if (!mek2.message) return;
-
-            const textMsg = mek2.message.conversation || mek2.message.extendedTextMessage?.text;
-            const fromReply = mek2.key.remoteJid;
-
-            const isReplyToSentMsg = mek2.message.extendedTextMessage &&
-                mek2.message.extendedTextMessage.contextInfo?.stanzaId === messageID;
-            if (!isReplyToSentMsg) return;
-
-            if (["1", "2", "3"].includes(textMsg)) {
-                await conn.sendMessage(fromReply, { react: { text: '⬇️', key: mek2.key } });
-
-                if (textMsg === "1") { 
-                    await conn.sendMessage(fromReply, {
-                        audio: { url: downloadUrl },
-                        mimetype: "audio/mpeg",
-                        ptt: false
-                    }, { quoted: ck });
-
-                } else if (textMsg === "2") { 
-                    await conn.sendMessage(fromReply, {
-                        document: { url: downloadUrl },
-                        mimetype: "audio/mpeg",
-                        fileName: `${video.title}.mp3`,
-                        caption: `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
-                    }, { quoted: ck });
-
-                } else if (textMsg === "3") { 
-                    await conn.sendMessage(fromReply, {
-                        audio: { url: downloadUrl },
-                        mimetype: "audio/mpeg",
-                        ptt: true
-                    }, { quoted: ck });
-                }
-
-                await conn.sendMessage(fromReply, { react: { text: '⬆️', key: mek2.key } });
-            }
-        });
-
-    } catch (e) {
-        console.log("🚨 ERROR DETAILS:", e);  //ටහුකන්න ගස් මෝල් ගොන් කැරියා
-        reply("❌ An error occurred while processing your request.");
+}, async (conn, mek, m, {from, reply, q}) => {
+  try {
+    if (!q) {
+      return await reply('❌ Please give me a song name')
     }
+    
+    const tharushaFetch = await fetchJson(`https://tharuzz-ofc-apis.vercel.app/api/search/ytsearch?query=` + encodeURIComponent(q));
+    const tharushaRes = tharushaFetch.result[0];
+    const {title, url, description, image, thumbnail, seconds, timestamp, ago, views} = tharushaRes;
+    
+    const tharushaMp3Fetch = await fetchJson(`https://tharuzz-ofc-api-v3.vercel.app/api/ytdl/yt?url=${encodeURIComponent(url)}&format=mp3`);
+    const downloadUrl = tharushaMp3Fetch.result.download;
+    
+    let songInfoMsg = `\`SONG DOWNLOADER\`\n\n` +
+    `* \`Title:\` ${title}\n` + 
+    `* \`Duration:\` ${timestamp}\n` +
+    `* \`Ago:\` ${ago}\n` + 
+    `* \`Views:\` ${views}\n\n` +
+    `🔽 \`Reply below number\`\n\n` +
+    `1 🎧Audio type\n` +
+    `2 📂Document type\n\n` +
+    `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*` +;
+    
+    const infoMsg = await conn.sendMessage(from, {
+      image: {url: image || thumbnail},
+      caption: songInfoMsg
+    }, {quoted: ck});
+    
+    conn.ev.on("messages.upsert", async (msgUpdate) => {
+      const mp3msg = msgUpdate.messages[0];
+                if (!mp3msg.message || !mp3msg.message.extendedTextMessage) return;
+
+      const selectedOption = mp3msg.message.extendedTextMessage.text.trim();
+       
+      if (mp3msg.message.extendedTextMessage.contextInfo &&
+            mp3msg.message.extendedTextMessage.contextInfo.stanzaId === infoMsg.key.id) {
+      await conn.sendMessage(from, { react: { text: "📥", key: mp3msg.key } });
+      
+      switch (selectedOption) {
+        case '1':
+          await conn.sendMessage(from, {
+            audio: {url: downloadUrl},
+            mimetype: 'audio/mpeg'
+          }, {quoted: ck});
+          break;
+          
+        case '2':
+          await conn.sendMessage(from, {
+             document: { url: downloadUrl },
+             mimetype: "audio/mpeg",
+            fileName: `${title}.mp3`,     
+            caption: `*📂 ᴛʜɪꜱ ɪꜱ ʏᴏᴜʀ ʏᴏᴜ ᴛᴜʙᴇ ꜱᴏɴɢ ᴅᴏᴄᴜᴍᴇɴᴛ ꜰɪʟᴇ*`
+          }, {quoted: ck})
+            break;
+  
+        default:
+          await reply('❌ Inalid number please reply a valid number');
+      }
+    }});
+  } catch (e) {
+    console.log('❌ Error: ' + e);
+    return await reply('❌ Error: ' + e.message);
+  }
 });
 
 const ck = {
