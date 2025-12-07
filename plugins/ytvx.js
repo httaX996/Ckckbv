@@ -25,7 +25,6 @@ cmd({
 
 🔖 \`TITLE:\` *${title}*
 ⏰ \`DURATION:\` *${timestamp}*
-📆 \`UPLOAD ON:\` *${ago}*
 👀 \`VIEWS:\` *${views}*
 
 🔽 *Reply below number*
