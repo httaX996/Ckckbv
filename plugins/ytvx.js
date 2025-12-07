@@ -2,100 +2,100 @@ const { cmd } = require('../command');
 const { fetchJson } = require('../lib/functions');
 
 cmd({
-  pattern: "ytvx",
-  alias: ["ytvideo", "ytmp4"],
-  react: "🎬",
-  desc: "Download YouTube video with quality selection",
-  category: "download",
-  use: ".video <name or url>",
-  filename: __filename
+    pattern: "video",
+    alias: ["ytvideo", "ytmp4"],
+    react: "🎬",
+    desc: "Download youtube videos with quality options.",
+    category: "download",
+    use: ".video <video name>",
+    filename: __filename
 }, async (conn, mek, m, { from, reply, q }) => {
-  try {
-    if (!q) return reply("❌ Please provide video name or url");
+    try {
+        if (!q) return reply('❌ Please give video name');
 
-    // 🔍 Search video
-    const search = await fetchJson(
-      `https://tharuzz-ofc-apis.vercel.app/api/search/ytsearch?query=${encodeURIComponent(q)}`
-    );
+        const search = await fetchJson(`https://tharuzz-ofc-apis.vercel.app/api/search/ytsearch?query=${encodeURIComponent(q)}`);
+        const res = search.result[0];
 
-    if (!search.result || !search.result[0]) {
-      return reply("❌ No results found");
+        if (!res) return reply("❌ No results found");
+
+        const { title, url, image, thumbnail, timestamp, views } = res;
+
+        const caption =
+`🎬 \`CK VIDEO DOWNLOADER\` 🎬
+
+🔖 \`TITLE:\` *${title}*
+⏰ \`DURATION:\` *${timestamp}*
+📆 \`UPLOAD ON:\` *${ago}*
+👀 \`VIEWS:\` *${views}*
+
+🔽 *Reply below number*
+\`1\` *|* ❭❭◦ *360p*
+\`2\` *|* ❭❭◦ *720p*
+\`3\` *|* ❭❭◦ *1080p*
+
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+
+        const infoMsg = await conn.sendMessage(from, {
+            image: { url: image || thumbnail },
+            caption
+        }, { quoted: ck });
+
+        // filter replies only to this message
+        const filter = (msg) =>
+            msg.messages?.[0]?.message?.extendedTextMessage?.contextInfo?.stanzaId === infoMsg.key.id;
+
+        const listener = async (msg) => {
+            if (!filter(msg)) return;
+
+            const userReply = msg.messages[0].message.extendedTextMessage.text.trim();
+            let quality = null;
+
+            if (userReply === '1') quality = '360';
+            if (userReply === '2') quality = '720';
+            if (userReply === '3') quality = '1080';
+
+            if (!quality) return reply('❌ Invalid quality number.');
+
+            conn.ev.off('messages.upsert', listener); // remove listener
+
+            await conn.sendMessage(from, { react: { text: "📥", key: msg.messages[0].key } });
+
+            const videoData = await fetchJson(
+                `https://tharuzz-ofc-api-v3.vercel.app/api/ytdl/yt?url=${encodeURIComponent(url)}&format=${quality}`
+            );
+
+            const videoUrl = videoData.result.download;
+
+            // send as video file
+            await conn.sendMessage(from, {
+                video: { url: videoUrl },
+                caption: `🎬 *${title}*\n👾 *${quality}p*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+            }, { quoted: ck });
+        };
+
+        conn.ev.on("messages.upsert", listener);
+
+    } catch (e) {
+        console.log('Video Error:', e);
+        reply('❌ Error: ' + e.message);
     }
-
-    const video = search.result[0];
-    const { title, url, thumbnail, timestamp, views } = video;
-
-    // 📋 Send quality menu
-    const menu =
-      `🎬 *VIDEO DOWNLOADER*\n\n` +
-      `📌 Title: ${title}\n` +
-      `⏱ Duration: ${timestamp}\n` +
-      `👀 Views: ${views}\n\n` +
-      `Reply with quality number:\n\n` +
-      `1 - 144p\n` +
-      `2 - 360p\n` +
-      `3 - 720p\n\n` +
-      `Reply to this message with the number`;
-
-    const sentMsg = await conn.sendMessage(from, {
-      image: { url: thumbnail },
-      caption: menu
-    }, { quoted: mek });
-
-    // ✅ One-time listener (memory leak නැතිව)
-    const handler = async (update) => {
-      try {
-        const msg = update.messages?.[0];
-        if (!msg?.message?.extendedTextMessage) return;
-
-        const ctx = msg.message.extendedTextMessage.contextInfo;
-        if (!ctx || ctx.stanzaId !== sentMsg.key.id) return;
-
-        const choice = msg.message.extendedTextMessage.text.trim();
-
-        let quality;
-        if (choice === "1") quality = "144";
-        else if (choice === "2") quality = "360";
-        else if (choice === "3") quality = "720";
-        else {
-          await reply("❌ Invalid option! Reply 1 / 2 / 3");
-          return;
-        }
-
-        await conn.sendMessage(from, { react: { text: "📥", key: msg.key } });
-
-        // 🎥 Get download url
-        const videoApi = await fetchJson(
-          `https://tharuzz-ofc-api-v3.vercel.app/api/ytdl/yt?url=${encodeURIComponent(url)}&format=${quality}`
-        );
-
-        const dl = videoApi.result?.download;
-        if (!dl) return reply("❌ Download link not found");
-
-        // 📤 Send video
-        await conn.sendMessage(from, {
-          video: { url: dl },
-          caption: `🎬 ${title}\n📺 Quality: ${quality}p`
-        }, { quoted: msg });
-
-        conn.ev.off("messages.upsert", handler);
-
-      } catch (err) {
-        console.log(err);
-        await reply("❌ Error: " + err.message);
-        conn.ev.off("messages.upsert", handler);
-      }
-    };
-
-    conn.ev.on("messages.upsert", handler);
-
-    // ⏳ Auto remove listener after 1 minute
-    setTimeout(() => {
-      conn.ev.off("messages.upsert", handler);
-    }, 60000);
-
-  } catch (e) {
-    console.log(e);
-    return reply("❌ Error: " + e.message);
-  }
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
