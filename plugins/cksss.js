@@ -32,7 +32,7 @@ cmd({
     `🔽 \`Reply below number\`\n\n` +
     `1 🎧Audio type\n` +
     `2 📂Document type\n\n` +
-    `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*` +;
+    `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
     
     const infoMsg = await conn.sendMessage(from, {
       image: {url: image || thumbnail},
