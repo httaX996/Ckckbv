@@ -21,6 +21,8 @@ const {
     fetchLatestBaileysVersion,
     Browsers
 } = require('@whiskeysockets/baileys')
+const { EventEmitter } = require('events');
+EventEmitter.defaultMaxListeners = 0;
 
 const l = console.log
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson } = require('./lib/functions')
