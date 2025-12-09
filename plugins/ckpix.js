@@ -1,6 +1,7 @@
 // dependencies: axios, fs-extra, mime-types
 // install: npm i axios fs-extra mime-types
-
+const {cmd} = require('../command');
+const {fetchJson} = require('../lib/functions')
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
