@@ -65,6 +65,7 @@
     "postgres_dbm": "^1.1.0",
     "node-cache": "5.1.2",
     "@dark-yasiya/scrap": "1.0.1",
-    "human-readable": "0.2.1"
+    "human-readable": "0.2.1",
+    "dew-api": "1.0.4"
   }
 }
