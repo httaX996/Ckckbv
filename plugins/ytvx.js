@@ -21,7 +21,7 @@ cmd({
         const { title, url, image, thumbnail, timestamp, views } = res;
 
         const caption =
-`🎬 \`CK VIDEO DOWNLOADER\` 🎬
+`🎬 \`CK YT VIDEO DOWNLOADER\` 🎬
 
 🔖 \`TITLE:\` *${title}*
 ⏰ \`DURATION:\` *${timestamp}*
@@ -88,7 +88,7 @@ const ck = {
     },
     message: {
         contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
             vcard: `BEGIN:VCARD
 VERSION:3.0
 FN:Meta
