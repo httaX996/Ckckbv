@@ -1,11 +1,10 @@
 const axios = require("axios");
 const { cmd } = require('../command');
 
-// User API Key
 const OMDB_API = "9b4d57d2";
-
 let imdbSessions = {};
 
+// IMDB SEARCH COMMAND
 cmd({
     pattern: "imdb",
     desc: "IMDB movie search",
@@ -22,36 +21,39 @@ cmd({
 
         if (!data.Search) return m.reply("❌ No movies found!");
 
-        let results = data.Search;
-        imdbSessions[m.sender] = results;
+        imdbSessions[m.sender] = data.Search;
 
         let msg = `🎬 *Results for:* _${text}_\n\n`;
 
-        results.forEach((mv, i) => {
+        data.Search.forEach((mv, i) => {
             msg += `*${i + 1}.* ${mv.Title} (${mv.Year})\n`;
         });
 
-        msg += `\n📌 *Reply a number to view full movie details.*`;
+        msg += `\n📌 *Reply a number to view full details.*`;
 
         return m.reply(msg);
 
-    } catch (e) {
-        console.log(e);
+    } catch (err) {
+        console.log(err);
         return m.reply("⚠️ Error searching IMDB.");
     }
 });
 
-cmd({
-    on: "text"
-}, async (conn, m) => {
 
-    let movies = imdbSessions[m.sender];
+// ---------------------------------------------------------
+// 🔥 UNIVERSAL WORKING REPLY LISTENER  (NOT inside cmd())
+// ---------------------------------------------------------
+
+global.imdb_reply_handler = async (conn, m) => {
+
+    const movies = imdbSessions[m.sender];
     if (!movies) return;
 
-    let num = parseInt(m.text.trim());
-    if (isNaN(num) || num < 1 || num > movies.length) return;
+    const num = parseInt(m.text?.trim());
+    if (isNaN(num)) return;
+    if (!movies[num - 1]) return;
 
-    let movie = movies[num - 1];
+    const movie = movies[num - 1];
     delete imdbSessions[m.sender];
 
     try {
@@ -71,15 +73,37 @@ ${data.Plot}
 
         return conn.sendMessage(
             m.chat,
-            {
-                image: { url: data.Poster },
-                caption: caption
-            },
+            { image: { url: data.Poster }, caption },
             { quoted: m }
         );
 
+    } catch (err) {
+        console.log(err);
+        return m.reply("⚠️ Error loading details.");
+    }
+};
+
+
+// ---------------------------------------------------------
+// ATTACH LISTENER TO YOUR BASE  (This ALWAYS works)
+// ---------------------------------------------------------
+
+// If your base uses "events" or "message-upsert"
+global.ev.on("messages.upsert", async (msg) => {
+    try {
+        const m = msg.messages[0];
+        const conn = global.conn;
+        if (!m.message) return;
+
+        m.text = m.message.conversation ||
+                 m.message.extendedTextMessage?.text ||
+                 m.message?.ephemeralMessage?.message?.extendedTextMessage?.text;
+
+        if (!m.text) return;
+
+        await global.imdb_reply_handler(conn, m);
+
     } catch (e) {
-        console.log(e);
-        return m.reply("⚠️ Error loading movie details.");
+        console.log("Reply handler error:", e);
     }
 });
