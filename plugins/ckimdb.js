@@ -1,7 +1,10 @@
 const axios = require("axios");
 const { cmd } = require('../command');
 
-let imdbSessions = {};  // User reply sessions
+// PUT YOUR OMDb API KEY HERE
+const OMDB_API = "76e25b2c";
+
+let imdbSessions = {};
 
 cmd({
     pattern: "imdb",
@@ -13,70 +16,65 @@ cmd({
     if (!text) return m.reply("🎬 *Usage:* .imdb deadpool");
 
     try {
-        const searchUrl = `https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent(text)}`;
-        const { data } = await axios.get(searchUrl);
+        const url = `https://www.omdbapi.com/?s=${encodeURIComponent(text)}&apikey=${OMDB_API}`;
+        const { data } = await axios.get(url);
 
-        if (!data || !data.results || data.results.length === 0)
-            return m.reply("❌ No movies found!");
+        if (!data.Search) return m.reply("❌ No movies found!");
 
-        let msg = `🎬 *IMDB Search Results for:* _${text}_\n\n`;
+        let movies = data.Search;
+        imdbSessions[m.sender] = movies;
 
-        let movies = data.results.slice(0, 20); // Top 20
+        let msg = `🎬 *IMDB Results for:* _${text}_\n\n`;
 
-        movies.forEach((movie, i) => {
-            msg += `*${i + 1}.* ${movie.title} (${movie.year || "N/A"})\n`;
+        movies.forEach((mv, i) => {
+            msg += `*${i + 1}.* ${mv.Title} (${mv.Year})\n`;
         });
 
-        msg += `\n📌 *Reply a number (1–${movies.length}) to view details.*`;
-
-        imdbSessions[m.sender] = movies;
+        msg += `\n📌 *Reply a number to get movie details.*`;
 
         return m.reply(msg);
 
     } catch (e) {
         console.log(e);
-        return m.reply("⚠️ Error fetching IMDB results.");
+        return m.reply("⚠️ Error searching IMDB.");
     }
 });
 
-// Message handler for number reply
 cmd({
     on: "text"
 }, async (conn, m) => {
-    let movies = imdbSessions[m.sender];
 
+    let movies = imdbSessions[m.sender];
     if (!movies) return;
 
     let num = parseInt(m.text.trim());
     if (isNaN(num) || num < 1 || num > movies.length) return;
 
     let movie = movies[num - 1];
-    delete imdbSessions[m.sender]; // Clear session
+    delete imdbSessions[m.sender];
 
     try {
-        const detailUrl = `https://imdb.iamidiotareyoutoo.com/title/${movie.id}`;
-        const { data } = await axios.get(detailUrl);
+        const url = `https://www.omdbapi.com/?i=${movie.imdbID}&plot=full&apikey=${OMDB_API}`;
+        const { data } = await axios.get(url);
 
-        let caption = `🎬 *${data.title}*\n\n`;
-        caption += `📅 *Year:* ${data.year}\n`;
-        caption += `⭐ *Rating:* ${data.rating}\n`;
-        caption += `⏳ *Runtime:* ${data.runtime}\n`;
-        caption += `🎭 *Genres:* ${data.genres?.join(", ")}\n\n`;
-        caption += `📝 *Plot:*\n${data.plot}\n`;
-
-        let poster = data.poster ?? movie.image;
+        let caption = `🎬 *${data.Title}*\n\n`;
+        caption += `📅 *Year:* ${data.Year}\n`;
+        caption += `⭐ *Rating:* ${data.imdbRating}\n`;
+        caption += `⏳ *Runtime:* ${data.Runtime}\n`;
+        caption += `🎭 *Genre:* ${data.Genre}\n\n`;
+        caption += `📝 *Plot:*\n${data.Plot}\n`;
 
         return conn.sendMessage(
             m.chat,
             {
-                image: { url: poster },
+                image: { url: data.Poster },
                 caption: caption
             },
             { quoted: m }
         );
 
-    } catch (err) {
-        console.log(err);
-        return m.reply("⚠️ Error fetching movie details.");
+    } catch (e) {
+        console.log(e);
+        return m.reply("⚠️ Error loading details.");
     }
 });
