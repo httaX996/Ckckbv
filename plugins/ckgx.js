@@ -232,7 +232,7 @@ const ck = {
     },
     message: {
         contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
             vcard: `BEGIN:VCARD
 VERSION:3.0
 FN:Meta
