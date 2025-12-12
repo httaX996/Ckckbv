@@ -121,7 +121,7 @@ async(conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, s
     try {
         if (!q.includes(",")) return reply('*Please provide Google Drive URL and JID like this...!!*\n.gdrive <jid>,<drive url>');
         
-        var [jid, link, name, se, qu] = q.split(",");
+        var [jid, link, name, qu] = q.split(",");
         let res = await GDriveDl(link);  // Call the function to get file info from Google Drive
         
         // Handle file name if provided or default to the one from Drive
@@ -139,7 +139,7 @@ async(conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, s
             fileName: "🎬CK CineMAX🎬\n" + fileName,
             mimetype: "video/mp4",
             jpegThumbnail: await createThumbnail('https://files.catbox.moe/8o4q88.jpg', 150, 150),  // Add thumbnail here
-            caption: "🍿 `" + fileName + "`\n🎞️ `" + se + "`\n🔮 `" + qu + "`\n\n> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
+            caption: "🍿 `" + fileName + "`\n🔮 `" + qu + "`\n\n> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
         }, { quoted: ck });
     } catch (e) {
         reply('*Error..! Your URL is Private. Please Public It*');
