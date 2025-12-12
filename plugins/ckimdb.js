@@ -1,19 +1,20 @@
 const axios = require("axios");
 const { cmd } = require('../command');
 
-// PUT YOUR OMDb API KEY HERE
-const OMDB_API = "76e25b2c";
+// User API Key
+const OMDB_API = "9b4d57d2";
 
 let imdbSessions = {};
 
 cmd({
     pattern: "imdb",
-    desc: "Search movies on IMDB",
+    desc: "IMDB movie search",
     react: "🎬",
     category: "search"
-}, async (conn, m, { text }) => {
+}, async (conn, m, { args }) => {
 
-    if (!text) return m.reply("🎬 *Usage:* .imdb deadpool");
+    const text = args.join(" ");
+    if (!text) return m.reply("🎬 *Usage:* .imdb movie name");
 
     try {
         const url = `https://www.omdbapi.com/?s=${encodeURIComponent(text)}&apikey=${OMDB_API}`;
@@ -21,16 +22,16 @@ cmd({
 
         if (!data.Search) return m.reply("❌ No movies found!");
 
-        let movies = data.Search;
-        imdbSessions[m.sender] = movies;
+        let results = data.Search;
+        imdbSessions[m.sender] = results;
 
-        let msg = `🎬 *IMDB Results for:* _${text}_\n\n`;
+        let msg = `🎬 *Results for:* _${text}_\n\n`;
 
-        movies.forEach((mv, i) => {
+        results.forEach((mv, i) => {
             msg += `*${i + 1}.* ${mv.Title} (${mv.Year})\n`;
         });
 
-        msg += `\n📌 *Reply a number to get movie details.*`;
+        msg += `\n📌 *Reply a number to view full movie details.*`;
 
         return m.reply(msg);
 
@@ -57,12 +58,16 @@ cmd({
         const url = `https://www.omdbapi.com/?i=${movie.imdbID}&plot=full&apikey=${OMDB_API}`;
         const { data } = await axios.get(url);
 
-        let caption = `🎬 *${data.Title}*\n\n`;
-        caption += `📅 *Year:* ${data.Year}\n`;
-        caption += `⭐ *Rating:* ${data.imdbRating}\n`;
-        caption += `⏳ *Runtime:* ${data.Runtime}\n`;
-        caption += `🎭 *Genre:* ${data.Genre}\n\n`;
-        caption += `📝 *Plot:*\n${data.Plot}\n`;
+        let caption = `
+🎬 *${data.Title}*
+📅 Year: ${data.Year}
+⭐ Rating: ${data.imdbRating}
+⏳ Runtime: ${data.Runtime}
+🎭 Genre: ${data.Genre}
+
+📝 *Plot:*
+${data.Plot}
+        `;
 
         return conn.sendMessage(
             m.chat,
@@ -75,6 +80,6 @@ cmd({
 
     } catch (e) {
         console.log(e);
-        return m.reply("⚠️ Error loading details.");
+        return m.reply("⚠️ Error loading movie details.");
     }
 });
