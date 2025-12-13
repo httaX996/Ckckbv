@@ -45,17 +45,18 @@ cmd({
             const englishPlot = omdb.Plot || detailsRes.data.overview || "N/A";
             const sinhalaPlot = await translateToSinhala(englishPlot);
 
-            const caption = `☣️ *Movie Name:-* ${omdb.Title || movie.title} (${omdb.Year || detailsRes.data.release_date?.slice(0, 4)})\n\n` +
-                            `⭐ *IMDb අගය:* ${omdb.imdbRating || "N/A"}\n` +
-                            `🎭 *කාණ්ඩය:* ${omdb.Genre || "N/A"}\n` +
-                            `🕒 *ධාවන කාලය:* ${omdb.Runtime || "N/A"}\n\n` +
-                            `🗣️ *කතා විස්තරය :* ${sinhalaPlot}\n\n` +
-                            `${config.MOVIE_FOOTER}`;
+            const caption = `🎬 \`${omdb.Title || movie.title}\`\n\n` +
+                            `⭐ *IMDb :* ${omdb.imdbRating || "N/A"}\n` +
+                            `📆 *RELEASED :* ${omdb.Released || "N/A"}` +
+                            `🎭 *GENRES :* ${omdb.Genre || "N/A"}\n` +
+                            `⏰ *RUN TIME :* ${omdb.Runtime || "N/A"}\n` +
+                            `🔊 *LANGUAGE :* ${omdb.Language || "N/A"}\n\n` +
+                            `🗣️ *PLOT :* ${sinhalaPlot}\n\n` +
+                            `> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;
 
             await conn.sendMessage(from, {
                 image: { url: poster },
-                caption: caption
-            });
+                caption: caption }, {quoted: ck});
 
             delete conn.movieSearch[from];
         } catch (err) {
@@ -89,3 +90,22 @@ cmd({
         reply("❌ දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.");
     }
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
