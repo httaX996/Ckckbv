@@ -1,13 +1,10 @@
 const { cmd } = require('../command');
 const axios = require('axios');
 const config = require('../config');
-
 const TMDB_KEY = "6284396e268fba60f0203b8b4b361ffe";
 const OMDB_KEY = "76cb7f39";
 
-// Temporary in-memory storage
-const movieSelections = {}; // { 'from': { results: [...], timestamp } }
-
+// Sinhala translation function
 async function translateToSinhala(text) {
     try {
         const res = await axios.get(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`);
@@ -17,46 +14,50 @@ async function translateToSinhala(text) {
     }
 }
 
+// Main command
 cmd({
-    pattern: "movieinfo",
-    desc: "Get HD official movie poster with Sinhala details",
+    pattern: "imdb",
+    desc: "Get movie list + select for details",
     category: "movie",
-    react: "♻️",
-    alias: ['info', 'in'],
+    react: "🎬",
     filename: __filename
-},
-async (conn, mek, m, { from, q, reply }) => {
+}, async (conn, mek, m, { from, q, reply }) => {
+    if (!q) return reply("❗කරුණාකර චිත්‍රපටයේ නම දෙන්න.\nඋදා: `.movieinfo Avengers`");
 
-    // Check if user is replying with a number
-    if (q && movieSelections[from]) {
-        const index = parseInt(q) - 1;
-        const selection = movieSelections[from].results?.[index];
+    conn.movieSearch = conn.movieSearch || {};
 
-        if (!selection) return reply("❌ වැරදි number එකක්. කරුණාකර listed number එකක් reply කරන්න.");
+    // Check if user reply number
+    const userReplyNumber = parseInt(q);
+    if (conn.movieSearch[from] && !isNaN(userReplyNumber)) {
+        const movies = conn.movieSearch[from];
+        const selectedIndex = userReplyNumber - 1;
+
+        if (!movies[selectedIndex]) return reply("❌ වැරදි number එකක්. නැවත උත්සාහ කරන්න.");
+
+        const movie = movies[selectedIndex];
 
         try {
-            // Movie details from TMDB
-            const { data: details } = await axios.get(`https://api.themoviedb.org/3/movie/${selection.id}?api_key=${TMDB_KEY}`);
-            const poster = details.poster_path ? `https://image.tmdb.org/t/p/original${details.poster_path}` : null;
+            const detailsRes = await axios.get(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_KEY}`);
+            const poster = `https://image.tmdb.org/t/p/original${detailsRes.data.poster_path}`;
+            const omdbRes = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(movie.title)}&apikey=${OMDB_KEY}`);
+            const omdb = omdbRes.data;
 
-            // OMDb Info
-            const { data: omdb } = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(selection.title)}&apikey=${OMDB_KEY}`);
+            const englishPlot = omdb.Plot || detailsRes.data.overview || "N/A";
+            const sinhalaPlot = await translateToSinhala(englishPlot);
 
-            const plot = omdb.Plot || details.overview || "N/A";
-            const sinhalaPlot = await translateToSinhala(plot);
-
-            const caption = `☣️ *Movie Name:* ${omdb.Title || details.title} (${omdb.Year || details.release_date?.slice(0,4)})\n` +
-                            `⭐ *IMDb Rating:* ${omdb.imdbRating || "N/A"}\n` +
-                            `🎭 *Genre:* ${omdb.Genre || "N/A"}\n` +
-                            `🕒 *Runtime:* ${omdb.Runtime || "N/A"}\n\n` +
-                            `🗣️ *Plot:* ${sinhalaPlot}\n\n` +
+            const caption = `☣️ *Movie Name:-* ${omdb.Title || movie.title} (${omdb.Year || detailsRes.data.release_date?.slice(0, 4)})\n\n` +
+                            `⭐ *IMDb අගය:* ${omdb.imdbRating || "N/A"}\n` +
+                            `🎭 *කාණ්ඩය:* ${omdb.Genre || "N/A"}\n` +
+                            `🕒 *ධාවන කාලය:* ${omdb.Runtime || "N/A"}\n\n` +
+                            `🗣️ *කතා විස්තරය :* ${sinhalaPlot}\n\n` +
                             `${config.MOVIE_FOOTER}`;
 
-            await conn.sendMessage(from, { image: { url: poster }, caption }, { quoted: m });
+            await conn.sendMessage(from, {
+                image: { url: poster },
+                caption: caption
+            });
 
-            // Clear selection
-            delete movieSelections[from];
-
+            delete conn.movieSearch[from];
         } catch (err) {
             console.error(err);
             reply("❌ දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.");
@@ -65,28 +66,24 @@ async (conn, mek, m, { from, q, reply }) => {
         return;
     }
 
-    // If first query
-    if (!q) return reply("❗කරුණාකර චිත්‍රපටයේ නම දෙන්න.\nඋදා: `.movieinfo Avengers`");
-
+    // If not reply number → search movie
     try {
-        // TMDB Search
-        const { data: searchData } = await axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`);
-        if (!searchData.results.length) return reply("😓 චිත්‍රපටය සොයාගත නොහැකි විය.");
+        const searchRes = await axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`);
+        const results = searchRes.data.results;
 
-        // Store top 5 results
-        const results = searchData.results.slice(0, 5);
-        movieSelections[from] = { results, timestamp: Date.now() };
+        if (!results.length) return reply("😓 චිත්‍රපටය සොයාගත නොහැකි විය.");
 
-        // Build list message
-        let listMsg = "📽️ *ඔබේ search එකට අදාල චිත්‍රපට මෙන්න:*\n";
-        results.forEach((movie, i) => {
+        // Save results
+        conn.movieSearch[from] = results;
+
+        let listMessage = `🎬 *ඔබ සොයන චිත්‍රපටය මෙන්න:* \n\n`;
+        results.slice(0, 10).forEach((movie, i) => {
             const year = movie.release_date?.slice(0,4) || "N/A";
-            listMsg += `${i+1}. ${movie.title} (${year})\n`;
+            listMessage += `*${i+1}.* ${movie.title} (${year})\n`;
         });
-        listMsg += "\n🎯 ඉහත listed number එක reply කරන්න, details ලබාගැනීමට.";
+        listMessage += `\n✅ ඔබට අවශ්‍ය චිත්‍රපටය number එක reply කරන්න.`;
 
-        reply(listMsg);
-
+        reply(listMessage);
     } catch (err) {
         console.error(err);
         reply("❌ දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.");
