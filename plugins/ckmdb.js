@@ -3,362 +3,162 @@ const axios = require('axios');
 const config = require('../config');
 
 const TMDB_KEY = "6284396e268fba60f0203b8b4b361ffe";
-const OMDB_KEY = "76cb7f39";
-const MVJID = "120363298587511714@g.us"
-const TVJID = "120363319444098961@g.us"
 
-cmd({
-    pattern: "imdb",
-    desc: "Get Movies & TV Series list",
-    category: "movie",
-    react: "🎬",
-    filename: __filename
-}, async (conn, mek, m, { from, q, reply }) => {
-    if (!q) return reply("❗Movie / TV Series name එක දෙන්න");
-
-    conn.movieSearch = conn.movieSearch || {};
-
-    try {
-        const [movieRes, tvRes] = await Promise.all([
-            axios.get(`https://api.themoviedb.org/3/search/movie`, {
-                params: { api_key: TMDB_KEY, query: q, page: 1 }
-            }),
-            axios.get(`https://api.themoviedb.org/3/search/tv`, {
-                params: { api_key: TMDB_KEY, query: q, page: 1 }
-            })
-        ]);
-
-        let movies = movieRes.data.results.map(m => ({
-            id: m.id,
-            title: m.title,
-            date: m.release_date,
-            type: "movie"
-        }));
-
-        let tvs = tvRes.data.results.map(t => ({
-            id: t.id,
-            title: t.name,
-            date: t.first_air_date,
-            type: "tv"
-        }));
-
-        let results = [...movies, ...tvs];
-
-        if (!results.length) return reply("😓 Result එකක් නැහැ");
-
-        results.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-        // send list message
-        const sentMsg = await conn.sendMessage(from, {
-            text: (() => {
-                let list = `🎬 *Movies & TV Series*\n\n`;
-                results.slice(0, 10).forEach((r, i) => {
-                    list += `*${i + 1}.* ${r.title} (${r.date?.slice(0,4) || "N/A"}) ${r.type === "tv" ? "📺" : "🎬"}\n`;
-                });
-                list += `\n📌 Use .imdb <number> to get details`;
-                return list;
-            })()
-        });
-
-        // cache results with messageId
-        conn.movieSearch[from] = {
-            messageId: sentMsg.key.id,
-            results
-        };
-
-    } catch (e) {
-        console.error(e);
-        reply("❌ Search error");
-    }
-});
-
-//--------------Normal---------------
-
+const MVJID = "120363xxxxxxxxxx@g.us"; // movie group
+const TVJID = "120363yyyyyyyyyy@g.us"; // tv group
 
 const LANG_MAP = {
-    en: "English", ja: "Japanese", ko: "Korean", hi: "Hindi",
-    ta: "Tamil", te: "Telugu", fr: "French", es: "Spanish",
-    it: "Italian", de: "German", zh: "Chinese", ru: "Russian",
-    si: "Sinhala"
+  en: "English",
+  hi: "Hindi",
+  ta: "Tamil",
+  te: "Telugu",
+  ml: "Malayalam",
+  ja: "Japanese",
+  ko: "Korean"
 };
 
+// Sinhala Translate
 async function translateToSinhala(text) {
-    try {
-        const r = await axios.get(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`);
-        return r.data.responseData.translatedText || text;
-    } catch {
-        return text;
-    }
+  try {
+    const res = await axios.get(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`
+    );
+    return res.data.responseData.translatedText || text;
+  } catch {
+    return text;
+  }
 }
 
-async function sendMovieDetails(conn, from, item, quotedMessage) {
-    try {
-        const endpoint = item.type === "tv" ? "tv" : "movie";
-        const details = await axios.get(
-            `https://api.themoviedb.org/3/${endpoint}/${item.id}`, {
-                params: { api_key: TMDB_KEY, language: "en-US" }
-            }
-        );
+// ================= SEARCH LIST =================
+cmd({
+  pattern: "movieinfo",
+  alias: ["movie", "mv"],
+  category: "movie",
+  desc: "Search Movies & TV Series"
+}, async (conn, mek, m, { from, q, reply }) => {
 
-        let omdb = {};
-        if (item.type === "movie") {
-            try {
-                const o = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(item.title)}&apikey=${OMDB_KEY}`);
-                omdb = o.data || {};
-            } catch {}
-        }
+  if (!q) return reply("❗ Movie / TV name එකක් දෙන්න");
 
-        const poster = details.data.poster_path
-            ? `https://image.tmdb.org/t/p/original${details.data.poster_path}`
-            : "https://i.imgur.com/NOPOSTER.png";
+  const movieRes = await axios.get(
+    `https://api.themoviedb.org/3/search/movie`,
+    { params:{ api_key:TMDB_KEY, query:q } }
+  );
 
-        const title = item.title;
-        const releaseDate = item.type === "tv" ? details.data.first_air_date || "N/A" : details.data.release_date || "N/A";
-        const language = LANG_MAP[details.data.original_language] || details.data.original_language.toUpperCase();
-        const rating = item.type === "movie" ? (omdb.imdbRating || `${details.data.vote_average}/10`) : `${details.data.vote_average}/10`;
-        const runtime = item.type === "tv" ? `${details.data.number_of_seasons} Seasons` : (omdb.Runtime || `${details.data.runtime} min`);
-        const genres = details.data.genres?.map(g => g.name).join(", ") || "N/A";
-        const plotEN = details.data.overview || "N/A";
-        const plotSI = await translateToSinhala(plotEN);
+  const tvRes = await axios.get(
+    `https://api.themoviedb.org/3/search/tv`,
+    { params:{ api_key:TMDB_KEY, query:q } }
+  );
 
-        const caption =
-`🎬 \`${title}\`
+  const results = [];
 
-📅 *RELEASED :* ${releaseDate}
-🔊 *LANGUAGE :* ${language}
-🌟 *RATING :* ${rating}
-🎭 *GENRES :* ${genres}
-⏰ *DURATION :* ${runtime}
+  movieRes.data.results.forEach(r=>{
+    results.push({
+      id:r.id,
+      title:r.title,
+      date:r.release_date,
+      type:"movie"
+    });
+  });
+
+  tvRes.data.results.forEach(r=>{
+    results.push({
+      id:r.id,
+      title:r.name,
+      date:r.first_air_date,
+      type:"tv"
+    });
+  });
+
+  if (!results.length) return reply("😓 Results නෑ");
+
+  conn.movieSearch = conn.movieSearch || {};
+  conn.movieSearch[from] = { results };
+
+  let list = `🎬 *SEARCH RESULTS*\n\n`;
+  results.slice(0,10).forEach((r,i)=>{
+    list += `${i+1}. ${r.title} (${r.date?.slice(0,4)||"N/A"}) [${r.type.toUpperCase()}]\n`;
+  });
+
+  list += `\n📌 Details ගන්න:\n.imd <number>\n.mvd <number>\n.tvd <number>`;
+
+  reply(list);
+});
+
+// ================= COMMON DETAILS BUILDER =================
+async function getDetails(item) {
+  const endpoint = item.type === "tv" ? "tv" : "movie";
+
+  const res = await axios.get(
+    `https://api.themoviedb.org/3/${endpoint}/${item.id}`,
+    { params:{ api_key:TMDB_KEY, language:"en-US" } }
+  );
+
+  const d = res.data;
+  const plotSI = await translateToSinhala(d.overview || "N/A");
+
+  return {
+    poster: d.poster_path
+      ? `https://image.tmdb.org/t/p/original${d.poster_path}`
+      : null,
+
+    caption:
+`🎬 \`${item.title}\`
+
+📅 *RELEASED :* ${item.type==="tv" ? d.first_air_date : d.release_date}
+🔊 *LANGUAGE :* ${LANG_MAP[d.original_language] || d.original_language}
+🌟 *RATING :* ${d.vote_average}/10
+🎭 *GENRES :* ${d.genres.map(g=>g.name).join(", ")}
+⏰ *DURATION :* ${
+  item.type==="tv"
+  ? d.number_of_seasons+" Seasons"
+  : d.runtime+" min"
+}
 
 🗣️ *STORY LINE :*
 ${plotSI}
 
-> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;
-
-        await conn.sendMessage(from, {
-            image: { url: poster },
-            caption
-        }, { quoted: ck });
-
-    } catch (e) {
-        console.error(e);
-        await conn.sendMessage(from, { text: "❌ Details load error" }, { quoted: quotedMessage });
-    }
+> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`
+  };
 }
 
-cmd({
-    pattern: "imd",
-    desc: "Get movie/TV details by number from last search",
-    category: "movie",
-    react: "🎬",
-    filename: __filename
-}, async (conn, mek, m, { from, q, reply }) => {
-    const num = parseInt(q);
-    if (!num) return reply("❗ Number එකක් දෙන්න. Example: `.imdb 1`");
+// ================= IMD → CHAT =================
+cmd({ pattern:"imd", category:"movie" }, async (conn, mek, m, { from, q, reply })=>{
+  const cache = conn.movieSearch?.[from];
+  if (!cache) return reply("❗ Search කරන්න කලින්");
 
-    const cache = conn.movieSearch?.[from];
-    if (!cache || !cache.results || cache.results.length === 0) return reply("❌ Last search result not found. Use `.movieinfo <name>` first.");
+  const item = cache.results[q-1];
+  if (!item) return reply("❌ Wrong number");
 
-    const index = num - 1;
-    const item = cache.results[index];
-    if (!item) return reply("❌ වැරදි number එකක්.");
+  const data = await getDetails(item);
 
-    return sendMovieDetails(conn, from, item, m); // send details with current message quoted
+  await conn.sendMessage(from, {
+    image:{ url:data.poster },
+    caption:data.caption
+  }, { quoted:m });
 });
 
+// ================= MVD → MOVIE GROUP =================
+cmd({ pattern:"mvd", category:"movie" }, async (conn, mek, m, { from, q, reply })=>{
+  const item = conn.movieSearch?.[from]?.results[q-1];
+  if (!item) return reply("❌ Wrong number");
 
+  const data = await getDetails(item);
 
-//-------------------Movie Group 
-
-async function translateToSinhala(text) {
-    try {
-        const r = await axios.get(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`);
-        return r.data.responseData.translatedText || text;
-    } catch {
-        return text;
-    }
-}
-
-async function sendMovieDetails(conn, from, item, quotedMessage) {
-    try {
-        const endpoint = item.type === "tv" ? "tv" : "movie";
-        const details = await axios.get(
-            `https://api.themoviedb.org/3/${endpoint}/${item.id}`, {
-                params: { api_key: TMDB_KEY, language: "en-US" }
-            }
-        );
-
-        let omdb = {};
-        if (item.type === "movie") {
-            try {
-                const o = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(item.title)}&apikey=${OMDB_KEY}`);
-                omdb = o.data || {};
-            } catch {}
-        }
-
-        const poster = details.data.poster_path
-            ? `https://image.tmdb.org/t/p/original${details.data.poster_path}`
-            : "https://i.imgur.com/NOPOSTER.png";
-
-        const title = item.title;
-        const releaseDate = item.type === "tv" ? details.data.first_air_date || "N/A" : details.data.release_date || "N/A";
-        const language = LANG_MAP[details.data.original_language] || details.data.original_language.toUpperCase();
-        const rating = item.type === "movie" ? (omdb.imdbRating || `${details.data.vote_average}/10`) : `${details.data.vote_average}/10`;
-        const runtime = item.type === "tv" ? `${details.data.number_of_seasons} Seasons` : (omdb.Runtime || `${details.data.runtime} min`);
-        const genres = details.data.genres?.map(g => g.name).join(", ") || "N/A";
-        const plotEN = details.data.overview || "N/A";
-        const plotSI = await translateToSinhala(plotEN);
-
-        const caption =
-`🎬 \`${title}\`
-
-📅 *RELEASED :* ${releaseDate}
-🔊 *LANGUAGE :* ${language}
-🌟 *RATING :* ${rating}
-🎭 *GENRES :* ${genres}
-⏰ *DURATION :* ${runtime}
-
-🗣️ *STORY LINE :*
-${plotSI}
-
-> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;
-
-        await conn.sendMessage(MVJID, {
-            image: { url: poster },
-            caption
-        }, { quoted: ck });
-
-    } catch (e) {
-        console.error(e);
-        await conn.sendMessage(from, { text: "❌ Details load error" }, { quoted: quotedMessage });
-    }
-}
-
-cmd({
-    pattern: "mvd",
-    desc: "Get movie/TV details by number from last search",
-    category: "movie",
-    react: "🎬",
-    filename: __filename
-}, async (conn, mek, m, { from, q, reply }) => {
-    const num = parseInt(q);
-    if (!num) return reply("❗ Number එකක් දෙන්න. Example: `.imdb 1`");
-
-    const cache = conn.movieSearch?.[from];
-    if (!cache || !cache.results || cache.results.length === 0) return reply("❌ Last search result not found. Use `.movieinfo <name>` first.");
-
-    const index = num - 1;
-    const item = cache.results[index];
-    if (!item) return reply("❌ වැරදි number එකක්.");
-
-    return sendMovieDetails(conn, from, item, m); // send details with current message quoted
+  await conn.sendMessage(MVJID, {
+    image:{ url:data.poster },
+    caption:data.caption
+  }, { quoted:m });
 });
 
+// ================= TVD → TV GROUP =================
+cmd({ pattern:"tvd", category:"movie" }, async (conn, mek, m, { from, q, reply })=>{
+  const item = conn.movieSearch?.[from]?.results[q-1];
+  if (!item) return reply("❌ Wrong number");
 
-//---------------------TV Series Group
+  const data = await getDetails(item);
 
-
-async function translateToSinhala(text) {
-    try {
-        const r = await axios.get(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`);
-        return r.data.responseData.translatedText || text;
-    } catch {
-        return text;
-    }
-}
-
-async function sendMovieDetails(conn, from, item, quotedMessage) {
-    try {
-        const endpoint = item.type === "tv" ? "tv" : "movie";
-        const details = await axios.get(
-            `https://api.themoviedb.org/3/${endpoint}/${item.id}`, {
-                params: { api_key: TMDB_KEY, language: "en-US" }
-            }
-        );
-
-        let omdb = {};
-        if (item.type === "movie") {
-            try {
-                const o = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(item.title)}&apikey=${OMDB_KEY}`);
-                omdb = o.data || {};
-            } catch {}
-        }
-
-        const poster = details.data.poster_path
-            ? `https://image.tmdb.org/t/p/original${details.data.poster_path}`
-            : "https://i.imgur.com/NOPOSTER.png";
-
-        const title = item.title;
-        const releaseDate = item.type === "tv" ? details.data.first_air_date || "N/A" : details.data.release_date || "N/A";
-        const language = LANG_MAP[details.data.original_language] || details.data.original_language.toUpperCase();
-        const rating = item.type === "movie" ? (omdb.imdbRating || `${details.data.vote_average}/10`) : `${details.data.vote_average}/10`;
-        const runtime = item.type === "tv" ? `${details.data.number_of_seasons} Seasons` : (omdb.Runtime || `${details.data.runtime} min`);
-        const genres = details.data.genres?.map(g => g.name).join(", ") || "N/A";
-        const plotEN = details.data.overview || "N/A";
-        const plotSI = await translateToSinhala(plotEN);
-
-        const caption =
-`🎬 \`${title}\`
-
-📅 *RELEASED :* ${releaseDate}
-🔊 *LANGUAGE :* ${language}
-🌟 *RATING :* ${rating}
-🎭 *GENRES :* ${genres}
-⏰ *DURATION :* ${runtime}
-
-🗣️ *STORY LINE :*
-${plotSI}
-
-> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;
-
-        await conn.sendMessage(TVJID, {
-            image: { url: poster },
-            caption
-        }, { quoted: ck });
-
-    } catch (e) {
-        console.error(e);
-        await conn.sendMessage(from, { text: "❌ Details load error" }, { quoted: quotedMessage });
-    }
-}
-
-cmd({
-    pattern: "tvd",
-    desc: "Get movie/TV details by number from last search",
-    category: "movie",
-    react: "🎬",
-    filename: __filename
-}, async (conn, mek, m, { from, q, reply }) => {
-    const num = parseInt(q);
-    if (!num) return reply("❗ Number එකක් දෙන්න. Example: `.imdb 1`");
-
-    const cache = conn.movieSearch?.[from];
-    if (!cache || !cache.results || cache.results.length === 0) return reply("❌ Last search result not found. Use `.movieinfo <name>` first.");
-
-    const index = num - 1;
-    const item = cache.results[index];
-    if (!item) return reply("❌ වැරදි number එකක්.");
-
-    return sendMovieDetails(conn, from, item, m); // send details with current message quoted
+  await conn.sendMessage(TVJID, {
+    image:{ url:data.poster },
+    caption:data.caption
+  }, { quoted:m });
 });
-
-
-const ck = {
-    key: {
-        fromMe: false,
-        participant: "0@s.whatsapp.net",
-        remoteJid: "status@broadcast"
-    },
-    message: {
-        contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
-        }
-    }
-};
-
