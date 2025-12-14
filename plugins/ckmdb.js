@@ -5,7 +5,7 @@ const config = require('../config');
 const TMDB_KEY = "6284396e268fba60f0203b8b4b361ffe";
 const OMDB_KEY = "76cb7f39";
 
-/* Language code map */
+/* Language map */
 const LANG_MAP = {
     en: "English",
     ja: "Japanese",
@@ -36,13 +36,15 @@ async function translateToSinhala(text) {
 
 cmd({
     pattern: "imdb",
-    desc: "Movie search with release date & language",
+    desc: "Movie search & details (final fixed)",
     category: "movie",
     react: "🎬",
     filename: __filename
 }, async (conn, mek, m, { from, q, reply }) => {
 
-    if (!q) return reply("❗Movie name එක දෙන්න\nඋදා: `.movieinfo Avengers`");
+    if (!q) {
+        return reply("❗Movie name එක දෙන්න\nඋදා: `.movieinfo Avengers`");
+    }
 
     conn.movieSearch = conn.movieSearch || {};
 
@@ -51,13 +53,20 @@ cmd({
         const index = parseInt(q) - 1;
         const movies = conn.movieSearch[from];
 
-        if (!movies[index]) return reply("❌ වැරදි number එකක්.");
+        if (!movies[index]) {
+            return reply("❌ වැරදි number එකක්.");
+        }
 
         const movie = movies[index];
 
         try {
-            const details = await axios.get(
-                `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_KEY}&language=en-US`
+            const detailsRes = await axios.get(
+                `https://api.themoviedb.org/3/movie/${movie.id}`, {
+                    params: {
+                        api_key: TMDB_KEY,
+                        language: "en-US"
+                    }
+                }
             );
 
             let omdb = {};
@@ -68,42 +77,42 @@ cmd({
                 omdb = o.data || {};
             } catch {}
 
-            const poster = details.data.poster_path
-                ? `https://image.tmdb.org/t/p/original${details.data.poster_path}`
+            const poster = detailsRes.data.poster_path
+                ? `https://image.tmdb.org/t/p/original${detailsRes.data.poster_path}`
                 : "https://i.imgur.com/NOPOSTER.png";
 
             const rating =
                 omdb.imdbRating && omdb.imdbRating !== "N/A"
                     ? omdb.imdbRating
-                    : (details.data.vote_average
-                        ? `${details.data.vote_average}/10 (TMDB)`
+                    : (detailsRes.data.vote_average
+                        ? `${detailsRes.data.vote_average}/10 (TMDB)`
                         : "N/A");
 
             const runtime =
                 omdb.Runtime && omdb.Runtime !== "N/A"
                     ? omdb.Runtime
-                    : (details.data.runtime
-                        ? `${details.data.runtime} min`
+                    : (detailsRes.data.runtime
+                        ? `${detailsRes.data.runtime} min`
                         : "N/A");
 
             const genre =
                 omdb.Genre && omdb.Genre !== "N/A"
                     ? omdb.Genre
-                    : details.data.genres.map(g => g.name).join(", ");
+                    : (detailsRes.data.genres?.map(g => g.name).join(", ") || "N/A");
 
             const releaseDate =
-                details.data.release_date || "Upcoming";
+                detailsRes.data.release_date || "Upcoming";
 
-            const languageCode =
-                details.data.original_language || "N/A";
+            const langCode =
+                detailsRes.data.original_language || "N/A";
 
             const language =
-                LANG_MAP[languageCode] || languageCode.toUpperCase();
+                LANG_MAP[langCode] || langCode.toUpperCase();
 
             const plotEN =
                 omdb.Plot && omdb.Plot !== "N/A"
                     ? omdb.Plot
-                    : details.data.overview || "N/A";
+                    : detailsRes.data.overview || "N/A";
 
             const plotSI = await translateToSinhala(plotEN);
 
@@ -128,63 +137,71 @@ ${config.MOVIE_FOOTER}`;
 
             delete conn.movieSearch[from];
 
-        } catch (e) {
-            console.error(e);
-            reply("❌ Details ලබාගන්න බැරි වුණා.");
+        } catch (err) {
+            console.error(err);
+            reply("❌ Movie details ලබාගන්න බැරි වුණා.");
         }
         return;
     }
 
-    /* ================= SEARCH STEP ================= */
+    /* ================= SEARCH STEP (FINAL FIX) ================= */
     try {
-        const multi = await axios.get(
-            `https://api.themoviedb.org/3/search/multi`, {
+        // search/movie page 1
+        const page1 = await axios.get(
+            `https://api.themoviedb.org/3/search/movie`, {
                 params: {
                     api_key: TMDB_KEY,
                     query: q,
+                    page: 1,
                     include_adult: true
                 }
             }
         );
 
-        const multiMovies = multi.data.results
-            .filter(x => x.media_type === "movie");
-
-        const discover = await axios.get(
-            `https://api.themoviedb.org/3/discover/movie`, {
+        // search/movie page 2
+        const page2 = await axios.get(
+            `https://api.themoviedb.org/3/search/movie`, {
                 params: {
                     api_key: TMDB_KEY,
-                    sort_by: "release_date.desc",
-                    "release_date.gte": "2024-01-01",
-                    "release_date.lte": "2026-12-31"
+                    query: q,
+                    page: 2,
+                    include_adult: true
                 }
             }
         );
 
-        let results = [...multiMovies, ...discover.data.results];
+        let results = [
+            ...page1.data.results,
+            ...page2.data.results
+        ];
 
+        // remove duplicates
         results = Array.from(
             new Map(results.map(m => [m.id, m])).values()
         );
 
-        if (!results.length) return reply("😓 Movie එකක් හමු වුණේ නැහැ.");
+        if (!results.length) {
+            return reply("😓 Movie එකක් හමු වුණේ නැහැ.");
+        }
 
+        // sort by latest release (ONLY matched movies)
         results.sort((a, b) =>
             new Date(b.release_date || 0) - new Date(a.release_date || 0)
         );
 
         conn.movieSearch[from] = results;
 
-        let list = `🎬 *Movie List (Latest & Upcoming)*\n\n`;
+        let list = `🎬 *Movie List*\n\n`;
         results.slice(0, 10).forEach((m, i) => {
             list += `*${i + 1}.* ${m.title} (${m.release_date?.slice(0,4) || "Upcoming"})\n`;
         });
-        list += `\n📌 Number එක reply කරන්න`;
+
+        list += `\n📌 අවශ්‍ය movie එකේ number එක reply කරන්න`;
 
         reply(list);
 
-    } catch (e) {
-        console.error(e);
+    } catch (err) {
+        console.error(err);
         reply("❌ Search error එකක්.");
     }
 });
