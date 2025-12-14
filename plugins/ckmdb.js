@@ -5,13 +5,30 @@ const config = require('../config');
 const TMDB_KEY = "6284396e268fba60f0203b8b4b361ffe";
 const OMDB_KEY = "76cb7f39";
 
-/* Sinhala Translation */
+/* Language code map */
+const LANG_MAP = {
+    en: "English",
+    ja: "Japanese",
+    ko: "Korean",
+    hi: "Hindi",
+    ta: "Tamil",
+    te: "Telugu",
+    fr: "French",
+    es: "Spanish",
+    it: "Italian",
+    de: "German",
+    zh: "Chinese",
+    ru: "Russian",
+    si: "Sinhala"
+};
+
+/* Sinhala translate */
 async function translateToSinhala(text) {
     try {
-        const res = await axios.get(
+        const r = await axios.get(
             `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`
         );
-        return res.data.responseData.translatedText || text;
+        return r.data.responseData.translatedText || text;
     } catch {
         return text;
     }
@@ -19,83 +36,88 @@ async function translateToSinhala(text) {
 
 cmd({
     pattern: "imdb",
-    desc: "Search movies & get full details",
+    desc: "Movie search with release date & language",
     category: "movie",
     react: "🎬",
     filename: __filename
 }, async (conn, mek, m, { from, q, reply }) => {
 
-    if (!q) {
-        return reply("❗Movie name එක දෙන්න\nඋදා: `.movieinfo Avengers`");
-    }
+    if (!q) return reply("❗Movie name එක දෙන්න\nඋදා: `.movieinfo Avengers`");
 
     conn.movieSearch = conn.movieSearch || {};
 
-    /* ===============================
-       STEP 2 – NUMBER SELECT
-    ================================ */
+    /* ================= SELECT STEP ================= */
     if (conn.movieSearch[from] && !isNaN(q)) {
         const index = parseInt(q) - 1;
         const movies = conn.movieSearch[from];
 
-        if (!movies[index]) {
-            return reply("❌ වැරදි number එකක්. නැවත try කරන්න.");
-        }
+        if (!movies[index]) return reply("❌ වැරදි number එකක්.");
 
         const movie = movies[index];
 
         try {
-            const detailsRes = await axios.get(
-                `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_KEY}`
+            const details = await axios.get(
+                `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_KEY}&language=en-US`
             );
-
-            const poster = detailsRes.data.poster_path
-                ? `https://image.tmdb.org/t/p/original${detailsRes.data.poster_path}`
-                : "https://i.imgur.com/NOPOSTER.png";
 
             let omdb = {};
             try {
-                const omdbRes = await axios.get(
+                const o = await axios.get(
                     `http://www.omdbapi.com/?t=${encodeURIComponent(movie.title)}&apikey=${OMDB_KEY}`
                 );
-                omdb = omdbRes.data || {};
+                omdb = o.data || {};
             } catch {}
 
-            const imdbRating =
+            const poster = details.data.poster_path
+                ? `https://image.tmdb.org/t/p/original${details.data.poster_path}`
+                : "https://i.imgur.com/NOPOSTER.png";
+
+            const rating =
                 omdb.imdbRating && omdb.imdbRating !== "N/A"
                     ? omdb.imdbRating
-                    : (detailsRes.data.vote_average
-                        ? `${detailsRes.data.vote_average} / 10 (TMDB)`
+                    : (details.data.vote_average
+                        ? `${details.data.vote_average}/10 (TMDB)`
                         : "N/A");
 
             const runtime =
                 omdb.Runtime && omdb.Runtime !== "N/A"
                     ? omdb.Runtime
-                    : (detailsRes.data.runtime
-                        ? `${detailsRes.data.runtime} min`
+                    : (details.data.runtime
+                        ? `${details.data.runtime} min`
                         : "N/A");
 
             const genre =
                 omdb.Genre && omdb.Genre !== "N/A"
                     ? omdb.Genre
-                    : detailsRes.data.genres?.map(g => g.name).join(", ") || "N/A";
+                    : details.data.genres.map(g => g.name).join(", ");
 
-            const englishPlot =
-                (omdb.Plot && omdb.Plot !== "N/A")
+            const releaseDate =
+                details.data.release_date || "Upcoming";
+
+            const languageCode =
+                details.data.original_language || "N/A";
+
+            const language =
+                LANG_MAP[languageCode] || languageCode.toUpperCase();
+
+            const plotEN =
+                omdb.Plot && omdb.Plot !== "N/A"
                     ? omdb.Plot
-                    : detailsRes.data.overview || "N/A";
+                    : details.data.overview || "N/A";
 
-            const sinhalaPlot = await translateToSinhala(englishPlot);
+            const plotSI = await translateToSinhala(plotEN);
 
             const caption =
-`☣️ *Movie Name:* ${movie.title} (${movie.release_date?.slice(0,4) || "Upcoming"})
+`☣️ *Movie Name:* ${movie.title} (${releaseDate.slice(0,4) || "Upcoming"})
 
-⭐ *Rating:* ${imdbRating}
+📅 *Release Date:* ${releaseDate}
+🌐 *Language:* ${language}
+⭐ *Rating:* ${rating}
 🎭 *Genre:* ${genre}
 🕒 *Runtime:* ${runtime}
 
 🗣️ *කතා විස්තරය :*
-${sinhalaPlot}
+${plotSI}
 
 ${config.MOVIE_FOOTER}`;
 
@@ -108,61 +130,56 @@ ${config.MOVIE_FOOTER}`;
 
         } catch (e) {
             console.error(e);
-            reply("❌ Movie details ගන්න බැරි වුණා.");
+            reply("❌ Details ලබාගන්න බැරි වුණා.");
         }
-
         return;
     }
 
-    /* ===============================
-       STEP 1 – SEARCH & LIST
-    ================================ */
+    /* ================= SEARCH STEP ================= */
     try {
-        const page1 = await axios.get(
-            `https://api.themoviedb.org/3/search/movie`, {
+        const multi = await axios.get(
+            `https://api.themoviedb.org/3/search/multi`, {
                 params: {
                     api_key: TMDB_KEY,
                     query: q,
-                    page: 1,
-                    include_adult: true,
-                    language: "en-US"
+                    include_adult: true
                 }
             }
         );
 
-        const page2 = await axios.get(
-            `https://api.themoviedb.org/3/search/movie`, {
+        const multiMovies = multi.data.results
+            .filter(x => x.media_type === "movie");
+
+        const discover = await axios.get(
+            `https://api.themoviedb.org/3/discover/movie`, {
                 params: {
                     api_key: TMDB_KEY,
-                    query: q,
-                    page: 2,
-                    include_adult: true,
-                    language: "en-US"
+                    sort_by: "release_date.desc",
+                    "release_date.gte": "2024-01-01",
+                    "release_date.lte": "2026-12-31"
                 }
             }
         );
 
-        let results = [...page1.data.results, ...page2.data.results];
+        let results = [...multiMovies, ...discover.data.results];
 
-        if (!results.length) {
-            return reply("😓 Movie එකක් හමු වුණේ නැහැ.");
-        }
+        results = Array.from(
+            new Map(results.map(m => [m.id, m])).values()
+        );
 
-        /* Sort by latest release */
+        if (!results.length) return reply("😓 Movie එකක් හමු වුණේ නැහැ.");
+
         results.sort((a, b) =>
             new Date(b.release_date || 0) - new Date(a.release_date || 0)
         );
 
         conn.movieSearch[from] = results;
 
-        let list = `🎬 *Movie List (Latest First)*\n\n`;
-
+        let list = `🎬 *Movie List (Latest & Upcoming)*\n\n`;
         results.slice(0, 10).forEach((m, i) => {
-            const year = m.release_date?.slice(0, 4) || "Upcoming";
-            list += `*${i + 1}.* ${m.title} (${year})\n`;
+            list += `*${i + 1}.* ${m.title} (${m.release_date?.slice(0,4) || "Upcoming"})\n`;
         });
-
-        list += `\n📌 අවශ්‍ය movie එකේ *number* එක reply කරන්න`;
+        list += `\n📌 Number එක reply කරන්න`;
 
         reply(list);
 
