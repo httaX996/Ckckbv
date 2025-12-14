@@ -170,13 +170,6 @@ cmd({
 
 //-------------------Movie Group 
 
-const LANG_MAP = {
-    en: "English", ja: "Japanese", ko: "Korean", hi: "Hindi",
-    ta: "Tamil", te: "Telugu", fr: "French", es: "Spanish",
-    it: "Italian", de: "German", zh: "Chinese", ru: "Russian",
-    si: "Sinhala"
-};
-
 async function translateToSinhala(text) {
     try {
         const r = await axios.get(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`);
@@ -264,12 +257,6 @@ cmd({
 
 //---------------------TV Series Group
 
-const LANG_MAP = {
-    en: "English", ja: "Japanese", ko: "Korean", hi: "Hindi",
-    ta: "Tamil", te: "Telugu", fr: "French", es: "Spanish",
-    it: "Italian", de: "German", zh: "Chinese", ru: "Russian",
-    si: "Sinhala"
-};
 
 async function translateToSinhala(text) {
     try {
