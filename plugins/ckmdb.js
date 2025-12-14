@@ -32,69 +32,51 @@ async function translateToSinhala(text) {
     }
 }
 
-cmd({
-    pattern: "imdb",
-    desc: "Movie & TV Series info + quoted number reply support",
-    category: "movie",
-    react: "🎬",
-    filename: __filename
-}, async (conn, mek, m, { from, q, reply }) => {
+/* Helper function to send details */
+async function sendMovieDetails(conn, from, item, quotedMessage) {
+    try {
+        const endpoint = item.type === "tv" ? "tv" : "movie";
+        const details = await axios.get(
+            `https://api.themoviedb.org/3/${endpoint}/${item.id}`, {
+                params: { api_key: TMDB_KEY, language: "en-US" }
+            }
+        );
 
-    conn.movieSearch = conn.movieSearch || {};
-
-    // ================= QUOTED NUMBER REPLY CHECK =================
-    if (m.quoted && conn.movieSearch[from] && /^[0-9]+$/.test(q || "")) {
-        const msgId = m.quoted.key?.id;
-        const cache = conn.movieSearch[from];
-
-        if (cache.messageId === msgId) {
-            const index = parseInt(q) - 1;
-            const item = cache.results[index];
-            if (!item) return reply("❌ වැරදි number එකක්.");
-
+        let omdb = {};
+        if (item.type === "movie") {
             try {
-                const endpoint = item.type === "tv" ? "tv" : "movie";
-                const details = await axios.get(
-                    `https://api.themoviedb.org/3/${endpoint}/${item.id}`, {
-                        params: { api_key: TMDB_KEY, language: "en-US" }
-                    }
+                const o = await axios.get(
+                    `http://www.omdbapi.com/?t=${encodeURIComponent(item.title)}&apikey=${OMDB_KEY}`
                 );
+                omdb = o.data || {};
+            } catch {}
+        }
 
-                let omdb = {};
-                if (item.type === "movie") {
-                    try {
-                        const o = await axios.get(
-                            `http://www.omdbapi.com/?t=${encodeURIComponent(item.title)}&apikey=${OMDB_KEY}`
-                        );
-                        omdb = o.data || {};
-                    } catch {}
-                }
+        const poster = details.data.poster_path
+            ? `https://image.tmdb.org/t/p/original${details.data.poster_path}`
+            : "https://i.imgur.com/NOPOSTER.png";
 
-                const poster = details.data.poster_path
-                    ? `https://image.tmdb.org/t/p/original${details.data.poster_path}`
-                    : "https://i.imgur.com/NOPOSTER.png";
+        const title = item.title;
+        const releaseDate = item.type === "tv"
+            ? details.data.first_air_date || "N/A"
+            : details.data.release_date || "N/A";
 
-                const title = item.title;
-                const releaseDate = item.type === "tv"
-                    ? details.data.first_air_date || "N/A"
-                    : details.data.release_date || "N/A";
+        const language = LANG_MAP[details.data.original_language] ||
+            details.data.original_language.toUpperCase();
 
-                const language = LANG_MAP[details.data.original_language] ||
-                    details.data.original_language.toUpperCase();
+        const rating = item.type === "movie"
+            ? (omdb.imdbRating || `${details.data.vote_average}/10`)
+            : `${details.data.vote_average}/10`;
 
-                const rating = item.type === "movie"
-                    ? (omdb.imdbRating || `${details.data.vote_average}/10`)
-                    : `${details.data.vote_average}/10`;
+        const runtime = item.type === "tv"
+            ? `${details.data.number_of_seasons} Seasons`
+            : (omdb.Runtime || `${details.data.runtime} min`);
 
-                const runtime = item.type === "tv"
-                    ? `${details.data.number_of_seasons} Seasons`
-                    : (omdb.Runtime || `${details.data.runtime} min`);
+        const genres = details.data.genres?.map(g => g.name).join(", ") || "N/A";
+        const plotEN = details.data.overview || "N/A";
+        const plotSI = await translateToSinhala(plotEN);
 
-                const genres = details.data.genres?.map(g => g.name).join(", ") || "N/A";
-                const plotEN = details.data.overview || "N/A";
-                const plotSI = await translateToSinhala(plotEN);
-
-                const caption =
+        const caption =
 `🎬 \`${title}\`
 
 📅 *RELEASED :* ${releaseDate}
@@ -108,16 +90,40 @@ ${plotSI}
 
 > ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;
 
-            await conn.sendMessage(from, {
-                image: { url: poster },
-                caption: caption }, { quoted: ck });
+        await conn.sendMessage(from, {
+            image: { url: poster },
+            caption
+        }, { quoted: quotedMessage });
 
-            } catch (e) {
-                console.error(e);
-                reply("❌ Details load error");
-            }
+    } catch (e) {
+        console.error(e);
+        await conn.sendMessage(from, { text: "❌ Details load error" }, { quoted: quotedMessage });
+    }
+}
 
-            return;
+cmd({
+    pattern: "movieinfo",
+    desc: "Movie & TV Series info + number reply support",
+    category: "movie",
+    react: "🎬",
+    filename: __filename
+}, async (conn, mek, m, { from, q, reply }) => {
+
+    conn.movieSearch = conn.movieSearch || {};
+
+    const replyText = (q || m.text || "").trim();
+
+    // ================= QUOTED OR PLAIN NUMBER REPLY CHECK =================
+    if (/^[0-9]+$/.test(replyText) && conn.movieSearch[from]) {
+        const cache = conn.movieSearch[from];
+        const quotedId = m.quoted?.key?.id;
+
+        // Reply to list message OR fallback last search
+        if (quotedId === cache.messageId || !quotedId) {
+            const index = parseInt(replyText) - 1;
+            const item = cache.results[index];
+            if (!item) return reply("❌ වැරදි number එකක්.");
+            return sendMovieDetails(conn, from, item, m); // pass current message as quoted
         }
     }
 
@@ -154,6 +160,7 @@ ${plotSI}
 
         results.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
+        // send list message
         const sentMsg = await conn.sendMessage(from, {
             text: (() => {
                 let list = `🎬 *Movies & TV Series*\n\n`;
@@ -177,22 +184,3 @@ ${plotSI}
     }
 
 });
-
-const ck = {
-    key: {
-        fromMe: false,
-        participant: "0@s.whatsapp.net",
-        remoteJid: "status@broadcast"
-    },
-    message: {
-        contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
-        }
-    }
-};
