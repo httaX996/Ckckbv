@@ -102,7 +102,7 @@ ${plotSI}
 }
 
 cmd({
-    pattern: "movieinfo",
+    pattern: "imdb",
     desc: "Movie & TV Series info + number reply support",
     category: "movie",
     react: "🎬",
@@ -118,8 +118,8 @@ cmd({
         const cache = conn.movieSearch[from];
         const quotedId = m.quoted?.key?.id;
 
-        // Reply to list message OR fallback last search
-        if (quotedId === cache.messageId || !quotedId) {
+        // Reply to list message
+        if (quotedId === cache.messageId) {
             const index = parseInt(replyText) - 1;
             const item = cache.results[index];
             if (!item) return reply("❌ වැරදි number එකක්.");
