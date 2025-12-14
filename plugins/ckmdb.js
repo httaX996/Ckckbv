@@ -4,8 +4,8 @@ const config = require('../config');
 
 const TMDB_KEY = "6284396e268fba60f0203b8b4b361ffe";
 
-const MVJID = "120363xxxxxxxxxx@g.us"; // movie group
-const TVJID = "120363yyyyyyyyyy@g.us"; // tv group
+const MVJID = "120363298587511714@g.us"; // movie group
+const TVJID = "120363319444098961@g.us"; // tv group
 
 const LANG_MAP = {
   en: "English",
@@ -14,7 +14,8 @@ const LANG_MAP = {
   te: "Telugu",
   ml: "Malayalam",
   ja: "Japanese",
-  ko: "Korean"
+  ko: "Korean",
+  si: "Sinhala"
 };
 
 // Sinhala Translate
@@ -134,7 +135,7 @@ cmd({ pattern:"imd", category:"movie" }, async (conn, mek, m, { from, q, reply }
   await conn.sendMessage(from, {
     image:{ url:data.poster },
     caption:data.caption
-  }, { quoted:m });
+  }, { quoted:ck });
 });
 
 // ================= MVD → MOVIE GROUP =================
@@ -147,7 +148,7 @@ cmd({ pattern:"mvd", category:"movie" }, async (conn, mek, m, { from, q, reply }
   await conn.sendMessage(MVJID, {
     image:{ url:data.poster },
     caption:data.caption
-  }, { quoted:m });
+  }, { quoted:ck });
 });
 
 // ================= TVD → TV GROUP =================
@@ -160,5 +161,24 @@ cmd({ pattern:"tvd", category:"movie" }, async (conn, mek, m, { from, q, reply }
   await conn.sendMessage(TVJID, {
     image:{ url:data.poster },
     caption:data.caption
-  }, { quoted:m });
+  }, { quoted:ck });
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
