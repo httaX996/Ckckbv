@@ -5,7 +5,6 @@ const config = require('../config');
 const TMDB_KEY = "6284396e268fba60f0203b8b4b361ffe";
 const OMDB_KEY = "76cb7f39";
 
-/* Language map */
 const LANG_MAP = {
     en: "English",
     ja: "Japanese",
@@ -22,7 +21,6 @@ const LANG_MAP = {
     si: "Sinhala"
 };
 
-/* Sinhala translate */
 async function translateToSinhala(text) {
     try {
         const r = await axios.get(
@@ -36,96 +34,84 @@ async function translateToSinhala(text) {
 
 cmd({
     pattern: "imdb",
-    desc: "Movie search & details (final fixed)",
+    desc: "Movie & TV Series info",
     category: "movie",
     react: "🎬",
     filename: __filename
 }, async (conn, mek, m, { from, q, reply }) => {
 
-    if (!q) {
-        return reply("❗Movie name එක දෙන්න\nඋදා: `.movieinfo Avengers`");
-    }
+    if (!q) return reply("❗Movie / TV Series name එක දෙන්න");
 
     conn.movieSearch = conn.movieSearch || {};
 
     /* ================= SELECT STEP ================= */
     if (conn.movieSearch[from] && !isNaN(q)) {
         const index = parseInt(q) - 1;
-        const movies = conn.movieSearch[from];
+        const items = conn.movieSearch[from];
+        const item = items[index];
 
-        if (!movies[index]) {
-            return reply("❌ වැරදි number එකක්.");
-        }
-
-        const movie = movies[index];
+        if (!item) return reply("❌ වැරදි number එකක්");
 
         try {
-            const detailsRes = await axios.get(
-                `https://api.themoviedb.org/3/movie/${movie.id}`, {
-                    params: {
-                        api_key: TMDB_KEY,
-                        language: "en-US"
-                    }
+            const endpoint = item.type === "tv" ? "tv" : "movie";
+
+            const details = await axios.get(
+                `https://api.themoviedb.org/3/${endpoint}/${item.id}`, {
+                    params: { api_key: TMDB_KEY, language: "en-US" }
                 }
             );
 
             let omdb = {};
-            try {
-                const o = await axios.get(
-                    `http://www.omdbapi.com/?t=${encodeURIComponent(movie.title)}&apikey=${OMDB_KEY}`
-                );
-                omdb = o.data || {};
-            } catch {}
+            if (item.type === "movie") {
+                try {
+                    const o = await axios.get(
+                        `http://www.omdbapi.com/?t=${encodeURIComponent(item.title)}&apikey=${OMDB_KEY}`
+                    );
+                    omdb = o.data || {};
+                } catch {}
+            }
 
-            const poster = detailsRes.data.poster_path
-                ? `https://image.tmdb.org/t/p/original${detailsRes.data.poster_path}`
+            const poster = details.data.poster_path
+                ? `https://image.tmdb.org/t/p/original${details.data.poster_path}`
                 : "https://i.imgur.com/NOPOSTER.png";
 
-            const rating =
-                omdb.imdbRating && omdb.imdbRating !== "N/A"
-                    ? omdb.imdbRating
-                    : (detailsRes.data.vote_average
-                        ? `${detailsRes.data.vote_average}/10 (TMDB)`
-                        : "N/A");
-
-            const runtime =
-                omdb.Runtime && omdb.Runtime !== "N/A"
-                    ? omdb.Runtime
-                    : (detailsRes.data.runtime
-                        ? `${detailsRes.data.runtime} min`
-                        : "N/A");
-
-            const genre =
-                omdb.Genre && omdb.Genre !== "N/A"
-                    ? omdb.Genre
-                    : (detailsRes.data.genres?.map(g => g.name).join(", ") || "N/A");
-
+            const title = item.title;
             const releaseDate =
-                detailsRes.data.release_date || "Upcoming";
-
-            const langCode =
-                detailsRes.data.original_language || "N/A";
+                item.type === "tv"
+                    ? details.data.first_air_date || "N/A"
+                    : details.data.release_date || "N/A";
 
             const language =
-                LANG_MAP[langCode] || langCode.toUpperCase();
+                LANG_MAP[details.data.original_language] ||
+                details.data.original_language.toUpperCase();
 
-            const plotEN =
-                omdb.Plot && omdb.Plot !== "N/A"
-                    ? omdb.Plot
-                    : detailsRes.data.overview || "N/A";
+            const rating =
+                item.type === "movie"
+                    ? (omdb.imdbRating || `${details.data.vote_average}/10`)
+                    : `${details.data.vote_average}/10`;
 
+            const runtime =
+                item.type === "tv"
+                    ? `${details.data.number_of_seasons} Seasons`
+                    : (omdb.Runtime || `${details.data.runtime} min`);
+
+            const genres =
+                details.data.genres?.map(g => g.name).join(", ") || "N/A";
+
+            const plotEN = details.data.overview || "N/A";
             const plotSI = await translateToSinhala(plotEN);
 
             const caption =
-`☣️ *Movie Name:* ${movie.title} (${releaseDate.slice(0,4) || "Upcoming"})
+`☣️ *${item.type === "tv" ? "TV Series" : "Movie"}*
+🎬 *Name:* ${title}
 
-📅 *Release Date:* ${releaseDate}
+📅 *Release:* ${releaseDate}
 🌐 *Language:* ${language}
 ⭐ *Rating:* ${rating}
-🎭 *Genre:* ${genre}
-🕒 *Runtime:* ${runtime}
+🎭 *Genre:* ${genres}
+🕒 *Duration:* ${runtime}
 
-🗣️ *කතා විස්තරය :*
+🗣️ *කතා විස්තරය:*
 ${plotSI}
 
 ${config.MOVIE_FOOTER}`;
@@ -137,71 +123,56 @@ ${config.MOVIE_FOOTER}`;
 
             delete conn.movieSearch[from];
 
-        } catch (err) {
-            console.error(err);
-            reply("❌ Movie details ලබාගන්න බැරි වුණා.");
+        } catch (e) {
+            console.error(e);
+            reply("❌ Details load error");
         }
         return;
     }
 
-    /* ================= SEARCH STEP (FINAL FIX) ================= */
+    /* ================= SEARCH STEP ================= */
     try {
-        // search/movie page 1
-        const page1 = await axios.get(
-            `https://api.themoviedb.org/3/search/movie`, {
-                params: {
-                    api_key: TMDB_KEY,
-                    query: q,
-                    page: 1,
-                    include_adult: true
-                }
-            }
-        );
+        const [movieRes, tvRes] = await Promise.all([
+            axios.get(`https://api.themoviedb.org/3/search/movie`, {
+                params: { api_key: TMDB_KEY, query: q, page: 1 }
+            }),
+            axios.get(`https://api.themoviedb.org/3/search/tv`, {
+                params: { api_key: TMDB_KEY, query: q, page: 1 }
+            })
+        ]);
 
-        // search/movie page 2
-        const page2 = await axios.get(
-            `https://api.themoviedb.org/3/search/movie`, {
-                params: {
-                    api_key: TMDB_KEY,
-                    query: q,
-                    page: 2,
-                    include_adult: true
-                }
-            }
-        );
+        let movies = movieRes.data.results.map(m => ({
+            id: m.id,
+            title: m.title,
+            date: m.release_date,
+            type: "movie"
+        }));
 
-        let results = [
-            ...page1.data.results,
-            ...page2.data.results
-        ];
+        let tvs = tvRes.data.results.map(t => ({
+            id: t.id,
+            title: t.name,
+            date: t.first_air_date,
+            type: "tv"
+        }));
 
-        // remove duplicates
-        results = Array.from(
-            new Map(results.map(m => [m.id, m])).values()
-        );
+        let results = [...movies, ...tvs];
 
-        if (!results.length) {
-            return reply("😓 Movie එකක් හමු වුණේ නැහැ.");
-        }
+        if (!results.length) return reply("😓 Result එකක් නැහැ");
 
-        // sort by latest release (ONLY matched movies)
-        results.sort((a, b) =>
-            new Date(b.release_date || 0) - new Date(a.release_date || 0)
-        );
-
+        results.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
         conn.movieSearch[from] = results;
 
-        let list = `🎬 *Movie List*\n\n`;
-        results.slice(0, 10).forEach((m, i) => {
-            list += `*${i + 1}.* ${m.title} (${m.release_date?.slice(0,4) || "Upcoming"})\n`;
+        let list = `🎬 *Movies & TV Series*\n\n`;
+        results.slice(0, 10).forEach((r, i) => {
+            list += `*${i + 1}.* ${r.title} (${r.date?.slice(0,4) || "N/A"}) ${r.type === "tv" ? "📺" : "🎬"}\n`;
         });
 
-        list += `\n📌 අවශ්‍ය movie එකේ number එක reply කරන්න`;
+        list += `\n📌 Number එක reply කරන්න`;
 
         reply(list);
 
-    } catch (err) {
-        console.error(err);
-        reply("❌ Search error එකක්.");
+    } catch (e) {
+        console.error(e);
+        reply("❌ Search error");
     }
 });
