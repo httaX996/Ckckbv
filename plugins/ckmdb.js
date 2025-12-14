@@ -1,111 +1,173 @@
 const { cmd } = require('../command');
 const axios = require('axios');
 const config = require('../config');
+
 const TMDB_KEY = "6284396e268fba60f0203b8b4b361ffe";
 const OMDB_KEY = "76cb7f39";
 
-// Sinhala translation function
+/* Sinhala Translation */
 async function translateToSinhala(text) {
     try {
-        const res = await axios.get(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`);
+        const res = await axios.get(
+            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|si`
+        );
         return res.data.responseData.translatedText || text;
     } catch {
         return text;
     }
 }
 
-// Main command
 cmd({
     pattern: "imdb",
-    desc: "Get movie list + select for details",
+    desc: "Search movies & get full details",
     category: "movie",
     react: "🎬",
     filename: __filename
 }, async (conn, mek, m, { from, q, reply }) => {
-    if (!q) return reply("❗කරුණාකර චිත්‍රපටයේ නම දෙන්න.\nඋදා: `.movieinfo Avengers`");
+
+    if (!q) {
+        return reply("❗Movie name එක දෙන්න\nඋදා: `.movieinfo Avengers`");
+    }
 
     conn.movieSearch = conn.movieSearch || {};
 
-    // Check if user reply number
-    const userReplyNumber = parseInt(q);
-    if (conn.movieSearch[from] && !isNaN(userReplyNumber)) {
+    /* ===============================
+       STEP 2 – NUMBER SELECT
+    ================================ */
+    if (conn.movieSearch[from] && !isNaN(q)) {
+        const index = parseInt(q) - 1;
         const movies = conn.movieSearch[from];
-        const selectedIndex = userReplyNumber - 1;
 
-        if (!movies[selectedIndex]) return reply("❌ වැරදි number එකක්. නැවත උත්සාහ කරන්න.");
+        if (!movies[index]) {
+            return reply("❌ වැරදි number එකක්. නැවත try කරන්න.");
+        }
 
-        const movie = movies[selectedIndex];
+        const movie = movies[index];
 
         try {
-            const detailsRes = await axios.get(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_KEY}`);
-            const poster = `https://image.tmdb.org/t/p/original${detailsRes.data.poster_path}`;
-            const omdbRes = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(movie.title)}&apikey=${OMDB_KEY}`);
-            const omdb = omdbRes.data;
+            const detailsRes = await axios.get(
+                `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_KEY}`
+            );
 
-            const englishPlot = omdb.Plot || detailsRes.data.overview || "N/A";
+            const poster = detailsRes.data.poster_path
+                ? `https://image.tmdb.org/t/p/original${detailsRes.data.poster_path}`
+                : "https://i.imgur.com/NOPOSTER.png";
+
+            let omdb = {};
+            try {
+                const omdbRes = await axios.get(
+                    `http://www.omdbapi.com/?t=${encodeURIComponent(movie.title)}&apikey=${OMDB_KEY}`
+                );
+                omdb = omdbRes.data || {};
+            } catch {}
+
+            const imdbRating =
+                omdb.imdbRating && omdb.imdbRating !== "N/A"
+                    ? omdb.imdbRating
+                    : (detailsRes.data.vote_average
+                        ? `${detailsRes.data.vote_average} / 10 (TMDB)`
+                        : "N/A");
+
+            const runtime =
+                omdb.Runtime && omdb.Runtime !== "N/A"
+                    ? omdb.Runtime
+                    : (detailsRes.data.runtime
+                        ? `${detailsRes.data.runtime} min`
+                        : "N/A");
+
+            const genre =
+                omdb.Genre && omdb.Genre !== "N/A"
+                    ? omdb.Genre
+                    : detailsRes.data.genres?.map(g => g.name).join(", ") || "N/A";
+
+            const englishPlot =
+                (omdb.Plot && omdb.Plot !== "N/A")
+                    ? omdb.Plot
+                    : detailsRes.data.overview || "N/A";
+
             const sinhalaPlot = await translateToSinhala(englishPlot);
 
-            const caption = `🎬 \`${omdb.Title || movie.title}\`\n\n` +
-                            `⭐ *IMDb :* ${omdb.imdbRating || "N/A"}\n` +
-                            `📆 *RELEASED :* ${omdb.Released || "N/A"}` +
-                            `🎭 *GENRES :* ${omdb.Genre || "N/A"}\n` +
-                            `⏰ *RUN TIME :* ${omdb.Runtime || "N/A"}\n` +
-                            `🔊 *LANGUAGE :* ${omdb.Language || "N/A"}\n\n` +
-                            `🗣️ *PLOT :* ${sinhalaPlot}\n\n` +
-                            `> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;
+            const caption =
+`☣️ *Movie Name:* ${movie.title} (${movie.release_date?.slice(0,4) || "Upcoming"})
+
+⭐ *Rating:* ${imdbRating}
+🎭 *Genre:* ${genre}
+🕒 *Runtime:* ${runtime}
+
+🗣️ *කතා විස්තරය :*
+${sinhalaPlot}
+
+${config.MOVIE_FOOTER}`;
 
             await conn.sendMessage(from, {
                 image: { url: poster },
-                caption: caption }, {quoted: ck});
+                caption
+            });
 
             delete conn.movieSearch[from];
-        } catch (err) {
-            console.error(err);
-            reply("❌ දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.");
+
+        } catch (e) {
+            console.error(e);
+            reply("❌ Movie details ගන්න බැරි වුණා.");
         }
 
         return;
     }
 
-    // If not reply number → search movie
+    /* ===============================
+       STEP 1 – SEARCH & LIST
+    ================================ */
     try {
-        const searchRes = await axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`);
-        const results = searchRes.data.results;
+        const page1 = await axios.get(
+            `https://api.themoviedb.org/3/search/movie`, {
+                params: {
+                    api_key: TMDB_KEY,
+                    query: q,
+                    page: 1,
+                    include_adult: true,
+                    language: "en-US"
+                }
+            }
+        );
 
-        if (!results.length) return reply("😓 චිත්‍රපටය සොයාගත නොහැකි විය.");
+        const page2 = await axios.get(
+            `https://api.themoviedb.org/3/search/movie`, {
+                params: {
+                    api_key: TMDB_KEY,
+                    query: q,
+                    page: 2,
+                    include_adult: true,
+                    language: "en-US"
+                }
+            }
+        );
 
-        // Save results
+        let results = [...page1.data.results, ...page2.data.results];
+
+        if (!results.length) {
+            return reply("😓 Movie එකක් හමු වුණේ නැහැ.");
+        }
+
+        /* Sort by latest release */
+        results.sort((a, b) =>
+            new Date(b.release_date || 0) - new Date(a.release_date || 0)
+        );
+
         conn.movieSearch[from] = results;
 
-        let listMessage = `🎬 *ඔබ සොයන චිත්‍රපටය මෙන්න:* \n\n`;
-        results.slice(0, 10).forEach((movie, i) => {
-            const year = movie.release_date?.slice(0,4) || "N/A";
-            listMessage += `*${i+1}.* ${movie.title} (${year})\n`;
-        });
-        listMessage += `\n✅ ඔබට අවශ්‍ය චිත්‍රපටය number එක reply කරන්න.`;
+        let list = `🎬 *Movie List (Latest First)*\n\n`;
 
-        reply(listMessage);
-    } catch (err) {
-        console.error(err);
-        reply("❌ දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.");
+        results.slice(0, 10).forEach((m, i) => {
+            const year = m.release_date?.slice(0, 4) || "Upcoming";
+            list += `*${i + 1}.* ${m.title} (${year})\n`;
+        });
+
+        list += `\n📌 අවශ්‍ය movie එකේ *number* එක reply කරන්න`;
+
+        reply(list);
+
+    } catch (e) {
+        console.error(e);
+        reply("❌ Search error එකක්.");
     }
 });
-
-const ck = {
-    key: {
-        fromMe: false,
-        participant: "0@s.whatsapp.net",
-        remoteJid: "status@broadcast"
-    },
-    message: {
-        contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
-        }
-    }
-};
