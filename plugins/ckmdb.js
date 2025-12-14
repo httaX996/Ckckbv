@@ -106,7 +106,7 @@ cmd({
 🗣️ *STORY LINE :*
 ${plotSI}
 
-> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;;
+> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;
 
             await conn.sendMessage(from, {
                 image: { url: poster },
