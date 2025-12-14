@@ -102,24 +102,23 @@ cmd({
             const plotSI = await translateToSinhala(plotEN);
 
             const caption =
-`☣️ *${item.type === "tv" ? "TV Series" : "Movie"}*
-🎬 *Name:* ${title}
+`🎬 \`${title}\`
 
-📅 *Release:* ${releaseDate}
-🌐 *Language:* ${language}
-⭐ *Rating:* ${rating}
-🎭 *Genre:* ${genres}
-🕒 *Duration:* ${runtime}
+📅 *RELEASED :* ${releaseDate}
+🔊 *LANGUAGE :* ${language}
+🌟 *RATING :* ${rating}
+🎭 *GENRES :* ${genres}
+⏰ *DURATION :* ${runtime}
 
-🗣️ *කතා විස්තරය:*
+🗣️ *STORY LINE :*
 ${plotSI}
 
-${config.MOVIE_FOOTER}`;
+> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`;;
 
             await conn.sendMessage(from, {
                 image: { url: poster },
-                caption
-            });
+                caption: caption }, { quoted: ck });
+            
 
             delete conn.movieSearch[from];
 
@@ -176,3 +175,22 @@ ${config.MOVIE_FOOTER}`;
         reply("❌ Search error");
     }
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
