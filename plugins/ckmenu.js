@@ -222,7 +222,7 @@ gduhikkfjvjgi
 
         // Send Main Menu Image and Caption
         const sentMsg = await conn.sendMessage(from, {
-            image: { url: "https://files.catbox.moe/h6t2am.jpg" },
+            image: { url: "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg" },
             caption: cap
             }, { quoted: ck });
 
@@ -240,26 +240,26 @@ gduhikkfjvjgi
             const isReplyToSentMsg = mek.message.extendedTextMessage && mek.message.extendedTextMessage.contextInfo.stanzaId === messageID;
             if (isReplyToSentMsg) {
                 const menuImages = {
-                    '1': "https://files.catbox.moe/h6t2am.jpg",
-                    '2': "https://files.catbox.moe/h6t2am.jpg",
-                    '3': "https://files.catbox.moe/h6t2am.jpg",
-                    '4': "https://files.catbox.moe/h6t2am.jpg",
-                    '5': "https://files.catbox.moe/h6t2am.jpg",
-                    '6': "https://files.catbox.moe/h6t2am.jpg",
-                    '7': "https://files.catbox.moe/h6t2am.jpg",
-                    '8': "https://files.catbox.moe/h6t2am.jpg",
-                    '9': "https://files.catbox.moe/h6t2am.jpg",
-                    '10': "https://files.catbox.moe/h6t2am.jpg",
-                    '11': "https://files.catbox.moe/h6t2am.jpg",
-                    '12': "https://files.catbox.moe/h6t2am.jpg",
-                    '13': "https://files.catbox.moe/h6t2am.jpg",
-                    '99': "https://files.catbox.moe/h6t2am.jpg"
+                    '1': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '2': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '3': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '4': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '5': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '6': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '7': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '8': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '9': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '10': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '11': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '12': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '13': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '99': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg"
                 };
 
                 const selectedMenu = `menu${messageType}`;
                 if (menus[selectedMenu]) {
                     await conn.sendMessage(from, {
-                        image: { url: menuImages[messageType] || "https://files.catbox.moe/h6t2am.jpg" },
+                        image: { url: menuImages[messageType] || "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg" },
                         caption: menus[selectedMenu]
                          }, { quoted: ck });
                 } else {
