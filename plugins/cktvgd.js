@@ -89,7 +89,7 @@ async function createThumbnail(imageUrl, width, height) {
 // Function to send document with thumbnail
 async function sendDocumentWithThumbnail(conn, from, documentUrl, caption) {
   try {
-    const thumbnailUrl = 'https://files.catbox.moe/8o4q88.jpg';  // Default thumbnail URL
+    const thumbnailUrl = 'https://i.ibb.co/zd34Xnr/20251021-154215.jpg';  // Default thumbnail URL
 
     // Generate thumbnail
     const thumbnailBuffer = await createThumbnail(thumbnailUrl, 150, 150);
@@ -138,7 +138,7 @@ async(conn, mek, m, { from, l, quoted, body, isCmd, command, args, q, isGroup, s
             document: { url: res.downloadUrl },
             fileName: "🎬CK CineMAX🎬\n" + fileName,
             mimetype: "video/mp4",
-            jpegThumbnail: await createThumbnail('https://files.catbox.moe/8o4q88.jpg', 150, 150),  // Add thumbnail here
+            jpegThumbnail: await createThumbnail('https://i.ibb.co/zd34Xnr/20251021-154215.jpg', 150, 150),  // Add thumbnail here
             caption: "🍿 `" + fileName + "`\n🔮 `" + qu + "`\n\n> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*"
         }, { quoted: ck });
     } catch (e) {
