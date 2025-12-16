@@ -30,7 +30,7 @@ async function createThumbnail(url, w, h) {
 }
 
 cmd({
-    pattern: "megax",
+    pattern: "tme",
     desc: "Download MEGA files",
     react: "☁️",
     category: "download",
@@ -63,8 +63,8 @@ async (conn, mek, m, { from, reply, q }) => {
 
         // FINAL FILE NAME
         const finalName = customName
-            ? `🎬CK CineMAX🎬 ${customName}${ext}`
-            : `🎬CK CineMAX🎬 ${originalName}`;
+            ? `${customName}${ext}`
+            : `${originalName}`;
 
         const sizeMB = (file.size / 1024 / 1024).toFixed(2);
         const isMp4 = ext.toLowerCase() === '.mp4';
@@ -85,34 +85,28 @@ async (conn, mek, m, { from, reply, q }) => {
         if (isMp4) {
             // MP4 → VIDEO
             await conn.sendMessage(from, {
-                video: buffer,
+                document: buffer,
                 mimetype: 'video/mp4',
-                fileName: finalName,
+                fileName: "🎬CK CineMAX🎬 " + finalName,
                 jpegThumbnail: thumb,
                 caption:
-`*📥 MEGA Download Completed*
+`🍿 \`${finalName}\`
 
-*🎞 Video:* ${finalName}
-*📂 Size:* ${sizeMB} MB
-
-> © Powered by CK CineMAX`
-            }, { quoted: mek });
+> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`
+            }, { quoted: ck });
 
         } else {
             // OTHER FILES → DOCUMENT
             await conn.sendMessage(from, {
                 document: buffer,
                 mimetype: getMimeType(finalName),
-                fileName: finalName,
+                fileName: "🎬CK CineMAX🎬 " + finalName,
                 jpegThumbnail: thumb,
                 caption:
-`*📥 MEGA Download Completed*
+`🍿 \`${finalName}\`
 
-*📌 File:* ${finalName}
-*📂 Size:* ${sizeMB} MB
-
-> © Powered by CK CineMAX`
-            }, { quoted: mek });
+> ⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ *CK CineMAX*`
+            }, { quoted: ck });
         }
 
     } catch (err) {
@@ -120,3 +114,22 @@ async (conn, mek, m, { from, reply, q }) => {
         reply("❌ *MEGA download error:* " + err.message);
     }
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
