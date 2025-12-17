@@ -2,7 +2,7 @@ const { cmd } = require("../command");
 const axios = require('axios');
 const NodeCache = require('node-cache');
 
-const img = "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg";
+const img = "https://i.ibb.co/nMYG1ng3/1765949607102.jpg";
 
 // Initialize cache (1-minute TTL)
 const searchCache = new NodeCache({ stdTTL: 60, checkperiod: 120 });
@@ -84,7 +84,7 @@ searchInfo += `\n\n*ඔයා ඕනේ paper එකට අදාල අංක�
 
       const searchMessage = await conn.sendMessage(from, {
                         image: { url: img },
-                        caption: searchinfo
+                        caption: searchInfo
                     }, { quoted: mek });
 
       const searchMessageKey = searchMessage.key;
