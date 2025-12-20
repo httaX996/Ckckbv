@@ -8,6 +8,20 @@ const PREVIEW_IMG = "https://i.ibb.co/nMYG1ng3/1765949607102.jpg";
 const cache = new NodeCache({ stdTTL: 60 });
 const activeSelections = new Map();
 
+/* 🔧 QUERY NORMALIZER */
+function normalizeQuery(q) {
+  return q
+    .replace(/\bo\/l\b/gi, "Ordinary Level")
+    .replace(/\bol\b/gi, "Ordinary Level")
+    .replace(/\ba\/l\b/gi, "Advanced Level")
+    .replace(/\bal\b/gi, "Advanced Level")
+    .replace(/\bmaths\b/gi, "Mathematics")
+    .replace(/\bmath\b/gi, "Mathematics")
+    .replace(/\bsci\b/gi, "Science")
+    .trim();
+}
+
+/* 📄 COMMAND */
 cmd(
   {
     pattern: "ckpp4",
@@ -20,20 +34,25 @@ cmd(
     if (!q) {
       return conn.sendMessage(
         from,
-        { text: "Usage: .past <search query>\nEg: .past Grade 10 Maths 2023 Term 2" },
+        { text: "Usage: .ckpp4 <query>\nEg: .ckpp4 o/l maths 2020" },
         { quoted: mek }
       );
     }
 
     try {
-      const cacheKey = `past_${q}`;
-      let data = cache.get(cacheKey);
+      const fixedQuery = normalizeQuery(q);
+      const cacheKey = `pp_${fixedQuery}`;
 
-      if (!data) {
+      let results = cache.get(cacheKey);
+
+      if (!results) {
         const res = await axios.get(
-          `https://past-paper-api.vercel.app/api/pastpapers`,
+          "https://past-paper-api.vercel.app/api/pastpapers",
           {
-            params: { q, api_key: API_KEY },
+            params: {
+              q: fixedQuery,
+              api_key: API_KEY,
+            },
             timeout: 15000,
           }
         );
@@ -42,46 +61,42 @@ cmd(
           throw new Error("No past papers found");
         }
 
-        data = res.data.results;
-        cache.set(cacheKey, data);
+        results = res.data.results;
+        cache.set(cacheKey, results);
       }
 
-      let msgText = `📚 *PAST PAPERS SEARCH*\n\n🔍 *${q}*\n\n`;
+      let text = `📚 *CK PAST PAPERS*\n\n🔍 *${fixedQuery}*\n\n`;
 
-      data.forEach((p, i) => {
-        msgText += `\`${i + 1}\` | 📘 ${p.title}\n`;
+      results.forEach((r, i) => {
+        text += `\`${i + 1}\` | 📘 ${r.title}\n`;
       });
 
-      msgText += `\n*Reply or send number (1-${data.length})*\n`;
+      text += `\n*Reply or send number (1-${results.length})*\n`;
 
       const sent = await conn.sendMessage(
         from,
-        {
-          image: { url: PREVIEW_IMG },
-          caption: msgText,
-        },
+        { image: { url: PREVIEW_IMG }, caption: text },
         { quoted: mek }
       );
 
       activeSelections.set(from, {
-        messageId: sent.key.id,
-        results: data,
+        results,
         time: Date.now(),
       });
 
       setTimeout(() => activeSelections.delete(from), 120000);
 
-    } catch (err) {
+    } catch (e) {
       await conn.sendMessage(
         from,
-        { text: `❌ Error: ${err.message}` },
+        { text: `❌ Error: ${e.message}` },
         { quoted: mek }
       );
     }
   }
 );
 
-// 🔥 GLOBAL LISTENER
+/* 🔥 GLOBAL LISTENER */
 module.exports = async (conn) => {
   conn.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0];
@@ -145,7 +160,7 @@ module.exports = async (conn) => {
     } catch (e) {
       await conn.sendMessage(
         from,
-        { text: `❌ Download failed\n${paper.url}` },
+        { text: "❌ Download failed. Try again later." },
         { quoted: msg }
       );
     }
