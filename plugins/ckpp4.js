@@ -1,168 +1,72 @@
 const { cmd } = require("../command");
 const axios = require("axios");
-const NodeCache = require("node-cache");
 
-const API_KEY = "chama-free-api";
-const PREVIEW_IMG = "https://i.ibb.co/nMYG1ng3/1765949607102.jpg";
+// temporary memory (per chat)
+const paperStore = {};
 
-const cache = new NodeCache({ stdTTL: 60 });
-const activeSelections = new Map();
-
-/* 🔧 QUERY NORMALIZER */
-function normalizeQuery(q) {
-  return q
-    .replace(/\bo\/l\b/gi, "Ordinary Level")
-    .replace(/\bol\b/gi, "Ordinary Level")
-    .replace(/\ba\/l\b/gi, "Advanced Level")
-    .replace(/\bal\b/gi, "Advanced Level")
-    .replace(/\bmaths\b/gi, "Mathematics")
-    .replace(/\bmath\b/gi, "Mathematics")
-    .replace(/\bsci\b/gi, "Science")
-    .trim();
-}
-
-/* 📄 COMMAND */
-cmd(
-  {
+// 🔍 Search past papers
+cmd({
     pattern: "ckpp4",
-    react: "📄",
+    desc: "Search past papers",
     category: "education",
-    desc: "Past Paper Downloader",
-    filename: __filename,
-  },
-  async (conn, mek, m, { from, q }) => {
-    if (!q) {
-      return conn.sendMessage(
-        from,
-        { text: "Usage: .ckpp4 <query>\nEg: .ckpp4 o/l maths 2020" },
-        { quoted: mek }
-      );
-    }
-
+    react: "📚",
+}, async (conn, mek, m, { text, from, reply }) => {
     try {
-      const fixedQuery = normalizeQuery(q);
-      const cacheKey = `pp_${fixedQuery}`;
-
-      let results = cache.get(cacheKey);
-
-      if (!results) {
-        const res = await axios.get(
-          "https://past-paper-api.vercel.app/api/pastpapers",
-          {
-            params: {
-              q: fixedQuery,
-              api_key: API_KEY,
-            },
-            timeout: 15000,
-          }
-        );
-
-        if (!res.data?.status || !res.data.results?.length) {
-          throw new Error("No past papers found");
+        if (!text) {
+            return reply("❌ *Keyword එකක් දාන්න*\n\nඋදාහරණ:\n.pp sinhala");
         }
 
-        results = res.data.results;
-        cache.set(cacheKey, results);
-      }
+        const apiUrl = `https://past-paper-api.vercel.app/api/pastpapers?q=${encodeURIComponent(text)}&api_key=chama-free-api`;
+        const res = await axios.get(apiUrl);
 
-      let text = `📚 *CK PAST PAPERS*\n\n🔍 *${fixedQuery}*\n\n`;
-
-      results.forEach((r, i) => {
-        text += `\`${i + 1}\` | 📘 ${r.title}\n`;
-      });
-
-      text += `\n*Reply or send number (1-${results.length})*\n`;
-
-      const sent = await conn.sendMessage(
-        from,
-        { image: { url: PREVIEW_IMG }, caption: text },
-        { quoted: mek }
-      );
-
-      activeSelections.set(from, {
-        results,
-        time: Date.now(),
-      });
-
-      setTimeout(() => activeSelections.delete(from), 120000);
-
-    } catch (e) {
-      await conn.sendMessage(
-        from,
-        { text: `❌ Error: ${e.message}` },
-        { quoted: mek }
-      );
-    }
-  }
-);
-
-/* 🔥 GLOBAL LISTENER */
-module.exports = async (conn) => {
-  conn.ev.on("messages.upsert", async ({ messages }) => {
-    const msg = messages[0];
-    if (!msg?.message) return;
-
-    const from = msg.key.remoteJid;
-    const ctx = activeSelections.get(from);
-    if (!ctx) return;
-
-    const text =
-      msg.message.conversation ||
-      msg.message.extendedTextMessage?.text;
-
-    if (!text) return;
-
-    const index = parseInt(text.trim());
-    if (isNaN(index)) return;
-
-    const paper = ctx.results[index - 1];
-    if (!paper) {
-      return conn.sendMessage(
-        from,
-        { text: "❌ Invalid number" },
-        { quoted: msg }
-      );
-    }
-
-    activeSelections.delete(from);
-
-    try {
-      const dl = await axios.get(
-        "https://past-paper-api.vercel.app/api/download",
-        {
-          params: {
-            url: paper.url,
-            api_key: API_KEY,
-          },
-          timeout: 15000,
+        if (!res.data || !res.data.results || res.data.results.length === 0) {
+            return reply("❌ Papers හමු නොවීය");
         }
-      );
 
-      if (!dl.data?.download) {
-        throw new Error("Download link error");
-      }
+        const papers = res.data.results;
+        paperStore[from] = papers;
 
-      await conn.sendMessage(
-        from,
-        {
-          document: { url: dl.data.download },
-          mimetype: "application/pdf",
-          fileName: `${paper.title}.pdf`,
-          caption: `📄 ${paper.title}`,
-        },
-        { quoted: msg }
-      );
+        let msg = `📚 *Past Papers List*\n🔍 Keyword: *${text}*\n\n`;
 
-      await conn.sendMessage(from, {
-        react: { text: "📄", key: msg.key },
-      });
+        papers.forEach((p, i) => {
+            msg += `${i + 1}. ${p.title}\n`;
+        });
+
+        msg += `\n📝 *Paper අංකයට reply කරන්න*\nඋදා: 1`;
+
+        await reply(msg);
 
     } catch (e) {
-      await conn.sendMessage(
-        from,
-        { text: "❌ Download failed. Try again later." },
-        { quoted: msg }
-      );
+        console.error(e);
+        reply("❌ Error එකක් ආවා");
     }
-  });
-};
+});
+
+// 📥 Download selected paper
+cmd({
+    on: "text"
+}, async (conn, mek, m, { body, from }) => {
+    try {
+        if (!m.quoted) return;
+        if (!paperStore[from]) return;
+
+        const index = parseInt(body.trim());
+        if (isNaN(index)) return;
+
+        const papers = paperStore[from];
+        if (index < 1 || index > papers.length) return;
+
+        const selected = papers[index - 1];
+
+        const dlApi = `https://past-paper-api.vercel.app/api/download?url=${encodeURIComponent(selected.url)}&api_key=chama-free-api`;
+
+        await conn.sendMessage(from, {
+            document: { url: dlApi },
+            mimetype: "application/pdf",
+            fileName: `${selected.title}.pdf`
+        }, { quoted: m });
+
+    } catch (e) {
+        console.error(e);
+    }
+});
