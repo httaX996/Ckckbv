@@ -38,7 +38,7 @@ const { File } = require('megajs')
  const prefix = ('.')
 
 // Owner Number
-const ownerNumber = ['94774391560']
+const ownerNumber = ['94722770762']
 
 // Session ID Handling
 //===================SESSION-AUTH============================
