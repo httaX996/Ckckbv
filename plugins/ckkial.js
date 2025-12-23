@@ -1,6 +1,6 @@
 
 
-const { cmd } = require('../lib/command');
+const { cmd } = require('../command');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // remove only member
