@@ -55,7 +55,7 @@ async (conn, mek, m, {
             await new Promise(res => setTimeout(res, 2000)) // 2s delay per kick (safe limit)
         }
 
-        reply("✅ *සාර්ථකයි!* *ඔක්කොම non-admin members kick කරලා!*")
+        reply("*Successfully romoved all members* ✅")
 
     } catch (err) {
         console.error("KickAll Error:", err)
