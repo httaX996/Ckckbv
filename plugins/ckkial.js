@@ -12,7 +12,6 @@ async (conn, mek, m, {
     from,
     isGroup,
     isAdmins,
-    isBotAdmins,
     groupMetadata,
     groupAdmins,
     reply,
@@ -23,18 +22,20 @@ async (conn, mek, m, {
         // Group check
         if (!isGroup) return reply("❌ *මෙම command එක group වලට විතරයි!*")
 
-        // Admin check - no check for admins now
-        // (removed the isAdmins check as all members can use the command now)
-        
-        // Bot admin check
-        if (!isBotAdmins) return reply("❌ *Bot ගේ Admin permission නැත*")
+        // Fetch updated group metadata and admins (Ensuring Bot's admin status is updated)
+        const group = await conn.groupMetadata(from)
+        const updatedGroupAdmins = group.participants.filter(p => p.admin === 'admin')
+
+        // Check if bot is an admin in the group
+        const botIsAdmin = updatedGroupAdmins.some(admin => admin.id === conn.user.id)
+        if (!botIsAdmin) return reply("❌ *Bot ගේ Admin permission නැත*")  // Check if bot has admin rights
 
         // Fetch all participants
         const participants = groupMetadata.participants
 
         // Filter non-admin members and exclude bot itself
         const targets = participants.filter(p =>
-            !groupAdmins.includes(p.id) && 
+            !updatedGroupAdmins.includes(p.id) && 
             p.id !== conn.user.id
         )
 
