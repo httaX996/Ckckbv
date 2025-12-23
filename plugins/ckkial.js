@@ -1,39 +1,64 @@
 const config = require('../config')
-const { cmd, commands } = require('../command')
-  
+const { cmd } = require('../command')
+
 cmd({
     pattern: "kickall",
-    desc: "Kicks all non-admin members from the group.",
+    desc: "Remove all members from the group except admins and bot",
     react: "👏",
     category: "group",
     filename: __filename,
-},           
-async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-      if (!isAdmins) return reply(`ONLY ADMINS CAN USE THIS CMD 🪄♻️`)
-      if (!isOwner) return reply(`SORRY ADMINS YOU R NOT BOT OWNER 🪄♻️`)
-      
-        // Check if the command is used in a group
-        if (!isGroup) return reply(`This command is only for groups.`);
+},
+async (conn, mek, m, {
+    from,
+    isGroup,
+    isAdmins,
+    isBotAdmins,
+    groupMetadata,
+    groupAdmins,
+    reply,
+    sender
+}) => {
+    try {
+
+        // Group check
+        if (!isGroup) return reply("❌ *මෙම command එක group වලට විතරයි!*")
+
+        // Admin check - no check for admins now
+        // (removed the isAdmins check as all members can use the command now)
         
-        // Check if the bot has admin privileges
-        if (!isBotAdmins) return reply(`I need admin privileges to kick users.`);
-        // Fetch all participants from the group
-        const allParticipants = groupMetadata.participants;
-        // Filter out the admins (including the bot)
-        const nonAdminParticipants = allParticipants.filter(member => !groupAdmins.includes(member.id));
-        if (nonAdminParticipants.length === 0) {
-            return reply('There are no non-admin members to kick.');
+        // Bot admin check
+        if (!isBotAdmins) return reply("❌ *Bot ගේ Admin permission නැත*")
+
+        // Fetch all participants
+        const participants = groupMetadata.participants
+
+        // Filter non-admin members and exclude bot itself
+        const targets = participants.filter(p =>
+            !groupAdmins.includes(p.id) && 
+            p.id !== conn.user.id
+        )
+
+        if (targets.length === 0) {
+            return reply("ℹ️ *Non-admin members නොමැත*")
         }
-        // Start removing non-admin participants
-        for (let participant of nonAdminParticipants) {
-            await conn.groupParticipantsUpdate(m.chat, [participant.id], "remove");
-  }
-        // Send a confirmation message once done
-        reply(`Successfully kicked all non-admin members from the group.`);
-        
-    } catch (e) {
-        console.error('Error kicking users:', e);
-        reply('An error occurred while trying to kick all members. Please try again.');
+
+        reply(`⚠️ *KickAll start*
+👥 *Total members to remove: ${targets.length}*`)
+
+        // Kicking non-admins with 2 second delay between each removal to prevent spam blocking
+        for (let user of targets) {
+            await conn.groupParticipantsUpdate(
+                from,
+                [user.id],
+                "remove"
+            )
+            await new Promise(res => setTimeout(res, 2000)) // 2s delay per kick (safe limit)
+        }
+
+        reply("✅ *සාර්ථකයි!* *ඔක්කොම non-admin members kick කරලා!*")
+
+    } catch (err) {
+        console.error("KickAll Error:", err)
+        reply("❌ *KickAll කරනකොට error එකක් ආවා.*")
     }
-});
+})
