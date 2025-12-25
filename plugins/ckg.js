@@ -86,7 +86,7 @@ async (m, match, msg, { from, q, reply }) => {
       `📃 \`File name:\` *${gdriveData.fileName}*\n` +
       `💈 \`File Size:\` *${gdriveData.fileSize}*\n` +
       `🕹️ \`File type:\` *${mime}*\n\n` +
-      `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍᴜɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+      `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
     );
 
     // Send file with thumbnail + auto mimetype
