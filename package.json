@@ -58,7 +58,7 @@
     "mrnima-moviedl":"1.0.0",
     "denethdev-ytmp3":"1.0.3",
     "g-i-s":"2.1.7",
-    "sharp": "^0.34.1",
+    "sharp": "0.32.6",
     "Jimp": "^0.16.1",
     "api-dylux": "1.8.5",
     "mongoose": "^8.9.4",
