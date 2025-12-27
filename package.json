@@ -9,7 +9,7 @@
     "restart": "pm2 restart CK-MD"
   },
   "dependencies": {
-    "@whiskeyshokets/baileys": "npm:baileys-dtz",
+    "@whiskeyshokets/baileys": "7.0.0-rc.9",
     "api-dylux": "latest",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@dark-yasiya/yt-dl.js": "latest",
@@ -58,7 +58,7 @@
     "mrnima-moviedl":"1.0.0",
     "denethdev-ytmp3":"1.0.3",
     "g-i-s":"2.1.7",
-    "sharp": "0.32.6",
+    "sharp": "^0.32.6",
     "Jimp": "^0.16.1",
     "api-dylux": "1.8.5",
     "mongoose": "^8.9.4",
