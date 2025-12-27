@@ -59,7 +59,7 @@
     "denethdev-ytmp3":"1.0.3",
     "g-i-s":"2.1.7",
     "sharp": "^0.32.6",
-    "Jimp": "^0.16.1",
+    "jimp": "^0.16.1",
     "api-dylux": "1.8.5",
     "mongoose": "^8.9.4",
     "postgres_dbm": "^1.1.0",
