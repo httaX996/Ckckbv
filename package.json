@@ -9,7 +9,7 @@
     "restart": "pm2 restart CK-MD"
   },
   "dependencies": {
-    "@whiskeyshokets/baileys": "7.0.0-rc.9",
+    "@whiskeysockets/baileys": "^6.7.8",
     "api-dylux": "latest",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@dark-yasiya/yt-dl.js": "latest",
