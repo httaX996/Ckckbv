@@ -3,24 +3,6 @@ const { cmd, commands } = require('../command');
 const os = require("os");
 const { runtime } = require('../lib/functions');
 
-// Quoted object for watermark credit
-const botname = "𝙺𝙰𝚅𝙸 𝙼𝙳"; // Change only if needed
-const ownername = "𝙺𝙰𝚅𝙸𝙳𝚄 𝚁𝙰𝚂𝙰𝙽𝙶𝙰"; // Change only if needed
-
-const Supunwa = {
-    key: {
-        remoteJid: 'status@broadcast',
-        participant: '0@s.whatsapp.net'
-    },
-    message: {
-        newsletterAdminInviteMessage: {
-            newsletterJid: '120363417070951702', // your WhatsApp Channel ID
-            newsletterName: "MOVIE CIRCLE", // Your bot/channel name
-            caption: botname + ` 𝚅𝙴𝚁𝙸𝙵𝙸𝙴𝙳 𝙱𝚈 ` + ownername,
-            inviteExpiration: 0
-        }
-    }
-};
 
 cmd({
     pattern: "system",
@@ -34,22 +16,39 @@ async (conn, mek, m, {
 }) => {
     try {
         let status = `
-╭╶━━━━━━━━━━━━━━━━━━━━◆➤
-┃❖ *Uptime:*  ${runtime(process.uptime())}
-┃
-┃❖ *RAM Usage:* ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${(os.totalmem() / 1024 / 1024).toFixed(2)}MB
-┃
-┃❖ *Bot Name:* ${config.BOT_NAME}
-┃
-┃❖ *Owner:* Kavidu Rasanga 
-╰╶━━━━━━━━━━━━━━━━━━━━◆➤`;
+🛡️ \`𝗖𝗞 𝗕𝗢𝗧 𝗦𝗬𝗦𝗧𝗘𝗠 𝗜𝗡𝗙𝗢\` 🛡️
+
+\`HOST:\` *Digital Ocean*
+\`UPTIME:\`  *${runtime(process.uptime())}*
+\`RAM:\` *${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${(os.totalmem() / 1024 / 1024).toFixed(2)}MB*
+\`BOT NAME:\` *CK BOT*
+\`OWNER:\` *Chethmina Kavishan*`;
 
         await conn.sendMessage(from, {
             text: status
-        }, { quoted: Supunwa });
+        }, { quoted: ck });
 
     } catch (e) {
         console.log(e);
         reply(`${e}`);
     }
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
