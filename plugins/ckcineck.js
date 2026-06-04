@@ -30,7 +30,7 @@ async (conn, mek, m, { from, q, reply }) => {
         }
 
         let text = `🎬 \`𝗖𝗞 𝗖𝗜𝗡𝗘𝗦𝗨𝗕𝗭 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
-        text += `🔎 Search: \`$\`{q}\n\n`;
+        text += `*🔎 Search:* \`${q}\`\n\n`;
 
         data.data.forEach((movie, index) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
