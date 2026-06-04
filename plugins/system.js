@@ -18,15 +18,18 @@ async (conn, mek, m, {
         let status = `
 🛡️ \`𝗖𝗞 𝗕𝗢𝗧 𝗦𝗬𝗦𝗧𝗘𝗠 𝗜𝗡𝗙𝗢\` 🛡️
 
-\`HOST:\` *Digital Ocean*
-\`UPTIME:\`  *${runtime(process.uptime())}*
-\`RAM:\` *${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${(os.totalmem() / 1024 / 1024).toFixed(2)}MB*
-\`BOT NAME:\` *CK BOT*
-\`OWNER:\` *Chethmina Kavishan*`;
+⚙️ \`HOST:\` *Digital Ocean*
+🆙 \`UPTIME:\`  *${runtime(process.uptime())}*
+💾 \`RAM:\` *${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${(os.totalmem() / 1024 / 1024).toFixed(2)}MB*
+🤖 \`BOT NAME:\` *CK BOT*
+🧬 \`VERSION:\` *1.0.0 V*
+🧑🏻‍💻 \`OWNER:\` *Chethmina Kavishan*
 
-        await conn.sendMessage(from, {
-            text: status
-        }, { quoted: ck });
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+
+        await conn.sendMessage(from,  { 
+              image: { url: "https://i.ibb.co/fd7v5197/6xs-BKLp911.jpg"},
+              caption: status }, { quoted: ck });
 
     } catch (e) {
         console.log(e);
