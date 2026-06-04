@@ -29,24 +29,22 @@ async (conn, mek, m, { from, q, reply }) => {
             return reply("❌ No movies found.");
         }
 
-        let text = `🎬 *CINESUBZ SEARCH RESULTS*\n\n`;
-        text += `🔎 Search: ${q}\n\n`;
+        let text = `🎬 \`𝗖𝗞 𝗖𝗜𝗡𝗘𝗦𝗨𝗕𝗭 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
+        text += `🔎 Search: \`$\`{q}\n\n`;
 
         data.data.forEach((movie, index) => {
-            text += `*${index + 1}.* ${movie.title}\n`;
+            text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply to this message with the movie number.`;
+        text += `\n💡 Reply to this message with the movie number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
             {
-                image: {
-                    url: data.data[0].image
-                },
+                image: { url: `https://i.ibb.co/fd7v5197/6xs-BKLp911.jpg` },
                 caption: text
             },
-            { quoted: mek }
+            { quoted: ck }
         );
 
         const movieSelectionListener = async (update) => {
@@ -89,21 +87,21 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const movie = infoResponse.data.data;
 
-                let caption = `🎬 *${movie.title}*\n\n`;
-                caption += `📅 *Year:* ${movie.year || "N/A"}\n`;
-                caption += `⭐ *Rating:* ${movie.rating || "N/A"}\n`;
-                caption += `⏳ *Duration:* ${movie.duration || "N/A"}\n`;
-                caption += `🎥 *Director:* ${movie.directors || "N/A"}\n`;
-                caption += `🌍 *Country:* ${movie.country || "N/A"}\n\n`;
+                let caption = `🎬 \`${movie.title}\`\n\n`;
+                caption += `📅 \`YEAR:\` *${movie.year || "N/A"}*\n`;
+                caption += `⭐ \`RATING:\` *${movie.rating || "N/A"}*\n`;
+                caption += `⏳ \`DURATION:\` *${movie.duration || "N/A"}*\n`;
+                caption += `🎥 \`DIRECTOR:\` *${movie.directors || "N/A"}*\n`;
+                caption += `🌍 \`COUNTRY:\` *${movie.country || "N/A"}*\n\n`;
 
-                caption += `📥 *Available Downloads*\n\n`;
+                caption += `📥 \`ᴀᴠᴀɪʟᴀʙʟᴇ Qᴜᴀʟɪᴛɪᴇꜱ\`\n\n`;
 
                 movie.downloads.forEach((dl, i) => {
-                    caption += `*${i + 1}.* ${dl.quality} • ${dl.size}\n`;
+                    caption += `\`${i + 1}\` *|* ❭❭◦ ${dl.quality} • ${dl.size}\n`;
                 });
 
                 caption +=
-                    `\n💡 Reply to this message with the quality number.`;
+                    `\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 const movieDetailsMessage =
                     await conn.sendMessage(
@@ -114,7 +112,7 @@ async (conn, mek, m, { from, q, reply }) => {
                             },
                             caption
                         },
-                        { quoted: mek }
+                        { quoted: ck }
                     );
 
                 const qualityListener = async (update2) => {
@@ -191,14 +189,14 @@ async (conn, mek, m, { from, q, reply }) => {
                                 mimetype: "video/mp4",
                                 fileName: `${movie.title}.mp4`,
                                 caption:
-`🎬 *${movie.title}*
+`🎬 \`${movie.title}\`
 
-🎞️ Quality: ${selectedQuality.quality}
-📦 Size: ${selectedQuality.size}
+🎞️ \`Quality:\` *${selectedQuality.quality}*
+📦 \`Size:\` *${selectedQuality.size}*
 
-✅ Downloaded via CineSubz`
+> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                             },
-                            { quoted: mek }
+                            { quoted: ck }
                         );
 
                         await conn.sendMessage(
@@ -255,3 +253,22 @@ async (conn, mek, m, { from, q, reply }) => {
     }
 
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
