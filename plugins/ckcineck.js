@@ -1,7 +1,25 @@
 const { cmd } = require('../command');
 const axios = require('axios');
+const sharp = require('sharp');
 
 const API_KEY = '1c5502363449511f';
+
+async function createThumbnail(url) {
+    try {
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer'
+        });
+
+        return await sharp(response.data)
+            .resize(300, 300)
+            .jpeg({ quality: 80 })
+            .toBuffer();
+
+    } catch (e) {
+        console.log('Thumbnail Error:', e);
+        return null;
+    }
+}
 
 cmd({
     pattern: "cineck",
@@ -143,6 +161,8 @@ async (conn, mek, m, { from, q, reply }) => {
 
                         const selectedQuality =
                             movie.downloads[qualityIndex];
+                        
+                        const thumb = await createThumbnail(movie.image);
 
                         await conn.sendMessage(
                             from,
@@ -188,6 +208,7 @@ async (conn, mek, m, { from, q, reply }) => {
                                 },
                                 mimetype: "video/mp4",
                                 fileName: `${movie.title}.mp4`,
+                                jpegThumbnail: thumb,
                                 caption:
 `🎬 \`${movie.title}\`
 
