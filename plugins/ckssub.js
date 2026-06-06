@@ -113,7 +113,7 @@ cmd({
 
         global.pendingSearch[sender] = { results, timestamp: Date.now() };
 
-        let text = "*🎬 VEXTER-MD MOVIE SEARCH:*\n\n";
+        let text = "*🎬 CK MOVIE SEARCH:*\n\n";
         results.forEach((m, i) => { text += `*${i+1}.* ${m.title}\n   📊 ${m.quality} | 📝 ${m.language}\n`; });
         text += `\n*Reply with movie number (1-${results.length})*`;
         return reply(text);
