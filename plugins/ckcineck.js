@@ -39,7 +39,7 @@ async (conn, mek, m, { from, q, reply }) => {
         }
 
         const searchUrl =
-            `https://api-dark-shan-yt.koyeb.app/movie/cinesubz-search?q=${encodeURIComponent(q)}&apikey=${API_KEY}`;
+            `https://darkyasiya-new-movie-api.vercel.app/api/movie/cinesubz/search?q=${encodeURIComponent(q)}`;
 
         const { data } = await axios.get(searchUrl);
 
@@ -95,7 +95,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     data.data[selectedMovieIndex];
 
                 const infoUrl =
-                    `https://api-dark-shan-yt.koyeb.app/movie/cinesubz-info?url=${encodeURIComponent(selectedMovie.link)}&apikey=${API_KEY}`;
+                    `https://darkyasiya-new-movie-api.vercel.app/api/movie/cinesubz/movie?url=${encodeURIComponent(selectedMovie.link)}`;
 
                 const infoResponse = await axios.get(infoUrl);
 
@@ -105,8 +105,8 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const movie = infoResponse.data.data;
 
-                let caption = `🎬 \`${movie.title}\`\n\n`;
-                caption += `📅 \`YEAR:\` *${movie.year || "N/A"}*\n`;
+                let caption = `🎬 \`${movie.maintitle}\`\n\n`;
+                caption += `📅 \`YEAR:\` *${movie.dateCreate || "N/A"}*\n`;
                 caption += `⭐ \`RATING:\` *${movie.rating || "N/A"}*\n`;
                 caption += `⏳ \`DURATION:\` *${movie.duration || "N/A"}*\n`;
                 caption += `🎥 \`DIRECTOR:\` *${movie.directors || "N/A"}*\n`;
