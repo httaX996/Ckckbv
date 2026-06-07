@@ -39,7 +39,7 @@ async (conn, mek, m, { from, q, reply }) => {
         }
 
         const searchUrl =
-            `https://api-dark-shan-yt.koyeb.app/movie/cinesubz-search?q=${encodeURIComponent(q)}&apikey=${API_KEY}`;
+            `https://apis.sadas.dev/api/v1/movie/cinesubz/search?q=${encodeURIComponent(q)}&apiKey=ea4d57a2a2db72e0bb3ba58f56b1ff9b`;
 
         const { data } = await axios.get(searchUrl);
 
@@ -95,7 +95,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     data.data[selectedMovieIndex];
 
                 const infoUrl =
-                    `https://api-dark-shan-yt.koyeb.app/movie/cinesubz-info?url=${encodeURIComponent(selectedMovie.link)}&apikey=${API_KEY}`;
+                    `https://apis.sadas.dev/api/v1/movie/cinesubz/info?q=${encodeURIComponent(selectedMovie.link)}&apiKey=ea4d57a2a2db72e0bb3ba58f56b1ff9b`;
 
                 const infoResponse = await axios.get(infoUrl);
 
@@ -107,14 +107,14 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 let caption = `🎬 \`${movie.title}\`\n\n`;
                 caption += `📅 \`YEAR:\` *${movie.year || "N/A"}*\n`;
-                caption += `⭐ \`RATING:\` *${movie.rating || "N/A"}*\n`;
-                caption += `⏳ \`DURATION:\` *${movie.duration || "N/A"}*\n`;
-                caption += `🎥 \`DIRECTOR:\` *${movie.directors || "N/A"}*\n`;
-                caption += `🌍 \`COUNTRY:\` *${movie.country || "N/A"}*\n\n`;
+                caption += `⭐ \`RATING:\` *${movie.imdb_rating || "N/A"}*\n`;
+                caption += `⏳ \`DURATION:\` *\n`;
+                caption += `🎥 \`DIRECTOR:\` *\n`;
+                caption += `🌍 \`COUNTRY:\` *\n\n`;
 
                 caption += `📥 \`ᴀᴠᴀɪʟᴀʙʟᴇ Qᴜᴀʟɪᴛɪᴇꜱ\`\n\n`;
 
-                movie.downloads.forEach((dl, i) => {
+                movie.download_links.forEach((dl, i) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ ${dl.quality} • ${dl.size}\n`;
                 });
 
@@ -126,7 +126,7 @@ async (conn, mek, m, { from, q, reply }) => {
                         from,
                         {
                             image: {
-                                url: movie.image
+                                url: movie.poster
                             },
                             caption
                         },
@@ -154,15 +154,15 @@ async (conn, mek, m, { from, q, reply }) => {
 
                         if (
                             qualityIndex < 0 ||
-                            qualityIndex >= movie.downloads.length
+                            qualityIndex >= movie.download_links.length
                         ) {
                             return reply("❌ Invalid quality number.");
                         }
 
                         const selectedQuality =
-                            movie.downloads[qualityIndex];
+                            movie.download_links[qualityIndex];
                         
-                        const thumb = await createThumbnail(movie.image);
+                        const thumb = await createThumbnail(movie.poster);
 
                         await conn.sendMessage(
                             from,
@@ -175,7 +175,7 @@ async (conn, mek, m, { from, q, reply }) => {
                         );
 
                         const downloadUrl =
-                            `https://api-dark-shan-yt.koyeb.app/movie/cinesubz-download?url=${encodeURIComponent(selectedQuality.link)}&apikey=${API_KEY}`;
+                            `https://api-dark-shan-yt.koyeb.app/movie/cinesubz-download?url=${encodeURIComponent(selectedQuality.original_zt_link)}&apikey=${API_KEY}`;
 
                         const downloadResponse =
                             await axios.get(downloadUrl);
