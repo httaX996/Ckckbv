@@ -25,7 +25,7 @@ const searchSessions = {};
 const qualitySessions = {};
 
 cmd({
-    pattern: "subck",
+    pattern: "subck2",
     desc: "Search SinhalaSub movies",
     category: "movie",
     react: "🎬",
