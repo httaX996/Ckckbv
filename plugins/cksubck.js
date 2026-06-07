@@ -4,8 +4,6 @@ const sharp = require('sharp');
 
 const API_KEY = "sadasggggg";
 
-const API_KEY = "sadasggggg";
-
 async function createThumbnail(url) {
     try {
         const response = await axios.get(url, {
