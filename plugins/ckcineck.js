@@ -109,7 +109,7 @@ async (conn, mek, m, { from, q, reply }) => {
                 caption += `📅 \`YEAR:\` *${movie.year || "N/A"}*\n`;
                 caption += `⭐ \`RATING:\` *${movie.imdb_rating || "N/A"}*\n`;
                 caption += `💿 \`QUALITY:\` *${movie.quality || "N/A"}*\n`;
-                caption += `🎭 \`CAST:\` ${movie.cast?.slice(0, 5).map(c => `*• ${c.name} (${c.role})`).join('*\n') || "N/A"}\n\n`;
+                caption += `🎭 \`CAST:\` ${movie.cast?.slice(0, 5).map(c => `*• ${c.name} (${c.role})*`).join('\n') || "N/A"}\n\n`;
 
                 caption += `📥 \`ᴀᴠᴀɪʟᴀʙʟᴇ Qᴜᴀʟɪᴛɪᴇꜱ\`\n\n`;
 
@@ -174,30 +174,26 @@ async (conn, mek, m, { from, q, reply }) => {
                         );
 
                         const downloadUrl =
-                            `https://api-dark-shan-yt.koyeb.app/movie/cinesubz-download?url=${encodeURIComponent(selectedQuality.original_zt_link)}&apikey=${API_KEY}`;
+                                `https://apis.sadas.dev/api/v1/movie/cinesubz/dl?q=${encodeURIComponent(selectedQuality.final_link)}&apiKey=ea4d57a2a2db72e0bb3ba58f56b1ff9b`;
 
-                        const downloadResponse =
-                            await axios.get(downloadUrl);
+                        const downloadResponse = await axios.get(downloadUrl);
 
                         if (!downloadResponse.data.status) {
-                            return reply("❌ Download link not found.");
+                        return reply("❌ Download link not found.");
                         }
 
-                        const downloadData =
-                            downloadResponse.data.data;
+                        const links = downloadResponse.data.data?.links || [];
 
-                        const directLink =
-                            downloadData.download.find(
-                                x =>
-                                x.name &&
-                                x.name.toLowerCase() === "unknown"
-                               )?.url;
+// Telegram link එක නොවන direct mp4 link එක ගන්නවා
+                        const directLink = links.find(
+                        link =>
+                        !link.includes("t.me") &&
+                        !link.includes("telegram")
+                        );
 
-                        if (!directLink) {
-                            return reply(
-                                "❌ Direct download link not found."
-                            );
-                        }
+if (!directLink) {
+    return reply("❌ Direct download link not found.");
+}
 
                         await conn.sendMessage(
                             from,
