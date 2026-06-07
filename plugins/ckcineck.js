@@ -109,7 +109,7 @@ async (conn, mek, m, { from, q, reply }) => {
                 caption += `📅 \`YEAR:\` *${movie.year || "N/A"}*\n`;
                 caption += `⭐ \`RATING:\` *${movie.imdb_rating || "N/A"}*\n`;
                 caption += `💿 \`QUALITY:\` *${movie.quality || "N/A"}*\n`;
-                caption += `🎭 \`CAST:\` *${movie.cast?.slice(0, 5).map(c => `• ${c.name} (${c.role})`).join('\n') || "N/A"}*\n`;
+                caption += `🎭 \`CAST:\` ${movie.cast?.slice(0, 5).map(c => `*• ${c.name} (${c.role})`).join('*\n') || "N/A"}\n\n`;
 
                 caption += `📥 \`ᴀᴠᴀɪʟᴀʙʟᴇ Qᴜᴀʟɪᴛɪᴇꜱ\`\n\n`;
 
@@ -174,7 +174,7 @@ async (conn, mek, m, { from, q, reply }) => {
                         );
 
                         const downloadUrl =
-                            `https://apis.sadas.dev/api/v1/movie/cinesubz/dl?q=${encodeURIComponent(selectedQuality.final_link)}&apiKey=ea4d57a2a2db72e0bb3ba58f56b1ff9b}`;
+                            `https://api-dark-shan-yt.koyeb.app/movie/cinesubz-download?url=${encodeURIComponent(selectedQuality.original_zt_link)}&apikey=${API_KEY}`;
 
                         const downloadResponse =
                             await axios.get(downloadUrl);
@@ -186,11 +186,12 @@ async (conn, mek, m, { from, q, reply }) => {
                         const downloadData =
                             downloadResponse.data.data;
 
-                        const directLink = downloadResponse.data.links.find(link =>
-                              link.includes('.mp4') &&
-                              !link.includes('pixeldrain') &&
-                              !link.includes('t.me')
-                              );
+                        const directLink =
+                            downloadData.download.find(
+                                x =>
+                                x.name &&
+                                x.name.toLowerCase() === "unknown"
+                               )?.url;
 
                         if (!directLink) {
                             return reply(
