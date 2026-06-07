@@ -8,7 +8,7 @@ const movieSearchStore = new Map();
 const qualityStore = new Map();
 
 cmd({
-    pattern: "cineck",
+    pattern: "subck2",
     desc: "Search SinhalaSub movies",
     category: "movie",
     react: "🎬",
