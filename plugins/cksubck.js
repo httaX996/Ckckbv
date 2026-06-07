@@ -1,214 +1,208 @@
 const { cmd } = require('../command');
 const axios = require('axios');
-const sharp = require('sharp');
 
-const API_KEY = "sadasggggg";
+const API_KEY = 'sadasggggg';
 
-async function createThumbnail(url) {
-    try {
-        const response = await axios.get(url, {
-            responseType: 'arraybuffer'
-        });
-
-        return await sharp(response.data)
-            .resize(300, 300)
-            .jpeg({ quality: 80 })
-            .toBuffer();
-
-    } catch (e) {
-        console.log(e);
-        return null;
-    }
-}
-
-const searchSessions = {};
-const qualitySessions = {};
+// Temporary memory store
+const movieSearchStore = new Map();
+const qualityStore = new Map();
 
 cmd({
-    pattern: "subck2",
+    pattern: "cineck",
     desc: "Search SinhalaSub movies",
     category: "movie",
     react: "🎬",
     filename: __filename
 },
 async (conn, mek, m, { from, q, reply }) => {
-
     try {
 
         if (!q) {
-            return reply("*Please provide a movie name.*\n\nExample:\n.cineck avatar");
+            return reply("*Please provide a movie name.*");
         }
 
-        const { data } = await axios.get(
+        const res = await axios.get(
             `https://apis.sadas.dev/api/v1/movie/sinhalasub/search?q=${encodeURIComponent(q)}&apiKey=${API_KEY}`
         );
 
-        if (!data.status || !data.data.length) {
-            return reply("*No movies found!*");
+        if (!res.data.status || !res.data.data.length) {
+            return reply("*No movies found.*");
         }
+
+        const movies = res.data.data;
 
         let text = `🎬 *Movie Search Results*\n\n`;
 
-        data.data.forEach((movie, i) => {
+        movies.forEach((movie, i) => {
             text += `${i + 1}. ${movie.Title}\n`;
         });
 
-        text += `\n_Reply to this message with a number._`;
+        text += `\n_Reply with the movie number by replying to this message._`;
 
         const sent = await conn.sendMessage(
             from,
             { text },
-            { quoted: ck }
+            { quoted: mek }
         );
 
-        searchSessions[sent.key.id] = data.data;
+        movieSearchStore.set(sent.key.id, movies);
 
-    } catch (err) {
-        console.error(err);
-        reply("*Error fetching movie results!*");
+    } catch (e) {
+        console.log(e);
+        reply("*Error while searching movie.*");
     }
 });
 
-cmd({
-    on: "text"
-},
-async (conn, mek, m, { from, body }) => {
+const movieSelectionListener = async (update) => {
 
     try {
 
-        const quoted =
-            mek.message?.extendedTextMessage?.contextInfo?.stanzaId;
+        const msg = update.messages[0];
 
-        if (!quoted) return;
+        if (!msg.message?.extendedTextMessage) return;
 
-        const number = parseInt(body);
+        if (
+            msg.message.extendedTextMessage.contextInfo?.stanzaId !==
+            sentMsg.key.id
+        ) return;
 
-        if (isNaN(number)) return;
+        const selected =
+            parseInt(
+                msg.message.extendedTextMessage.text.trim()
+            ) - 1;
 
-        // MOVIE SELECTION
-        if (searchSessions[quoted]) {
+        if (
+            selected < 0 ||
+            selected >= movies.length
+        ) {
+            return reply("❌ Invalid movie number.");
+        }
 
-            const movies = searchSessions[quoted];
+        const movie = movies[selected];
 
-            if (number < 1 || number > movies.length) return;
+        const infoUrl =
+            `https://apis.sadas.dev/api/v1/movie/sinhalasub/infodl?q=${encodeURIComponent(movie.Link)}&apiKey=${API_KEY}`;
 
-            const selectedMovie = movies[number - 1];
+        const { data: info } =
+            await axios.get(infoUrl);
 
-            const { data } = await axios.get(
-                `https://apis.sadas.dev/api/v1/movie/sinhalasub/infodl?q=${encodeURIComponent(selectedMovie.Link)}&apiKey=${API_KEY}`
-            );
+        if (!info.status) {
+            return reply("❌ Movie details not found.");
+        }
 
-            if (!data.status || !data.data?.status) {
-                return;
-            }
+        const details = info.data;
 
-            const info = data.data;
-            const downloads = info.downloadLinks.filter(
-    x => x.server === "DLServer-01"
-);
-
-            const image =
-                info.images?.[0] ||
-                selectedMovie.Img;
-
-            const dlLinks = info.downloadLinks.filter(
+        const dlLinks =
+            details.downloadLinks.filter(
                 x => x.server === "DLServer-01"
             );
 
-            if (!dlLinks.length) {
-                return conn.sendMessage(
-                    from,
-                    { text: "No DLServer-01 links found." },
-                    { quoted: mek }
-                );
-            }
+        let caption =
+`🎬 *${details.title}*
 
-            let caption =
-`🎬 *${info.title}*
+📅 Year : ${details.date}
+⭐ Rating : ${details.rating}
+🌍 Country : ${details.country}
 
-📅 Date : ${info.date}
-⭐ Rating : ${info.rating}
-🌍 Country : ${info.country}
-
-📥 *Download Qualities*
+📥 *Available Qualities*
 
 `;
 
-            downloads.forEach((item, index) => {
-    caption += `${index + 1}. ${item.quality} - ${item.size}\n`;
-});
+        dlLinks.forEach((dl, i) => {
+            caption +=
+                `${i + 1}. ${dl.quality} - ${dl.size}\n`;
+        });
 
-            caption += `\n_Reply to this image with a quality number._`;
+        caption +=
+            `\nReply with quality number.`;
 
-            const sent = await conn.sendMessage(
+        const qualityMsg =
+            await conn.sendMessage(
                 from,
                 {
-                    image: { url: image },
+                    image: {
+                        url: details.images[0]
+                    },
                     caption
                 },
                 { quoted: ck }
             );
 
-            qualitySessions[sent.key.id] = dlLinks;
+        const qualityListener = async (update2) => {
 
-            delete searchSessions[quoted];
-        }
+            try {
 
-        // QUALITY SELECTION
-        else if (qualitySessions[quoted]) {
+                const msg2 =
+                    update2.messages[0];
 
-            const links = qualitySessions[quoted];
+                if (
+                    !msg2.message?.extendedTextMessage
+                ) return;
 
-            if (number < 1 || number > links.length) return;
+                if (
+                    msg2.message
+                    .extendedTextMessage
+                    .contextInfo?.stanzaId !==
+                    qualityMsg.key.id
+                ) return;
 
-            const selected = links[number - 1];
+                const qualityIndex =
+                    parseInt(
+                        msg2.message
+                        .extendedTextMessage
+                        .text.trim()
+                    ) - 1;
 
-          const thumb = await createThumbnail(
-    info.images?.[0]
-);
+                if (
+                    qualityIndex < 0 ||
+                    qualityIndex >= dlLinks.length
+                ) {
+                    return reply(
+                        "❌ Invalid quality number."
+                    );
+                }
 
-            await conn.sendMessage(
-    from,
-    {
-        document: {
-            url: selected.link
-        },
-        mimetype: "video/mp4",
-        fileName: `${info.title}.mp4`,
-        jpegThumbnail: thumb,
-        caption:
-`🎬 ${info.title}
+                const selectedQuality =
+                    dlLinks[qualityIndex];
 
-🎞️ Quality : ${selected.quality}
-📦 Size : ${selected.size}`
-    },
-    { quoted: ck }
-);
+                await conn.sendMessage(
+                    from,
+                    {
+                        document: {
+                            url: selectedQuality.link
+                        },
+                        mimetype: "video/mp4",
+                        fileName:
+                            `${details.title}.mp4`,
+                        caption:
+`🎬 ${details.title}
 
-            delete qualitySessions[quoted];
-        }
+📦 ${selectedQuality.size}
+🎞️ ${selectedQuality.quality}`
+                    },
+                    { quoted: ck }
+                );
 
-    } catch (err) {
-        console.error(err);
+            } catch (e) {
+                console.log(e);
+            }
+
+        };
+
+        conn.ev.on(
+            "messages.upsert",
+            qualityListener
+        );
+
+        setTimeout(() => {
+            conn.ev.off(
+                "messages.upsert",
+                qualityListener
+            );
+        }, 120000);
+
+    } catch (e) {
+        console.log(e);
     }
-});
 
-const ck = {
-    key: {
-        fromMe: false,
-        participant: "0@s.whatsapp.net",
-        remoteJid: "status@broadcast"
-    },
-    message: {
-        contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
-        }
-    }
 };
-
