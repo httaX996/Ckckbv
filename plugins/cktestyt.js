@@ -110,7 +110,6 @@ cmd({
     const sentMsg = await conn.sendMessage(from, {
       'image': { 'url': videoData.thumbnail },
       'caption': captionText
-      }
     }, { 'quoted': mek });
 
     const originalMsgId = sentMsg.key.id;
