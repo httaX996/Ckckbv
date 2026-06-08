@@ -1,12 +1,12 @@
 {
-  "name": "KAVI-MD",
-  "version": "3.0.0",
-  "description": "A WhatsApp Bot Created By KAVIDU RASANGA.",
+  "name": "CK-BOT",
+  "version": "1.0.0",
+  "description": "A WhatsApp Bot Created By CHETHMINA KAVISHAN",
   "main": "index.js",
   "scripts": {
-    "start": "pm2 start index.js --deep-monitoring --attach --name KAVI-MD",
-    "stop": "pm2 stop KAVI-MD",
-    "restart": "pm2 restart KAVI-MD"
+    "start": "pm2 start index.js --deep-monitoring --attach --name CK-BOT",
+    "stop": "pm2 stop CK-BOT",
+    "restart": "pm2 restart CK-BOT"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "7.0.0-rc.8",
@@ -66,6 +66,7 @@
     "postgres_dbm": "^1.1.0",
     "node-cache": "5.1.2",
     "@dark-yasiya/scrap": "1.0.1",
+    "@xaviabot/fb-downloader": "1.0.14",
     "human-readable": "0.2.1",
     "dew-api": "1.0.4"
   }
