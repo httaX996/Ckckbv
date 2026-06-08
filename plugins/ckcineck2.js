@@ -22,7 +22,7 @@ async function createThumbnail(url) {
 }
 
 cmd({
-    pattern: "cineck",
+    pattern: "cineck2",
     desc: "Search movies from CineSubz",
     category: "movie",
     react: "🎬",
