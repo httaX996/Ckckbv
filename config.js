@@ -1,15 +1,4 @@
-/**
 
-
- Copyright (C) 2025.
- Licensed under the  GPL-3.0 License;
- You may not sell this script.
- It is supplied in the hope that it may be useful.
- * @project_name : Free Bot script
- * @author : Malvin King <https://github.com/kingmalvn>
- * @description : A Multi-functional whatsapp bot script.
- * @version 3.0.0
- **/
 
 
 const fs = require('fs');
@@ -25,8 +14,9 @@ MODE: process.env.MODE || "public",
 AUTO_VOICE: process.env.AUTO_VOICE || "false",
 AUTO_STICKER: process.env.AUTO_STICKER || "false",
 AUTO_REPLY: process.env.AUTO_REPLY || "true",
-ALIVE_IMG: process.env.ALIVE_IMG || "https://i.ibb.co/fd7v5197/6xs-BKLp911.jpg",
-MENU_IMG: process.env.MENU_IMG || "https://i.ibb.co/fd7v5197/6xs-BKLp911.jpg",
+ALIVE_IMG: process.env.ALIVE_IMG || "https://graph.org/file/2fb6e685f72b2755603f6-bd07f6a5500ed5bcb7.jpg",
+MENU_IMG: process.env.MENU_IMG || "https://graph.org/file/2fb6e685f72b2755603f6-bd07f6a5500ed5bcb7.jpg",
+IMG_URL: process.env.IMG_URL || "https://graph.org/file/2fb6e685f72b2755603f6-bd07f6a5500ed5bcb7.jpg",
 ALIVE_MSG: process.env.ALIVE_MSG || "*😎 Hey How are you? 👻*\n\n*👊 KAVI-MD Whatsapp Bot Alive Now..!*\n\n> *ᴘᴏᴡᴇʀᴅ ʙʏ  ᴋᴀᴠɪᴅᴜ ʀᴀꜱᴀɴɢᴀ : )*",
 ANTI_LINK: process.env.ANTI_LINK || "true",
 ANTI_BAD: process.env.ANTI_BAD || "true",
