@@ -22,52 +22,26 @@ await conn.sendMessage(from, { react: { text: "💡", key: mek.key } });
 
 const result = await getFBInfo(q);
 
-    const captionHeader = `🎥 *DILSHAN MD FB DOWNLOADER 🎥*
+    const captionHeader = `🧩 \`𝗖𝗞 𝗙𝗕 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗘𝗥\` 🧩
 
-*┏━━━━━━━━━━━━━━━━┓*
-*┃ 🎥 ᴛɪᴛʟᴇ:* ${result.title}
-*┃ 🔗 ᴜʀʟ:* -=-${q} 
-*┗━━━━━━━━━━━━━━━━┛*
+🔖 \`TITLE:\` *${result.title}*
+🔗 \`URL:\` *${q}*
 
-*🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ɴᴜᴍʙᴇʀ:*
+🔢 \`ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ɴᴜᴍʙᴇʀ\`
 
-*[1] 𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗩𝗜𝗗𝗘𝗢*🎥
-*1.1 | 🪫  SD QULITY*
-*1.2 | 🔋 HD QULITY*
+\`1\` *|* ❭❭◦ *SD QULITY* 🪫
+\`2\` *|* ❭❭◦ *HD QULITY* 🔋
+\`3\` *|* ❭❭◦ *AUDIO* 🎶
 
-*[2] 𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗔𝗨𝗗𝗜𝗢*🎧
-
-*2.1 | 🎶 AUDIO*
-*2.2 | 📂 DOCUMENT*
-*2.3 | 🎤 VOICE NOTE [ptt]*
-
-> *𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙳𝙸𝙻𝚂𝙷𝙰𝙽 𝙼𝙳*
+> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
 `;
 
 const sentMsg = await conn.sendMessage(from, {
   image: { url: result.thumbnail}, // Ensure `img.allmenu` is a valid image URL or base64 encoded image
-  caption: captionHeader,
-  contextInfo: {
-      mentionedJid: ['94773416478@s.whatsapp.net'], // specify mentioned JID(s) if any
-      groupMentions: [],
-      forwardingScore: 999,
-      isForwarded: true,
-      forwardedNewsletterMessageInfo: {
-          newsletterJid: '@newsletter',
-          newsletterName: "Luxalgo",
-          serverMessageId: 999
-      },
-      externalAdReply: {
-          title: 'Luxalgo',
-          body: '𝙻𝚄𝚇𝙰𝙻𝙶𝙾 ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ',
-          mediaType: 1,
-          sourceUrl: "https://github.com/luxalgo/algo",
-          thumbnailUrl: 'https://files.catbox.moe/joo2gt.jpg', // This should match the image URL provided above
-          renderLargerThumbnail: false,
-          showAdAttribution: true
-      }
-  }
-});
+  caption: captionHeader
+},
+  { quoted: ck }
+);
 const messageID = sentMsg.key.id; // Save the message ID for later reference
 
 
@@ -91,102 +65,33 @@ conn.ev.on('messages.upsert', async (messageUpdate) => {
         // React to the upload (sending the file)
         await conn.sendMessage(from, { react: { text: '⬆️', key: mek.key } });
 
-        if (messageType === '1.1') {
+        if (messageType === '1') {
             // Handle option 1 (sd File)
             await conn.sendMessage(from, {
               video: { url: result.sd}, // Ensure `img.allmenu` is a valid image URL or base64 encoded image
-              caption: "*𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙻𝚄𝚇𝙰𝙻𝙶𝙾 𝚇𝙳*",
-              contextInfo: {
-                  mentionedJid: ['94774575878@s.whatsapp.net'], // specify mentioned JID(s) if any
-                  groupMentions: [],
-                  forwardingScore: 999,
-                  isForwarded: true,
-                  forwardedNewsletterMessageInfo: {
-                      newsletterJid: '@newsletter',
-                      newsletterName: "Luxalgo",
-                      serverMessageId: 999
-                  },
-                  externalAdReply: {
-                      title: 'Luxalgo',
-                      body: 'ʟᴜxᴀʟɢᴏ xᴅ ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ',
-                      mediaType: 1,
-                      sourceUrl: "https://github.com/luxalgo/algo",
-                      thumbnailUrl: 'https://files.catbox.moe/joo2gt.jpg', // This should match the image URL provided above
-                      renderLargerThumbnail: false,
-                      showAdAttribution: true
-                  }
-              }
-            });
+              caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*",
+            },
+                                   { quoted: ck }
+              
+            );
           }
 
-          else if (messageType === '1.2') {
+          else if (messageType === '2') {
             // Handle option 2 (hd File)
             await conn.sendMessage(from, {
-              video: { url: result.hd}, // Ensure `img.allmenu` is a valid image URL or base64 encoded image
-              caption: "*𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙻𝚄𝚇𝙰𝙻𝙶𝙾 𝚇𝙳*",
-              contextInfo: {
-                  mentionedJid: ['94773416478@s.whatsapp.net'], // specify mentioned JID(s) if any
-                  groupMentions: [],
-                  forwardingScore: 999,
-                  isForwarded: true,
-                  forwardedNewsletterMessageInfo: {
-                      newsletterJid: '@newsletter',
-                      newsletterName: "luxalgo",
-                      serverMessageId: 999
-                  },
-                  externalAdReply: {
-                      title: 'Luxalgo',
-                      body: 'ʟᴜxᴀʟɢᴏ xᴅ ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ',
-                      mediaType: 1,
-                      sourceUrl: "https://github.com/luxalgo/algo",
-                      thumbnailUrl: 'https://files.catbox.moe/joo2gt.jpg', // This should match the image URL provided above
-                      renderLargerThumbnail: false,
-                      showAdAttribution: true
-                  }
-              }
-            });
+              video: { url: result.hd}, // Ensure `img.allmenu` is a valid image URL or base64 en",
+              caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*",
+            },
+                                   { quoted: ck }
+            );
           }
            
-          else if (messageType === '2.1') {
+          else if (messageType === '3') {
             //Handle option 3 (audio File)  
-          await conn.sendMessage(from, { audio: { url: result.sd }, mimetype: "audio/mpeg" }, { quoted: mek })
+          await conn.sendMessage(from, { audio: { url: result.sd }, mimetype: "audio/mpeg" }, { quoted: ck })
           }
           
-          else if (messageType === '2.2') {
-            await conn.sendMessage(from, {
-              document: { url: result.sd },
-              mimetype: "audio/mpeg",
-              fileName: `Luxalgo XD/FBDL.mp3`,
-              caption: "*𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙻𝚄𝚇𝙰𝙻𝙶𝙾 𝚇𝙳*",
-              contextInfo: {
-                mentionedJid: ['94773416478@s.whatsapp.net'], // specify mentioned JID(s) if any
-                groupMentions: [],
-                forwardingScore: 999,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '@newsletter',
-                    newsletterName: "LUXALGO",
-                    serverMessageId: 999
-                },
-                externalAdReply: {
-                    title: 'Luxalgo',
-                    body: 'ʟᴜxᴀʟɢᴏ xᴅ ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ',
-                    mediaType: 1,
-                    sourceUrl: "https://github.com/luxalgo/algo",
-                    thumbnailUrl: 'https://files.catbox.moe/joo2gt.jpg', // This should match the image URL provided above
-                    renderLargerThumbnail: false,
-                    showAdAttribution: true
-                }
-            }
-          }, { quoted: mek });
-          }
           
-          else if (messageType === '2.3') {
-            //Handle option 3 (audio File)  
-          await conn.sendMessage(from, { audio: { url: result.sd }, mimetype: 'audio/mp4', ptt: true }, { quoted: mek })
-    
-          }
-
         // React to the successful completion of the task
         await conn.sendMessage(from, { react: { text: '✅', key: mek.key } });
 
@@ -198,3 +103,23 @@ console.log(e);
 reply(`${e}`);
 }
 })
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
+
