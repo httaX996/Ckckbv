@@ -1,6 +1,7 @@
 const { cmd } = require('../command');
 const axios = require('axios');
 const sharp = require('sharp');
+const config = require('../config');
 
 const API_KEY = '1c5502363449511f';
 
@@ -59,7 +60,7 @@ async (conn, mek, m, { from, q, reply }) => {
         const sentMsg = await conn.sendMessage(
             from,
             {
-                image: { url: `https://i.ibb.co/fd7v5197/6xs-BKLp911.jpg` },
+                image: { url: config.IMG_URL },
                 caption: text
             },
             { quoted: ck }
