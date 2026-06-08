@@ -28,7 +28,7 @@ async (conn, mek, m, {
 > 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         await conn.sendMessage(from,  { 
-              image: { url: "https://i.ibb.co/fd7v5197/6xs-BKLp911.jpg"},
+              image: { url: config.IMG_URL },
               caption: status }, { quoted: ck });
 
     } catch (e) {
