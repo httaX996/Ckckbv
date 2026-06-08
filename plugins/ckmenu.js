@@ -1,6 +1,7 @@
 const { cmd, commands } = require('../command');
 const os = require("os");
 const { runtime } = require('../lib/functions');
+const config = require('../config');
 
 cmd({
     pattern: "menu",
@@ -240,9 +241,9 @@ gduhikkfjvjgi
             const isReplyToSentMsg = mek.message.extendedTextMessage && mek.message.extendedTextMessage.contextInfo.stanzaId === messageID;
             if (isReplyToSentMsg) {
                 const menuImages = {
-                    '1': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
-                    '2': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
-                    '3': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
+                    '1': "https://graph.org/file/2fb6e685f72b2755603f6-bd07f6a5500ed5bcb7.jpg",
+                    '2': "https://graph.org/file/2fb6e685f72b2755603f6-bd07f6a5500ed5bcb7.jpg",
+                    '3': "https://graph.org/file/2fb6e685f72b2755603f6-bd07f6a5500ed5bcb7.jpg",
                     '4': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
                     '5': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
                     '6': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
@@ -253,13 +254,13 @@ gduhikkfjvjgi
                     '11': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
                     '12': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
                     '13': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg",
-                    '99': "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg"
+                    '99': "https://graph.org/file/2fb6e685f72b2755603f6-bd07f6a5500ed5bcb7.jpg"
                 };
 
                 const selectedMenu = `menu${messageType}`;
                 if (menus[selectedMenu]) {
                     await conn.sendMessage(from, {
-                        image: { url: menuImages[messageType] || "https://i.ibb.co/jZBBk3j1/20251019-084548.jpg" },
+                        image: { url: menuImages[messageType] || "https://graph.org/file/2fb6e685f72b2755603f6-bd07f6a5500ed5bcb7.jpg" },
                         caption: menus[selectedMenu]
                          }, { quoted: ck });
                 } else {
