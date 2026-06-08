@@ -1,249 +1,147 @@
-const { cmd, commands } = require('../lib/scommand');
-const { fetchJson } = require('../lib/sfunctions');
-
-// ✅ Define your custom footer here
-const FOOTER = "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*";
-
-// ✅ Fix: Define desc1
-const desc1 = 'Download Facebook videos in SD/HD quality or as Audio/Document';
-
-// ✅ FB URL Validator
-function fbreg(url) {
-  return /facebook\.com|fb\.watch/.test(url);
-}
-
-const urlneed2 = '🧩 *Please provide a valid Facebook video link.*';
+const { cmd, commands } = require('../lib/command');
+const { fetchJson } = require('../lib/functions');
 
 cmd({
-  pattern: "fb",
-  react: '📥',
-  alias: ["fbdl"],
-  desc: desc1,
-  category: "download",
-  use: '.fb <Fb video link>',
+    pattern: "ckfb",
+    alias: ["facebook"],
+    use: '.fb <facebook url>',
+    react: "🏮",
+    desc: 'Download videos from Facebook',
+    category: "download",
+    filename: __filename
+}, async (conn, m, mek, { from, prefix, q, reply }) => {
+    try {
+        if (!q || !q.includes('facebook.com')) {
+            return await reply('*❌ Please enter a valid Facebook URL!*');
+        }
+
+        const apiURL = `https://apis.prexzyvilla.site/download/facebook?url=${encodeURIComponent(q)}`;
+        console.log('🌐 FB API URL:', apiURL);
+
+        let sadas;
+        try {
+            const res = await axios.get(apiURL, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                    "Accept": "application/json",
+                    "Referer": "https://www.facebook.com/"
+                }
+            });
+            sadas = res.data;
+            console.log('📦 API DATA:', JSON.stringify(sadas, null, 2));
+        } catch (err) {
+            console.error("❌ AXIOS ERROR:", err.response?.data || err.message);
+            return reply('*⚠️ Failed to fetch data from Facebook API. Check console for details.*');
+        }
+
+        if (!sadas.status || !sadas.data) {
+            return reply('*❌ No downloadable data found. Try another video.*');
+        }
+
+        const data = sadas.data;
+        const hdUrl = data.hd;
+        const sdUrl = data.sd;
+        let thumb = data.thumbnail;
+
+        // ✅ Use fallback or proxy for thumbnail
+        if (!thumb || !thumb.startsWith('http')) {
+            thumb = 'https://i.imgur.com/qNQv8Ru.jpeg';
+        } else {
+            thumb = `https://images.weserv.nl/?url=${encodeURIComponent(thumb.replace(/^https?:\/\//, ''))}`;
+        }
+
+        const duration = 'Unknown'; // Not available in new API
+        const title = data.title || 'Facebook video';
+
+        const caption = `*🏮 VISPER FB DOWNLOADER 🏮*
+         *┌──────────────────*
+         *├ 🐼 Title:* ${title}
+         *├ ⏱️ Duration:* ${duration}
+         *├ 🔗 Url:* ${q}
+         *└──────────────────*
+		 ${config.FOOTER}`;
+
+        const buttons = [];
+
+        if (hdUrl) {
+            buttons.push({
+                buttonId: prefix + 'downfb ' + hdUrl,
+                buttonText: { displayText: '*HD Quality*' },
+                type: 1
+            });
+        }
+
+        if (sdUrl) {
+            buttons.push({
+                buttonId: prefix + 'downfb ' + sdUrl,
+                buttonText: { displayText: '*SD Quality*' },
+                type: 1
+            });
+        }
+
+        if (buttons.length === 0) {
+            return reply('*❌ No video formats found.*');
+        }
+
+        const buttonMessage = {
+            image: { url: thumb },
+            caption: caption,
+            footer: config.FOOTER,
+            buttons: buttons,
+            headerType: 4
+        };
+
+
+
+
+            await conn.buttonMessage(from, buttonMessage, mek);
+
+
+    } catch (e) {
+        console.error('❌ Unexpected Error:', e);
+        return reply('*⚠️ An unexpected error occurred. Try again later.*');
+    }
+});
+
+
+
+
+cmd({
+  pattern: "downfb",
+  react: "🎥",
+  dontAddCommandList: true,
   filename: __filename
 },
-async(conn, mek, m, { from, prefix, q, reply }) => {
+async (conn, mek, m, { from, q, reply }) => {
   try {
-    if (!fbreg(q)) return await reply(urlneed2);
-    const result = await fetchJson(`https://suhas-api-x.vercel.app/download/fbdown?url=${q}`);
+    if (!q || !q.includes('fbcdn')) return await reply('*❌ Invalid Facebook CDN video URL!*');
 
-    let dat = `📥 \`CK FB DOWNLOADER\` 📥
+    reply('⏳ *Downloading Facebook video...*');
 
-➤ *𝚅𝙸𝙳𝙴𝙾 𝚄𝚁𝙻 :* ${q}`;
-
-    var sections = [
-      {
-        title: "𝐒𝙳 𝐓𝚈𝙿𝙴 🪫",
-        rows: [
-          { title: "    1.1", rowId: prefix + 'fbsd ' + q, description: ' 🪫 `SD` 𝐐𝚄𝙰𝙻𝙸𝚃𝚈 𝐕𝙸𝙳𝙴𝙾' },
-          { title: "    1.2", rowId: prefix + 'fbsdd ' + q, description: ' 📂 `SD` 𝐐𝚄𝙰𝙻𝙸𝚃𝚈 𝐃𝙾𝙲𝚄𝙼𝙴𝙽𝚃' },
-        ]
-      },
-      {
-        title: "𝐇𝙳 𝐓𝚈𝙿𝙴 🔋",
-        rows: [
-          { title: "    2.1", rowId: prefix + 'fbhd ' + q, description: ' 🔋 `HD` 𝐐𝚄𝙰𝙻𝙸𝚃𝚈 𝐕𝙸𝙳𝙴𝙾' },
-          { title: "    2.2", rowId: prefix + 'fbhdd ' + q, description: ' 📂 `HD` 𝐐𝚄𝙰𝙻𝙸𝚃𝚈 𝐃𝙾𝙲𝚄𝙼𝙴𝙽𝚃' },
-        ]
-      },
-      {
-        title: "𝐕𝙾𝙸𝙲𝙴 𝐓𝚈𝙿𝙴 🎶",
-        rows: [
-          { title: "    3.1", rowId: prefix + 'fba ' + q, description: ' 🎶 𝐀𝚄𝙳𝙸𝙾 𝐅𝙸𝙻𝙴' },
-          { title: "    3.2", rowId: prefix + 'fbd ' + q, description: ' 📂 𝐃𝙾𝙲𝚄𝙼𝙴𝙽𝚃 𝐅𝙸𝙻𝙴' }
-        ]
-      }
-    ];
-
-    const listMessage = {
-      image: { url: result.result.thumb },
-      caption: dat,
-      footer: FOOTER, // ✅ Directly using the defined footer
-      title: '',
-      buttonText: '*🔢 Reply Below Number*',
-      sections
-    };
-
-    return await conn.replyList(from, listMessage, { quoted: ck });
-
-  } catch (e) {
-    reply('*ERROR !!*');
-    console.log(e);
+ const response = await axios.get(q, {
+  responseType: 'arraybuffer',
+  headers: {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "Accept": "*/*",
+    "Accept-Encoding": "identity",
+    "Referer": "https://fdown.net/",
+    "Origin": "https://fdown.net"
   }
 });
 
 
-cmd({
-    pattern: "fbsd",
-    react: "⬇",    
-    filename: __filename
-},
+    const videoBuffer = Buffer.from(response.data, 'binary');
 
-async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try {
-  const result = await fetchJson(`https://suhas-api-x.vercel.app/download/fbdown?url=${q}`)
+    await conn.sendMessage(from, {
+      video: videoBuffer,
+      mimetype: 'video/mp4',
+      caption: '✅ *Facebook video downloaded successfully!*'
+    }, { quoted: mek });
 
-  // Send reactions and the video
-  await conn.sendMessage(from, { react: { text: '⬆', key: mek.key } });
-  await conn.sendMessage(from, { video: { url: result.result.sd }, mimetype: "video/mp4", caption: `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*` }, { quoted: ck });
-  await conn.sendMessage(from, { react: { text: '✔', key: mek.key } });
+    await conn.sendMessage(from, { react: { text: '✔️', key: mek.key } });
 
-}catch(e){
-await conn.sendMessage(from, { react: { text: `❌`, key: mek.key } })
-console.log(e)
-reply(`Error !!\n\n*${e}*`)
-}
-})
-
-
-cmd({
-    pattern: "fbsdd",
-    react: "⬇",    
-    filename: __filename
-},
-
-async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-
- 
-
- // let data = await fetchJson(`${baseUrl}/api/fdown?url=${q}`)
-const result = await fetchJson(`https://suhas-api-x.vercel.app/download/fbdown?url=${q}`)
-
-
-	
-await conn.sendMessage(from, { react: { text: '⬆', key: mek.key }})
-await conn.sendMessage(from, { document: { url: result.result.sd }, mimetype: "video/mp4", fileName: `FaceBookDL.mp4`, caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*" }, { quoted: ck })	
-await conn.sendMessage(from, { react: { text: '✔', key: mek.key }})
-}catch(e){
-await conn.sendMessage(from, { react: { text: `❌`, key: mek.key } })
-console.log(e)
-reply(`Error !!\n\n*${e}*`)
-}
-})
-
-
-cmd({
-    pattern: "fbhd",
-    react: "⬇",    
-    filename: __filename
-},
-
-async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-  
-if (!q.includes('https://')) return await reply(msr.not_fo)
-
- // let data = await fetchJson(`${baseUrl}/api/fdown?url=${q}`)
-const result = await fetchJson(`https://suhas-api-x.vercel.app/download/fbdown?url=${q}`)
-
-await conn.sendMessage(from, { react: { text: '⬆', key: mek.key }})
-await conn.sendMessage(from, { video: { url: result.result.hd }, mimetype: "video/mp4", caption: `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*` }, { quoted: ck })  	
-await conn.sendMessage(from, { react: { text: '✔', key: mek.key }})
-}catch(e){
-await conn.sendMessage(from, { react: { text: `❌`, key: mek.key } })
-console.log(e)
-reply(`Error !!\n\n*${e}*`)
-}
-})
-
-
-cmd({
-    pattern: "fbhdd",
-    react: "⬇",    
-    filename: __filename
-},
-
-async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-  
-if (!q.includes('https://')) return await reply(msr.not_fo)
-
- // let data = await fetchJson(`${baseUrl}/api/fdown?url=${q}`)
-const result = await fetchJson(`https://suhas-api-x.vercel.app/download/fbdown?url=${q}`)
-
-await conn.sendMessage(from, { react: { text: '⬆', key: mek.key }})  
-await conn.sendMessage(from, { document: { url: result.result.hd }, mimetype: "video/mp4", fileName: `FaceBookDL.mp4`, caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*" }, { quoted: ck }); 
-await conn.sendMessage(from, { react: { text: '✔', key: mek.key }})
-}catch(e){
-await conn.sendMessage(from, { react: { text: `❌`, key: mek.key } })
-console.log(e)
-reply(`Error !!\n\n*${e}*`)
-}
-})
-
-
-					    
-cmd({
-    pattern: "fba",
-    react: "⬇",    
-    filename: __filename
-},
-
-async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-  
-
-if (!q.includes('https://')) return await reply(msr.not_fo)
-
-//let data = await fetchJson(`${baseUrl}/api/fdown?url=${q}`)
-const result = await fetchJson(`https://suhas-api-x.vercel.app/download/fbdown?url=${q}`)
-
-	
-await conn.sendMessage(from, { react: { text: '⬆', key: mek.key }})
-await conn.sendMessage(from, { audio: { url: result.result.hd }, mimetype: "audio/mpeg" }, { quoted: mek })
-await conn.sendMessage(from, { react: { text: '✔', key: mek.key }})
-}catch(e){
-await conn.sendMessage(from, { react: { text: `❌`, key: mek.key } })
-console.log(e)
-reply(`Error !!\n\n*${e}*`)
-}
-})
-
-
-cmd({
-    pattern: "fbd",
-    react: "⬇",    
-    filename: __filename
-},
-
-async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-  
-
-if (!q.includes('https://')) return await reply(msr.not_fo)
-
-//let data = await fetchJson(`${baseUrl}/api/fdown?url=${q}`)
-const result = await fetchJson(`https://suhas-api-x.vercel.app/download/fbdown?url=${q}`)
-
-
-	
-await conn.sendMessage(from, { react: { text: '⬆', key: mek.key }})
-await conn.sendMessage(from, { document: { url: result.result.hd }, mimetype: "audio/mpeg", fileName: `Fbdl.mp3`, caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*" }, { quoted: ck }); 
-await conn.sendMessage(from, { react: { text: '✔', key: mek.key }})
-}catch(e){
-await conn.sendMessage(from, { react: { text: `❌`, key: mek.key } })
-console.log(e)
-reply(`Error !!\n\n*${e}*`)
-}
-})
-
-const ck = {
-    key: {
-        fromMe: false,
-        participant: "0@s.whatsapp.net",
-        remoteJid: "status@broadcast"
-    },
-    message: {
-        contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
-        }
-    }
-};
+  } catch (error) {
+    console.log("❌ Facebook video download error:", error);
+    reply('*❌ Failed to download. The video might be geo-blocked or expired.*');
+  }
+});
