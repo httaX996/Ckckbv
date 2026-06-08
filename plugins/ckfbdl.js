@@ -1,112 +1,200 @@
-const { cmd, commands } = require('../command');
-const { fetchJson } = require('../lib/functions');
-const config = require('../config');
 
 
-      // Facebook-dl
+const config = require('../config')
+const {cmd , commands} = require('../command')
+const getFBInfo = require("@xaviabot/fb-downloader");
 
-cmd({ 
-pattern: "ckfb",
-react:"📥",
- alias: ["facebook"], 
-desc: "Download Facebook videos", 
-category: "download",
- filename: __filename 
-}, async (conn, m, store, { from, quoted, args, q, reply }) => { try { if (!q || !q.startsWith("https://")) { return conn.sendMessage(from, { text: "Need URL" }, { quoted: m }); }
+cmd({
+  pattern: "fb",
+  alias: ["fbdl"],
+  desc: "Download Facebook videos",
+  category: "download",
+  filename: __filename
+},
+async(conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
+  try {
 
-await conn.sendMessage(from, {
-  react: { text: '⏳', key: m.key }
-});
-
-const response = await fetch(`https://api.nexray.web.id/downloader/facebook?url=${encodeURIComponent(q)}`);
-const fbData = await response.json();
-
-if (!fbData.status) {
-  return reply("❌ Error fetching the video. Please try again.");
+  if (!q || !q.startsWith("https://")) {
+    return conn.sendMessage(from, { text: "❌ Please provide a valid URL." }, { quoted: mek });
 }
 
-const caption = `*🧩 𝐐𝐔𝐄𝐄𝐍 𝐑𝐀𝐒𝐇𝐔 𝐌𝐃 𝐁𝐄𝐓𝐀 FaceBook Dawnloder ......*
+await conn.sendMessage(from, { react: { text: "💡", key: mek.key } });
 
-●  *🧩 Title:* ${fbData.title}
-●  *📒 Descripition:* 
+const result = await getFBInfo(q);
 
-+ ┉┉┉┉┉┉┉┉[ 🧩 ]┉┉┉┉┉┉┉┉ +
-*DAWNLOAD OPTIONS ⬇️*
-+ ┉┉┉┉┉┉┉┉[ 🧩 ]┉┉┉┉┉┉┉┉ +
+    const captionHeader = `🎥 *DILSHAN MD FB DOWNLOADER 🎥*
 
-*| 1️⃣ ❕ SD Dawnload*
-*| 2️⃣ ❗ HD Dawnload*
+*┏━━━━━━━━━━━━━━━━┓*
+*┃ 🎥 ᴛɪᴛʟᴇ:* ${result.title}
+*┃ 🔗 ᴜʀʟ:* -=-${q} 
+*┗━━━━━━━━━━━━━━━━┛*
 
-*| 3️⃣  🎧 Audio (SD)*
+*🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ɴᴜᴍʙᴇʀ:*
 
-*‼️මෝඩයෙක් නොවී උඩින් නම්බර් එකක් සිලෙට් කරනව මැට්ටො 🤭*
+*[1] 𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗩𝗜𝗗𝗘𝗢*🎥
+*1.1 | 🪫  SD QULITY*
+*1.2 | 🔋 HD QULITY*
 
-> 𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝐐𝐔𝐄𝐄𝐍 𝐑𝐀𝐒𝐇𝐔 𝐌𝐃 𝙾𝙵𝙲 🫟`;
+*[2] 𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗔𝗨𝗗𝗜𝗢*🎧
+
+*2.1 | 🎶 AUDIO*
+*2.2 | 📂 DOCUMENT*
+*2.3 | 🎤 VOICE NOTE [ptt]*
+
+> *𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙳𝙸𝙻𝚂𝙷𝙰𝙽 𝙼𝙳*
+`;
 
 const sentMsg = await conn.sendMessage(from, {
-  image: { url: config.IMG_URL },
-  caption: caption
-}, { quoted: m });
-
-const messageID = sentMsg.key.id;
-
-conn.ev.on("messages.upsert", async (msgData) => {
-  const receivedMsg = msgData.messages[0];
-  if (!receivedMsg.message) return;
-  
-  const receivedText = receivedMsg.message.conversation || receivedMsg.message.extendedTextMessage?.text;
-  const senderID = receivedMsg.key.remoteJid;
-  const isReplyToBot = receivedMsg.message.extendedTextMessage?.contextInfo?.stanzaId === messageID;
-  
-  if (isReplyToBot) {
-    await conn.sendMessage(senderID, {
-      react: { text: '⬇️', key: receivedMsg.key }
-    });
-    
-    switch (receivedText) {
-      case "1":
-        await conn.sendMessage(senderID, {
-          video: { url: fbData.video_sd },
-          caption: "📥 *❕ 𝐐𝐔𝐄𝐄𝐍 𝐑𝐀𝐒𝐇𝐔 𝐌𝐃 𝐁𝐄𝐓𝐀 SD Video Dawnload ...*"
-        }, { quoted: receivedMsg });
-        break;
-
-      case "2":
-        await conn.sendMessage(senderID, {
-          video: { url: fbData.video_hd },
-          caption: "📥 *❗ 𝐐𝐔𝐄𝐄𝐍 𝐑𝐀𝐒𝐇𝐔 𝐌𝐃 𝐁𝐄𝐓𝐀 HD Video Dawnload ...*"
-        }, { quoted: receivedMsg });
-        break;
-
-      case "3":
-        await conn.sendMessage(senderID, {
-          audio: { url: fbData.audio },
-          mimetype: "audio/mpeg"
-        }, { quoted: receivedMsg });
-        break;
-
-      case "4":
-        await conn.sendMessage(senderID, {
-          document: { url: fbData.BK9.sd },
-          mimetype: "audio/mpeg",
-          fileName: "Facebook_Audio.mp3",
-          caption: "📥 *🎧 𝐐𝐔𝐄𝐄𝐍 𝐑𝐀𝐒𝐇𝐔 𝐌𝐃 𝐁𝐄𝐓𝐀 Document Dawnload ...*"
-        }, { quoted: receivedMsg });
-        break;
-
-      case "5":
-        await conn.sendMessage(senderID, {
-          audio: { url: fbData.BK9.sd },
-          mimetype: "audio/mp4",
-          ptt: true
-        }, { quoted: receivedMsg });
-        break;
-
-      default:
-        reply("❌ Invalid option! Please reply with 1, 2, 3, 4, or 5.");
-    }
+  image: { url: result.thumbnail}, // Ensure `img.allmenu` is a valid image URL or base64 encoded image
+  caption: captionHeader,
+  contextInfo: {
+      mentionedJid: ['94773416478@s.whatsapp.net'], // specify mentioned JID(s) if any
+      groupMentions: [],
+      forwardingScore: 999,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+          newsletterJid: '@newsletter',
+          newsletterName: "Luxalgo",
+          serverMessageId: 999
+      },
+      externalAdReply: {
+          title: 'Luxalgo',
+          body: '𝙻𝚄𝚇𝙰𝙻𝙶𝙾 ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ',
+          mediaType: 1,
+          sourceUrl: "https://github.com/luxalgo/algo",
+          thumbnailUrl: 'https://files.catbox.moe/joo2gt.jpg', // This should match the image URL provided above
+          renderLargerThumbnail: false,
+          showAdAttribution: true
+      }
   }
 });
+const messageID = sentMsg.key.id; // Save the message ID for later reference
 
-} catch (error) { console.error("Error:", error); reply("❌ Error fetching the video. Please try again."); } });
 
+// Listen for the user's response
+conn.ev.on('messages.upsert', async (messageUpdate) => {
+    const mek = messageUpdate.messages[0];
+    if (!mek.message) return;
+    const messageType = mek.message.conversation || mek.message.extendedTextMessage?.text;
+    const from = mek.key.remoteJid;
+    const sender = mek.key.participant || mek.key.remoteJid;
+
+    // Check if the message is a reply to the previously sent message
+    const isReplyToSentMsg = mek.message.extendedTextMessage && mek.message.extendedTextMessage.contextInfo.stanzaId === messageID;
+
+    if (isReplyToSentMsg) {
+        // React to the user's reply (the "1" or "2" message)
+        await conn.sendMessage(from, { react: { text: '⬇️', key: mek.key } });
+        
+        
+
+        // React to the upload (sending the file)
+        await conn.sendMessage(from, { react: { text: '⬆️', key: mek.key } });
+
+        if (messageType === '1.1') {
+            // Handle option 1 (sd File)
+            await conn.sendMessage(from, {
+              video: { url: result.sd}, // Ensure `img.allmenu` is a valid image URL or base64 encoded image
+              caption: "*𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙻𝚄𝚇𝙰𝙻𝙶𝙾 𝚇𝙳*",
+              contextInfo: {
+                  mentionedJid: ['94774575878@s.whatsapp.net'], // specify mentioned JID(s) if any
+                  groupMentions: [],
+                  forwardingScore: 999,
+                  isForwarded: true,
+                  forwardedNewsletterMessageInfo: {
+                      newsletterJid: '@newsletter',
+                      newsletterName: "Luxalgo",
+                      serverMessageId: 999
+                  },
+                  externalAdReply: {
+                      title: 'Luxalgo',
+                      body: 'ʟᴜxᴀʟɢᴏ xᴅ ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ',
+                      mediaType: 1,
+                      sourceUrl: "https://github.com/luxalgo/algo",
+                      thumbnailUrl: 'https://files.catbox.moe/joo2gt.jpg', // This should match the image URL provided above
+                      renderLargerThumbnail: false,
+                      showAdAttribution: true
+                  }
+              }
+            });
+          }
+
+          else if (messageType === '1.2') {
+            // Handle option 2 (hd File)
+            await conn.sendMessage(from, {
+              video: { url: result.hd}, // Ensure `img.allmenu` is a valid image URL or base64 encoded image
+              caption: "*𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙻𝚄𝚇𝙰𝙻𝙶𝙾 𝚇𝙳*",
+              contextInfo: {
+                  mentionedJid: ['94773416478@s.whatsapp.net'], // specify mentioned JID(s) if any
+                  groupMentions: [],
+                  forwardingScore: 999,
+                  isForwarded: true,
+                  forwardedNewsletterMessageInfo: {
+                      newsletterJid: '@newsletter',
+                      newsletterName: "luxalgo",
+                      serverMessageId: 999
+                  },
+                  externalAdReply: {
+                      title: 'Luxalgo',
+                      body: 'ʟᴜxᴀʟɢᴏ xᴅ ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ',
+                      mediaType: 1,
+                      sourceUrl: "https://github.com/luxalgo/algo",
+                      thumbnailUrl: 'https://files.catbox.moe/joo2gt.jpg', // This should match the image URL provided above
+                      renderLargerThumbnail: false,
+                      showAdAttribution: true
+                  }
+              }
+            });
+          }
+           
+          else if (messageType === '2.1') {
+            //Handle option 3 (audio File)  
+          await conn.sendMessage(from, { audio: { url: result.sd }, mimetype: "audio/mpeg" }, { quoted: mek })
+          }
+          
+          else if (messageType === '2.2') {
+            await conn.sendMessage(from, {
+              document: { url: result.sd },
+              mimetype: "audio/mpeg",
+              fileName: `Luxalgo XD/FBDL.mp3`,
+              caption: "*𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙻𝚄𝚇𝙰𝙻𝙶𝙾 𝚇𝙳*",
+              contextInfo: {
+                mentionedJid: ['94773416478@s.whatsapp.net'], // specify mentioned JID(s) if any
+                groupMentions: [],
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '@newsletter',
+                    newsletterName: "LUXALGO",
+                    serverMessageId: 999
+                },
+                externalAdReply: {
+                    title: 'Luxalgo',
+                    body: 'ʟᴜxᴀʟɢᴏ xᴅ ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ',
+                    mediaType: 1,
+                    sourceUrl: "https://github.com/luxalgo/algo",
+                    thumbnailUrl: 'https://files.catbox.moe/joo2gt.jpg', // This should match the image URL provided above
+                    renderLargerThumbnail: false,
+                    showAdAttribution: true
+                }
+            }
+          }, { quoted: mek });
+          }
+          
+          else if (messageType === '2.3') {
+            //Handle option 3 (audio File)  
+          await conn.sendMessage(from, { audio: { url: result.sd }, mimetype: 'audio/mp4', ptt: true }, { quoted: mek })
+    
+          }
+
+        // React to the successful completion of the task
+        await conn.sendMessage(from, { react: { text: '✅', key: mek.key } });
+
+        console.log("Response sent successfully");
+    }
+  });
+} catch (e) {
+console.log(e);
+reply(`${e}`);
+}
+})
