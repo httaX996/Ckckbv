@@ -1,9 +1,28 @@
 const { cmd } = require('../command');
 const axios = require('axios');
+const sharp = require('sharp'); // sharp library එක require කරගන්න
 const config = require('../config');
 
 const API_KEY = "sadasggggg";
 const BASE_URL = "https://apis.sadas.dev/api/v1/movie/sinhalasub";
+
+// 🖼️ පෝස්ටරය කුඩා කර Thumbnail එකක් සාදන ශ්‍රිතය
+async function createThumbnail(url) {
+    try {
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer'
+        });
+
+        return await sharp(response.data)
+            .resize(300, 300)
+            .jpeg({ quality: 80 })
+            .toBuffer();
+
+    } catch (e) {
+        console.log('Thumbnail Error:', e);
+        return null;
+    }
+}
 
 cmd({
     pattern: "subck",
@@ -26,30 +45,24 @@ async (conn, mek, m, { from, q, reply }) => {
         }
 
         const moviesList = response.data.data;
-        let message = "🎬 *SinhalaSub Movie Search Results* 🎬\n\n";
+        let message = "🎬 \`𝗖𝗞 𝗦𝗜𝗡𝗛𝗔𝗟𝗔𝗦𝗨𝗕 𝗦𝗘𝗔𝗥𝗖𝗛\` 🎬\n\n";
         
         moviesList.forEach((movie, index) => {
-            message += `*${index + 1}.* ${movie.Title} (${movie.Year})\n🔹 Quality: ${movie.Quality}\n\n`;
+            message += `\`${index + 1}\` *|* ❭❭◦ ${movie.Title} (${movie.Year})\n`;
         });
 
-        message += "ℹ️ *ඉහත ලැයිස්තුවෙන් අවශ්‍ය චිත්‍රපටයේ අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*";
+        message += "ℹ️ *ඉහත ලැයිස්තුවෙන් අවශ්‍ය චිත්‍රපටයේ අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*";
 
-        // පියවර 2: config.IMG_URL එක සමඟ සෙවුම් ප්‍රතිඵල යැවීම
+        // පියවර 2: සෙවුම් ප්‍රතිඵල යැවීම
         const sentMsg = await conn.sendMessage(from, {
             image: { url: config.IMG_URL || `https://i.ibb.co/zHLW3WL/044e155205d4f11c.jpg` },
-            caption: message,
-            contextInfo: {
-                forwardingScore: 999,
-                isForwarded: false,
-            }
-        }, { quoted: mek });
+            caption: message
+        }, { quoted: ck });
 
-        // චිත්‍රපට අංකය තෝරන තුරු බලා සිටීමේ Listener එක
+        // Movie Selection Listener
         const movieSelectionListener = async (update) => {
             const msg = update.messages[0];
             if (!msg.message || !msg.message.extendedTextMessage) return;
-
-            // පරිශීලකයා Reply කර ඇත්තේ අප යැවූ පණිවිඩයටමදැයි පරීක්ෂා කිරීම
             if (msg.message.extendedTextMessage.contextInfo.stanzaId !== sentMsg.key.id) return;
 
             const userReply = msg.message.extendedTextMessage.text.trim();
@@ -60,9 +73,7 @@ async (conn, mek, m, { from, q, reply }) => {
                 return conn.sendMessage(from, { text: "❗ Invalid selection. Please choose a valid number from the list." }, { quoted: msg });
             }
 
-            // Listener එක ඉවත් කිරීම (Memory leak වැලැක්වීමට)
             conn.ev.off("messages.upsert", movieSelectionListener);
-
             const selectedMovie = moviesList[selectedMovieIndex];
             await conn.sendMessage(from, { react: { text: '⏳', key: msg.key } });
 
@@ -75,8 +86,6 @@ async (conn, mek, m, { from, q, reply }) => {
             }
 
             const movieData = infoResponse.data.data;
-
-            // DLServer-01 සහ DLServer-02 ලින්ක්ස් පමණක් පෙරා ගැනීම (Filtering)
             const filteredLinks = movieData.downloadLinks.filter(dl => 
                 dl.server === "DLServer-01" || dl.server === "DLServer-02"
             );
@@ -85,38 +94,32 @@ async (conn, mek, m, { from, q, reply }) => {
                 return conn.sendMessage(from, { text: "❌ මෙම චිත්‍රපටය සඳහා සෘජු (DLServer) බාගත කිරීමේ සබැඳි නොමැත." }, { quoted: msg });
             }
 
-            // Caption එක සකස් කිරීම
-            let movieMessage = `🎬 *${movieData.title}*\n\n`;
-            movieMessage += `📅 *Year:* ${movieData.date || 'N/A'}\n`;
-            movieMessage += `⭐ *Rating:* ${movieData.rating || 'N/A'}\n`;
-            movieMessage += `🌍 *Country:* ${movieData.country || 'N/A'}\n\n`;
-            movieMessage += `📥 *Available Qualities:* \n`;
+            let movieMessage = `🎬 \`${movieData.title}\`\n\n`;
+            movieMessage += `📅 \`YEAR:\` *${movieData.date || 'N/A'}*\n`;
+            movieMessage += `⭐ \`RATING:\` *${movieData.rating || 'N/A'}*\n`;
+            movieMessage += `🌍 \`COUNTRY:\` *${movieData.country || 'N/A'}*\n\n`;
+            movieMessage += `📥 \`ᴀᴠᴀɪʟᴀʙʟᴇ Qᴜᴀʟɪᴛɪᴇꜱ\`\n\n`;
 
             filteredLinks.forEach((dl, index) => {
-                movieMessage += `*${index + 1}.* 💾 ${dl.quality} (${dl.size}) [${dl.server}]\n`;
+                movieMessage += `\`${index + 1}\` *${dl.quality} (${dl.size})*\n*[${dl.server}]*\n`;
             });
 
-            movieMessage += `\nℹ️ *අවශ්‍ය Quality එකෙහි අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*`;
+            movieMessage += `\nℹ️ *අවශ්‍ය Quality එකෙහි අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ**`;
 
             // චිත්‍රපටයේ මුල් රූපය (Image URL) ලබාගැනීම
             const imageUrl = (movieData.images && movieData.images.length > 0) ? movieData.images[0] : selectedMovie.Img;
 
-            // පියවර 4: විස්තර සහ Quality ලැයිස්තුව රූපය සමඟ යැවීම
+            // පියවර 4: විස්තර සහ Quality ලැයිස්තුව යැවීම
             const movieDetailsMessage = await conn.sendMessage(from, {
                 image: { url: imageUrl },
-                caption: movieMessage,
-                contextInfo: {
-                    forwardingScore: 999,
-                    isForwarded: false,
-                }
-            }, { quoted: msg });
+                caption: movieMessage
+            }, { quoted: ck });
 
-            // Quality එක තෝරන තුරු බලා සිටීමේ Listener එක
+            // Quality Listener
             const qualityListener = async (qualityUpdate) => {
                 const qMsg = qualityUpdate.messages[0];
                 if (!qMsg.message || !qMsg.message.extendedTextMessage) return;
 
-                // නිවැරදි විස්තර පණිවිඩයටමද Reply කර ඇත්තේ කියා බැලීම
                 if (qMsg.message.extendedTextMessage.contextInfo.stanzaId === movieDetailsMessage.key.id) {
                     
                     const qUserReply = qMsg.message.extendedTextMessage.text.trim();
@@ -127,20 +130,25 @@ async (conn, mek, m, { from, q, reply }) => {
                         return conn.sendMessage(from, { text: "❗ Invalid quality selection. Please choose a valid number." }, { quoted: qMsg });
                     }
 
-                    // Listener එක ඉවත් කිරීම
                     conn.ev.off("messages.upsert", qualityListener);
-                    
                     const selectedLinkObj = filteredLinks[selectedQualityIndex];
+                    
                     await conn.sendMessage(from, { react: { text: '📥', key: qMsg.key } });
 
                     try {
-                        // පියවර 5: වීඩියෝව Document එකක් ලෙස WhatsApp වෙත යැවීම
+                        // 🌟 චිත්‍රපටයේ Poster එක ඇසුරෙන් Thumbnail Buffer එක සෑදීම
+                        const thumb = await createThumbnail(imageUrl);
+
+                        // ਪියවර 5: වීඩියෝව Document එකක් ලෙස බ්ලොක් නොවී යාමට headers සහ thumbnail සහිතව යැවීම
                         await conn.sendMessage(from, {
-                            document: { url: selectedLinkObj.link },
+                            document: { 
+                                url: selectedLinkObj.link
+                            },
                             mimetype: 'video/mp4',
                             fileName: `${movieData.title} - ${selectedLinkObj.quality}.mp4`,
-                            caption: `✨ *Here is your movie!* \n🍿 *Title:* ${movieData.title}\n⚙️ *Quality:* ${selectedLinkObj.quality}`
-                        }, { quoted: qMsg });
+                            jpegThumbnail: thumb ? thumb.toString('base64') : undefined, // 👈 Thumbnail එක මෙතනින් Base64 කරලා ඇඩ් වෙනවා
+                            caption: `🎬 \`${movieData.title}\`\n\n🎞️ \`Quality:\` *${selectedLinkObj.quality}*\n📦 \`Size:\` *${selectedLinkObj.size}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                        }, { quoted: ck });
 
                         await conn.sendMessage(from, { react: { text: '✅', key: qMsg.key } });
 
@@ -152,22 +160,12 @@ async (conn, mek, m, { from, q, reply }) => {
                 }
             };
 
-            // Quality Listener එක ලියාපදිංචි කිරීම
             conn.ev.on("messages.upsert", qualityListener);
-
-            // තත්පර 60 කින් Quality Listener එක ඉවත් කිරීම
-            setTimeout(() => {
-                conn.ev.off("messages.upsert", qualityListener);
-            }, 60000);
+            setTimeout(() => { conn.ev.off("messages.upsert", qualityListener); }, 60000);
         };
 
-        // Movie Selection Listener එක ලියාපදිංචි කිරීම
         conn.ev.on("messages.upsert", movieSelectionListener);
-
-        // තත්පර 60 කින් Movie Selection Listener එක ඉවත් කිරීම
-        setTimeout(() => {
-            conn.ev.off("messages.upsert", movieSelectionListener);
-        }, 60000);
+        setTimeout(() => { conn.ev.off("messages.upsert", movieSelectionListener); }, 60000);
 
     } catch (e) {
         console.log(e);
@@ -175,3 +173,22 @@ async (conn, mek, m, { from, q, reply }) => {
         return reply(`❗ Error: ${e.message}`);
     }
 });
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
