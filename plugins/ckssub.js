@@ -1,11 +1,6 @@
 const { cmd } = require('../command');
 const axios = require('axios');
-const config = require('../config'); // config.IMG_URL ලබාගැනීම සඳහා config file එක require කරගන්න
-
-// පරිශීලකයන්ගේ තේරීම් තාවකාලිකව මතක තබා ගැනීමට (Global Session Object)
-if (!global.movieSession) {
-    global.movieSession = {};
-}
+const config = require('../config');
 
 const API_KEY = "sadasggggg";
 const BASE_URL = "https://apis.sadas.dev/api/v1/movie/sinhalasub";
@@ -19,135 +14,164 @@ cmd({
 },
 async (conn, mek, m, { from, q, reply }) => {
     try {
-        const text = q ? q.trim() : "";
+        const input = q ? q.trim() : "";
+        if (!input) return reply("Please provide a movie name to search. (ඇතුලත් කරන්න: .subck avatar)");
+        
+        // පියවර 1: API එකෙන් සිනමාපට සෙවීම
+        const searchUrl = `${BASE_URL}/search?q=${encodeURIComponent(input)}&apiKey=${API_KEY}`;
+        const response = await axios.get(searchUrl);
 
-        // -------------------------------------------------------------
-        // පියවර 1: චිත්‍රපට සෙවීම සහ Image එක සමඟ ලැයිස්තුව යැවීම
-        // -------------------------------------------------------------
-        if (text && isNaN(text)) {
-            const searchUrl = `${BASE_URL}/search?q=${encodeURIComponent(text)}&apiKey=${API_KEY}`;
-            const response = await axios.get(searchUrl);
+        if (!response.data.status || !response.data.data || response.data.data.length === 0) {
+            return reply("❌ සිනමාපටයක් හමු වූයේ නැත. නැවත උත්සාහ කරන්න.");
+        }
 
-            if (!response.data.status || !response.data.data || response.data.data.length === 0) {
-                return reply("❌ සිනමාපටයක් හමු වූයේ නැත. නැවත උත්සාහ කරන්න.");
+        const moviesList = response.data.data;
+        let message = "🎬 *SinhalaSub Movie Search Results* 🎬\n\n";
+        
+        moviesList.forEach((movie, index) => {
+            message += `*${index + 1}.* ${movie.Title} (${movie.Year})\n🔹 Quality: ${movie.Quality}\n\n`;
+        });
+
+        message += "ℹ️ *ඉහත ලැයිස්තුවෙන් අවශ්‍ය චිත්‍රපටයේ අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*";
+
+        // පියවර 2: config.IMG_URL එක සමඟ සෙවුම් ප්‍රතිඵල යැවීම
+        const sentMsg = await conn.sendMessage(from, {
+            image: { url: config.IMG_URL || `https://i.ibb.co/zHLW3WL/044e155205d4f11c.jpg` },
+            caption: message,
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: false,
+            }
+        }, { quoted: mek });
+
+        // චිත්‍රපට අංකය තෝරන තුරු බලා සිටීමේ Listener එක
+        const movieSelectionListener = async (update) => {
+            const msg = update.messages[0];
+            if (!msg.message || !msg.message.extendedTextMessage) return;
+
+            // පරිශීලකයා Reply කර ඇත්තේ අප යැවූ පණිවිඩයටමදැයි පරීක්ෂා කිරීම
+            if (msg.message.extendedTextMessage.contextInfo.stanzaId !== sentMsg.key.id) return;
+
+            const userReply = msg.message.extendedTextMessage.text.trim();
+            const selectedMovieIndex = parseInt(userReply) - 1;
+
+            if (isNaN(selectedMovieIndex) || selectedMovieIndex < 0 || selectedMovieIndex >= moviesList.length) {
+                await conn.sendMessage(from, { react: { text: '❌', key: msg.key } });
+                return conn.sendMessage(from, { text: "❗ Invalid selection. Please choose a valid number from the list." }, { quoted: msg });
             }
 
-            const movies = response.data.data;
-            let responseText = "🎬 *SinhalaSub Movie Search Results* 🎬\n\n";
-            
-            // Session එක ආරම්භ කර දත්ත තැන්පත් කිරීම
-            global.movieSession[from] = {
-                step: "SELECT_MOVIE",
-                moviesList: movies
-            };
+            // Listener එක ඉවත් කිරීම (Memory leak වැලැක්වීමට)
+            conn.ev.off("messages.upsert", movieSelectionListener);
 
-            movies.forEach((movie) => {
-                responseText += `*${movie.No}.* ${movie.Title} (${movie.Year})\n🔹 Quality: ${movie.Quality}\n\n`;
+            const selectedMovie = moviesList[selectedMovieIndex];
+            await conn.sendMessage(from, { react: { text: '⏳', key: msg.key } });
+
+            // පියවර 3: තෝරාගත් චිත්‍රපටයේ විස්තර Fetch කිරීම
+            const infoUrl = `${BASE_URL}/infodl?q=${encodeURIComponent(selectedMovie.Link)}&apiKey=${API_KEY}`;
+            const infoResponse = await axios.get(infoUrl);
+
+            if (!infoResponse.data.status || !infoResponse.data.data) {
+                return conn.sendMessage(from, { text: "❌ විස්තර ලබාගැනීමට නොහැකි විය." }, { quoted: msg });
+            }
+
+            const movieData = infoResponse.data.data;
+
+            // DLServer-01 සහ DLServer-02 ලින්ක්ස් පමණක් පෙරා ගැනීම (Filtering)
+            const filteredLinks = movieData.downloadLinks.filter(dl => 
+                dl.server === "DLServer-01" || dl.server === "DLServer-02"
+            );
+
+            if (filteredLinks.length === 0) {
+                return conn.sendMessage(from, { text: "❌ මෙම චිත්‍රපටය සඳහා සෘජු (DLServer) බාගත කිරීමේ සබැඳි නොමැත." }, { quoted: msg });
+            }
+
+            // Caption එක සකස් කිරීම
+            let movieMessage = `🎬 *${movieData.title}*\n\n`;
+            movieMessage += `📅 *Year:* ${movieData.date || 'N/A'}\n`;
+            movieMessage += `⭐ *Rating:* ${movieData.rating || 'N/A'}\n`;
+            movieMessage += `🌍 *Country:* ${movieData.country || 'N/A'}\n\n`;
+            movieMessage += `📥 *Available Qualities:* \n`;
+
+            filteredLinks.forEach((dl, index) => {
+                movieMessage += `*${index + 1}.* 💾 ${dl.quality} (${dl.size}) [${dl.server}]\n`;
             });
 
-            responseText += "ℹ️ *ඉහත ලැයිස්තුවෙන් අවශ්‍ය චිත්‍රපටයේ අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*";
-            
-            // config.IMG_URL එක භාවිතයෙන් Image එක සමඟ Caption එකක් ලෙස ලැයිස්තුව යැවීම
-            return await conn.sendMessage(from, {
-                image: { url: config.IMG_URL || "https://image.tmdb.org/t/p/w185/bRBeSHfGHwkEpImlhxPmOcUsaeg.jpg" }, // config එකේ නැත්නම් default එකක් වැඩ කරයි
-                caption: responseText
-            }, { quoted: mek });
-        }
+            movieMessage += `\nℹ️ *අවශ්‍ය Quality එකෙහි අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*`;
 
-        // -------------------------------------------------------------
-        // පියවර 2: පරිශීලකයා අංකයක් එවා ඇති විට (Session Handling)
-        // -------------------------------------------------------------
-        if (global.movieSession[from]) {
-            const session = global.movieSession[from];
+            // චිත්‍රපටයේ මුල් රූපය (Image URL) ලබාගැනීම
+            const imageUrl = (movieData.images && movieData.images.length > 0) ? movieData.images[0] : selectedMovie.Img;
 
-            // 2.1: චිත්‍රපට අංකය තේරීම
-            if (session.step === "SELECT_MOVIE") {
-                const selectedIndex = parseInt(text) - 1;
-                if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= session.moviesList.length) {
-                    return reply("❌ වලංගු නොවන අංකයකි. කරුණාකර ලැයිස්තුවේ ඇති අංකයක් ලබාදෙන්න.");
+            // පියවර 4: විස්තර සහ Quality ලැයිස්තුව රූපය සමඟ යැවීම
+            const movieDetailsMessage = await conn.sendMessage(from, {
+                image: { url: imageUrl },
+                caption: movieMessage,
+                contextInfo: {
+                    forwardingScore: 999,
+                    isForwarded: false,
                 }
+            }, { quoted: msg });
 
-                const selectedMovie = session.moviesList[selectedIndex];
-                await conn.sendMessage(from, { react: { text: "⏳", key: mek.key } });
+            // Quality එක තෝරන තුරු බලා සිටීමේ Listener එක
+            const qualityListener = async (qualityUpdate) => {
+                const qMsg = qualityUpdate.messages[0];
+                if (!qMsg.message || !qMsg.message.extendedTextMessage) return;
 
-                // Movie Info API එක කැඳවීම
-                const infoUrl = `${BASE_URL}/infodl?q=${encodeURIComponent(selectedMovie.Link)}&apiKey=${API_KEY}`;
-                const infoResponse = await axios.get(infoUrl);
+                // නිවැරදි විස්තර පණිවිඩයටමද Reply කර ඇත්තේ කියා බැලීම
+                if (qMsg.message.extendedTextMessage.contextInfo.stanzaId === movieDetailsMessage.key.id) {
+                    
+                    const qUserReply = qMsg.message.extendedTextMessage.text.trim();
+                    const selectedQualityIndex = parseInt(qUserReply) - 1;
 
-                if (!infoResponse.data.status || !infoResponse.data.data) {
-                    return reply("❌ විස්තර ලබාගැනීමට නොහැකි විය.");
+                    if (isNaN(selectedQualityIndex) || selectedQualityIndex < 0 || selectedQualityIndex >= filteredLinks.length) {
+                        await conn.sendMessage(from, { react: { text: '❌', key: qMsg.key } });
+                        return conn.sendMessage(from, { text: "❗ Invalid quality selection. Please choose a valid number." }, { quoted: qMsg });
+                    }
+
+                    // Listener එක ඉවත් කිරීම
+                    conn.ev.off("messages.upsert", qualityListener);
+                    
+                    const selectedLinkObj = filteredLinks[selectedQualityIndex];
+                    await conn.sendMessage(from, { react: { text: '📥', key: qMsg.key } });
+
+                    try {
+                        // පියවර 5: වීඩියෝව Document එකක් ලෙස WhatsApp වෙත යැවීම
+                        await conn.sendMessage(from, {
+                            document: { url: selectedLinkObj.link },
+                            mimetype: 'video/mp4',
+                            fileName: `${movieData.title} - ${selectedLinkObj.quality}.mp4`,
+                            caption: `✨ *Here is your movie!* \n🍿 *Title:* ${movieData.title}\n⚙️ *Quality:* ${selectedLinkObj.quality}`
+                        }, { quoted: qMsg });
+
+                        await conn.sendMessage(from, { react: { text: '✅', key: qMsg.key } });
+
+                    } catch (err) {
+                        console.error('Error sending document:', err);
+                        await conn.sendMessage(from, { react: { text: '❌', key: qMsg.key } });
+                        return conn.sendMessage(from, { text: "❗ සන්නිවේදන දෝෂයකි. වීඩියෝව බාගත කිරීමට නොහැකි විය." }, { quoted: qMsg });
+                    }
                 }
+            };
 
-                const movieData = infoResponse.data.data;
-                
-                // DLServer ලින්ක්ස් පමණක් Filter කිරීම
-                const filteredLinks = movieData.downloadLinks.filter(dl => 
-                    dl.server === "DLServer-01" || dl.server === "DLServer-02"
-                );
+            // Quality Listener එක ලියාපදිංචි කිරීම
+            conn.ev.on("messages.upsert", qualityListener);
 
-                if (filteredLinks.length === 0) {
-                    return reply("❌ මෙම චිත්‍රපටය සඳහා DLServer බාගත කිරීමේ සබැඳි නොමැත.");
-                }
+            // තත්පර 60 කින් Quality Listener එක ඉවත් කිරීම
+            setTimeout(() => {
+                conn.ev.off("messages.upsert", qualityListener);
+            }, 60000);
+        };
 
-                // මීළඟ Quality තේරීමේ පියවරට Session එක යාවත්කාලීන කිරීම
-                global.movieSession[from] = {
-                    step: "SELECT_QUALITY",
-                    links: filteredLinks,
-                    title: movieData.title
-                };
+        // Movie Selection Listener එක ලියාපදිංචි කිරීම
+        conn.ev.on("messages.upsert", movieSelectionListener);
 
-                // රූපවාහිනී විස්තර Caption එක සකස් කිරීම
-                let caption = `🎬 *${movieData.title}*\n\n`;
-                caption += `📅 *Year:* ${movieData.date || 'N/A'}\n`;
-                caption += `⭐ *Rating:* ${movieData.rating || 'N/A'}\n`;
-                caption += `🌍 *Country:* ${movieData.country || 'N/A'}\n\n`;
-                caption += `📥 *Available Qualities:* \n`;
+        // තත්පර 60 කින් Movie Selection Listener එක ඉවත් කිරීම
+        setTimeout(() => {
+            conn.ev.off("messages.upsert", movieSelectionListener);
+        }, 60000);
 
-                filteredLinks.forEach((dl, index) => {
-                    caption += `*${index + 1}.* 💾 ${dl.quality} (${dl.size}) [${dl.server}]\n`;
-                });
-
-                caption += `\nℹ️ *අවශ්‍ය Quality අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*`;
-
-                const imageUrl = (movieData.images && movieData.images.length > 0) ? movieData.images[0] : selectedMovie.Img;
-                
-                return await conn.sendMessage(from, {
-                    image: { url: imageUrl },
-                    caption: caption
-                }, { quoted: mek });
-            }
-
-            // 2.2: Quality අංකය තේරූ පසු Document එක යැවීම
-            else if (session.step === "SELECT_QUALITY") {
-                const selectedIndex = parseInt(text) - 1;
-                if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= session.links.length) {
-                    return reply("❌ වලංගු නොවන Quality අංකයකි.");
-                }
-
-                const selectedLinkObj = session.links[selectedIndex];
-                await conn.sendMessage(from, { react: { text: "📥", key: mek.key } });
-
-                // වීඩියෝව Document එකක් ලෙස ලබාදීම
-                await conn.sendMessage(from, {
-                    document: { url: selectedLinkObj.link },
-                    mimetype: 'video/mp4',
-                    fileName: `${session.title} - ${selectedLinkObj.quality}.mp4`,
-                    caption: `🍿 *Title:* ${session.title}\n⚙️ *Quality:* ${selectedLinkObj.quality}\n\n*Downloaded via Bot*`
-                }, { quoted: mek });
-
-                // වැඩේ ඉවර නිසා Session එක Reset කිරීම
-                delete global.movieSession[from];
-                return;
-            }
-        }
-
-        // කිසිදු Text එකක් නැතිව නිකන් .subck ගැහුවොත්
-        if (!text) {
-            return reply("Please provide a movie name! (ඇතුලත් කරන්න: .subck avatar)");
-        }
-
-    } catch (error) {
-        console.error(error);
-        reply("⚠️ දෝෂයක් සිදු විය! කරුණාකර නැවත උත්සාහ කරන්න.");
+    } catch (e) {
+        console.log(e);
+        await conn.sendMessage(from, { react: { text: '❌', key: mek.key } });
+        return reply(`❗ Error: ${e.message}`);
     }
 });
