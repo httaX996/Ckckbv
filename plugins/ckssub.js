@@ -1,180 +1,225 @@
-const { cmd } = require("../command");
-const puppeteer = require("puppeteer");
+const { cmd } = require('../command');
+const axios = require('axios');
+const sharp = require('sharp');
+const config = require('../config');
 
-// Global states (Memory එකේ තියාගන්න)
-if (!global.pendingSearch) global.pendingSearch = {};
-if (!global.pendingQuality) global.pendingQuality = {};
-
-// --- 🛠️ HELPER FUNCTIONS ---
-function normalizeQuality(text) {
-    if (!text) return null;
-    text = text.toUpperCase();
-    if (/1080|FHD/.test(text)) return "1080p";
-    if (/720|HD/.test(text)) return "720p";
-    if (/480|SD/.test(text)) return "480p";
-    return text;
+// පරිශීලකයාගේ පියවරයන් තාවකාලිකව මතක තබා ගැනීමට (Session Manager)
+if (!global.cineck_sessions) {
+    global.cineck_sessions = {};
 }
 
-function getDirectPixeldrainUrl(url) {
-    const match = url.match(/pixeldrain\.com\/u\/(\w+)/);
-    if (!match) return null;
-    return `https://pixeldrain.com/api/file/${match[1]}?download`;
-}
+const API_KEY = 'ea4d57a2a2db72e0bb3ba58f56b1ff9b';
 
-async function searchMovies(query) {
-    const searchUrl = `https://sinhalasub.lk/?s=${encodeURIComponent(query)}&post_type=movies`;
-    const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox"] });
-    const page = await browser.newPage();
+// Thumbnail එක සෑදීමේ Function එක
+async function createThumbnail(url) {
     try {
-        await page.goto(searchUrl, { waitUntil: "networkidle2", timeout: 30000 });
-        const results = await page.$$eval(".display-item .item-box", boxes =>
-            boxes.slice(0, 10).map((box, index) => {
-                const a = box.querySelector("a");
-                const img = box.querySelector(".thumb");
-                const lang = box.querySelector(".item-desc-giha .language")?.textContent || "";
-                const quality = box.querySelector(".item-desc-giha .quality")?.textContent || "";
-                return {
-                    id: index + 1,
-                    title: a?.title?.trim() || "",
-                    movieUrl: a?.href || "",
-                    thumb: img?.src || "",
-                    language: lang.trim(),
-                    quality: quality.trim(),
-                };
-            }).filter(m => m.title && m.movieUrl)
-        );
-        return results;
-    } catch (e) { return []; } finally { await browser.close(); }
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        return await sharp(response.data)
+            .resize(300, 300)
+            .jpeg({ quality: 80 })
+            .toBuffer();
+    } catch (e) {
+        console.log('Thumbnail Error:', e);
+        return null;
+    }
 }
 
-async function getMovieMetadata(url) {
-    const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox"] });
-    const page = await browser.newPage();
-    try {
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
-        const metadata = await page.evaluate(() => {
-            const getText = el => el?.textContent.trim() || "";
-            const title = getText(document.querySelector(".info-details .details-title h3"));
-            let language = "";
-            document.querySelectorAll(".info-col p").forEach(p => {
-                if (p.querySelector("strong")?.textContent.includes("Language:")) language = p.textContent.replace("Language:", "").trim();
-            });
-            const duration = getText(document.querySelector(".info-details .data-views[itemprop='duration']"));
-            const imdb = getText(document.querySelector(".info-details .data-imdb"))?.replace("IMDb:", "").trim();
-            const genres = Array.from(document.querySelectorAll(".details-genre a")).map(el => el.textContent.trim());
-            const thumbnail = document.querySelector(".splash-bg img")?.src || "";
-            return { title, language, duration, imdb, genres, thumbnail };
-        });
-        return metadata;
-    } catch (e) { return null; } finally { await browser.close(); }
-}
-
-async function getPixeldrainLinks(movieUrl) {
-    const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox"] });
-    const page = await browser.newPage();
-    try {
-        await page.goto(movieUrl, { waitUntil: "networkidle2", timeout: 30000 });
-        const linksData = await page.$$eval(".link-pixeldrain tbody tr", rows =>
-            rows.map(row => {
-                const a = row.querySelector(".link-opt a");
-                const quality = row.querySelector(".quality")?.textContent.trim() || "";
-                const size = row.querySelector("td:nth-child(3) span")?.textContent.trim() || "";
-                return { pageLink: a?.href || "", quality, size };
-            })
-        );
-        const directLinks = [];
-        for (const l of linksData) {
-            const subPage = await browser.newPage();
-            try {
-                await subPage.goto(l.pageLink, { waitUntil: "networkidle2", timeout: 15000 });
-                await new Promise(r => setTimeout(r, 2000));
-                const finalUrl = await subPage.$eval(".wait-done a[href^='https://pixeldrain.com/']", el => el.href).catch(() => null);
-                if (finalUrl) directLinks.push({ link: finalUrl, quality: normalizeQuality(l.quality), size: l.size });
-            } catch (e) {} finally { await subPage.close(); }
-        }
-        return directLinks;
-    } catch (e) { return []; } finally { await browser.close(); }
-}
-
-// --- 🎬 COMMAND: .MOVIE ---
+// -------------------------------------------------------------------------
+// 1. ප්‍රධාන සෙවුම් Command එක (.cineck <movie_name>)
+// -------------------------------------------------------------------------
 cmd({
     pattern: "subck",
-    alias: ["films", "sinhalasub"],
+    desc: "Search movies from CineSubz",
+    category: "movie",
     react: "🎬",
-    category: "download",
     filename: __filename
-}, async (danuwa, mek, m, { from, q, sender, reply, isCmd }) => {
-    
-    // 1. සර්ච් කිරීම (Command එකෙන් එන වෙලාව)
-    if (isCmd && q) {
-        reply("*🔍 Searching for movies...*");
-        const results = await searchMovies(q);
-        if (!results.length) return reply("*❌ No movies found!*");
-
-        global.pendingSearch[sender] = { results, timestamp: Date.now() };
-
-        let text = "*🎬 CK MOVIE SEARCH:*\n\n";
-        results.forEach((m, i) => { text += `*${i+1}.* ${m.title}\n   📊 ${m.quality} | 📝 ${m.language}\n`; });
-        text += `\n*Reply with movie number (1-${results.length})*`;
-        return reply(text);
-    }
-
-    // 2. අංකය Reply කරන එක Handle කිරීම
-    const body = m.body || q; // q එකේ තමයි අංකය එන්නේ index.js එකෙන් pass කළොත්
-    if (!isNaN(body)) {
-        const num = parseInt(body) - 1;
-
-        // --- පියවර 01: Movie එක තෝරාගැනීම ---
-        if (global.pendingSearch[sender]) {
-            const state = global.pendingSearch[sender];
-            if (num >= 0 && num < state.results.length) {
-                const selected = state.results[num];
-                delete global.pendingSearch[sender];
-                
-                await danuwa.sendMessage(from, { react: { text: "⏳", key: m.key } });
-                const meta = await getMovieMetadata(selected.movieUrl);
-                if (!meta) return reply("*❌ Error fetching details.*");
-
-                let msg = `*🎬 ${meta.title}*\n\n*⏱️ Duration:* ${meta.duration}\n*⭐ IMDb:* ${meta.imdb}\n*🎭 Genres:* ${meta.genres.join(", ")}\n\n*🔗 Fetching download links...*`;
-                await danuwa.sendMessage(from, { image: { url: meta.thumbnail }, caption: msg }, { quoted: m });
-
-                const links = await getPixeldrainLinks(selected.movieUrl);
-                if (!links.length) return reply("*❌ No download links found (<2GB)!*");
-
-                global.pendingQuality[sender] = { movie: { meta, links }, timestamp: Date.now() };
-
-                let qMsg = "*📥 Select Quality (Max 2GB):*\n\n";
-                links.forEach((d, i) => qMsg += `*${i+1}.* ${d.quality} - ${d.size}\n`);
-                return reply(qMsg + `\n*Reply with quality number to download.*`);
-            }
+},
+async (conn, mek, m, { from, q, reply }) => {
+    try {
+        if (!q) {
+            return reply("🎬 Please provide a movie name.\n\nExample:\n.cineck deadpool");
         }
 
-        // --- පියවර 02: Quality එක තෝරාගැනීම ---
-        if (global.pendingQuality[sender]) {
-            const state = global.pendingQuality[sender];
-            if (num >= 0 && num < state.movie.links.length) {
-                const selectedLink = state.movie.links[num];
-                const meta = state.movie.meta;
-                delete global.pendingQuality[sender];
+        const searchUrl = `https://apis.sadas.dev/api/v1/movie/cinesubz/search?q=${encodeURIComponent(q)}&apiKey=${API_KEY}`;
+        const { data } = await axios.get(searchUrl);
 
-                reply(`*⬇️ Sending ${selectedLink.quality} as document...*`);
-                try {
-                    const directUrl = getDirectPixeldrainUrl(selectedLink.link);
-                    await danuwa.sendMessage(from, {
-                        document: { url: directUrl },
-                        mimetype: "video/mp4",
-                        fileName: `${meta.title} - ${selectedLink.quality}.mp4`.replace(/[^\w\s.-]/gi,''),
-                        caption: `*🎬 ${meta.title}*\n*📊 Quality:* ${selectedLink.quality}\n\n*Enjoy!* 🍿`
-                    }, { quoted: m });
-                } catch (e) { reply("❌ Error: " + e.message); }
-            }
+        if (!data.status || !data.data || !data.data.length) {
+            return reply("❌ No movies found.");
         }
+
+        let text = `🎬 \`𝗖𝗞 𝗖𝗜𝗡𝗘𝗦𝗨𝗕𝗭 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
+        text += `*🔎 Search:* \`${q}\`\n\n`;
+
+        data.data.forEach((movie, index) => {
+            text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
+        });
+
+        text += `\n💡 Reply to this message with the movie number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+
+        const sentMsg = await conn.sendMessage(
+            from,
+            { image: { url: config.IMG_URL }, caption: text },
+            { quoted: ck }
+        );
+
+        // පළමු පියවර සඳහා Session එක Save කිරීම
+        global.cineck_sessions[sentMsg.key.id] = {
+            type: 'movie_list',
+            movies: data.data,
+            timestamp: Date.now()
+        };
+
+    } catch (err) {
+        console.log(err);
+        reply("❌ Error while searching movie.");
     }
 });
 
-// Clean up expired sessions (10 mins)
-setInterval(() => {
-    const now = Date.now();
-    for (const s in global.pendingSearch) if (now - global.pendingSearch[s].timestamp > 600000) delete global.pendingSearch[s];
-    for (const s in global.pendingQuality) if (now - global.pendingQuality[s].timestamp > 600000) delete global.pendingQuality[s];
-}, 300000);
+// -------------------------------------------------------------------------
+// 2. අංක හරහා ලැබෙන පිළිතුරු (Replies) හැසිරවීම සඳහා පොදු Listener එක
+// -------------------------------------------------------------------------
+cmd({
+    on: "text",
+    filename: __filename
+},
+async (conn, mek, m, { from, body, reply }) => {
+    try {
+        // Reply කර ඇති පණිවිඩයේ Stanza ID එක ලබා ගැනීම
+        const quotedId = m.quoted ? (m.quoted.id || (m.quoted.key && m.quoted.key.id)) : null;
+        if (!quotedId || !global.cineck_sessions[quotedId]) return;
+
+        const session = global.cineck_sessions[quotedId];
+        
+        // විනාඩි 2ක් (මිලිතත්පර 120000) ඉක්මවා ඇත්නම් Session එක Expire කිරීම
+        if (Date.now() - session.timestamp > 120000) {
+            delete global.cineck_sessions[quotedId];
+            return reply("❌ Session expired. Please search again.");
+        }
+
+        const userReply = body ? body.trim() : "";
+        const selectedIndex = parseInt(userReply) - 1;
+
+        if (isNaN(selectedIndex) || selectedIndex < 0) return;
+
+        // =================================================================
+        // [පියවර A] චිත්‍රපට අංකය තෝරාගත් විට (Movie Details & Quality List)
+        // =================================================================
+        if (session.type === 'movie_list') {
+            if (selectedIndex >= session.movies.length) return reply("❌ Invalid movie number.");
+
+            const selectedMovie = session.movies[selectedIndex];
+            await conn.sendMessage(from, { react: { text: "⏳", key: mek.key } });
+
+            const infoUrl = `https://apis.sadas.dev/api/v1/movie/cinesubz/info?q=${encodeURIComponent(selectedMovie.link)}&apiKey=${API_KEY}`;
+            const infoResponse = await axios.get(infoUrl);
+
+            if (!infoResponse.data.status) {
+                return reply("❌ Failed to fetch movie details.");
+            }
+
+            const movie = infoResponse.data.data;
+
+            let caption = `🎬 \`${movie.title}\`\n\n`;
+            caption += `📅 \`YEAR:\` *${movie.year || "N/A"}*\n`;
+            caption += `⭐ \`RATING:\` *${movie.imdb_rating || "N/A"}*\n`;
+            caption += `💿 \`QUALITY:\` *${movie.quality || "N/A"}*\n`;
+            caption += `🎭 \`CAST:\` ${movie.cast?.slice(0, 5).map(c => `*• ${c.name} (${c.role})*`).join('\n') || "N/A"}\n\n`;
+            caption += `📥 \`ᴀᴠᴀɪʟᴀʙʟᴇ Qᴜᴀʟɪᴛɪᴇꜱ\`\n\n`;
+
+            movie.download_links.forEach((dl, i) => {
+                caption += `\`${i + 1}\` *|* ❭❭◦ *${dl.quality} • ${dl.size}*\n`;
+            });
+
+            caption += `\n> 💡 Reply to this message with the quality number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+
+            const movieDetailsMessage = await conn.sendMessage(
+                from,
+                { image: { url: movie.poster }, caption },
+                { quoted: ck }
+            );
+
+            // ඊළඟ Quality තේරීමේ පියවර සඳහා නව Session එකක් නිර්මාණය කිරීම
+            global.cineck_sessions[movieDetailsMessage.key.id] = {
+                type: 'quality_list',
+                movieData: movie,
+                timestamp: Date.now()
+            };
+
+            // පරණ සෙවුම් ලැයිස්තුවේ session එක මතකයෙන් ඉවත් කිරීම
+            delete global.cineck_sessions[quotedId];
+        }
+        
+        // =================================================================
+        // [පියවර B] Quality අංකය තෝරාගත් විට (Document Download)
+        // =================================================================
+        else if (session.type === 'quality_list') {
+            const movie = session.movieData;
+
+            if (selectedIndex >= movie.download_links.length) {
+                return reply("❌ Invalid quality number.");
+            }
+
+            const selectedQuality = movie.download_links[selectedIndex];
+            await conn.sendMessage(from, { react: { text: "⬇️", key: mek.key } });
+
+            const downloadUrl = `https://apis.sadas.dev/api/v1/movie/cinesubz/dl?q=${encodeURIComponent(selectedQuality.final_link)}&apiKey=${API_KEY}`;
+            const downloadResponse = await axios.get(downloadUrl);
+
+            if (!downloadResponse.data.status) {
+                return reply("❌ Download link not found.");
+            }
+
+            const links = downloadResponse.data.data?.links || [];
+
+            // Telegram ලින්ක් නොවන සෘජු (Direct) mp4 ලින්ක් එක පෙරීම
+            const directLink = links.find(link => !link.includes("t.me") && !link.includes("telegram"));
+
+            if (!directLink) {
+                return reply("❌ Direct download link not found.");
+            }
+
+            const thumb = await createThumbnail(movie.poster);
+
+            await conn.sendMessage(
+                from,
+                {
+                    document: { url: directLink },
+                    mimetype: "video/mp4",
+                    fileName: `${movie.title.replace(/[^a-zA-Z0-9 ]/g, "")}.mp4`,
+                    jpegThumbnail: thumb,
+                    caption: `🎬 \`${movie.title}\`\n\n🎞️ \`Quality:\` *${selectedQuality.quality}*\n📦 \`Size:\` *${selectedQuality.size}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                },
+                { quoted: ck }
+            );
+
+            await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
+
+            // කාර්යය නිම වූ පසු Session එක සම්පූර්ණයෙන්ම මකා දැමීම
+            delete global.cineck_sessions[quotedId];
+        }
+
+    } catch (err) {
+        console.log(err);
+        reply("❌ An error occurred while processing your request.");
+    }
+});
+
+// Quoted (Fake) Message Object එක
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
+        }
+    }
+};
