@@ -4,24 +4,19 @@ const cheerio = require('cheerio');
 const sharp = require('sharp'); 
 const fg = require("api-dylux"); 
 const config = require('../config');
-const qs = require('qs'); // POST Data Format කිරීම සඳහා (npm install qs හෝ bot එකේ දැනටමත් ඇති)
 
 // 🖼️ Thumbnail සාදන ශ්‍රිතය
 async function createThumbnail(url) {
     try {
         if (!url) return null;
-        const validUrl = url.startsWith('http') ? url : 'https://ginisisilacartoon.net/' + url;
-        
-        const response = await axios.get(validUrl, {
+        const response = await axios.get(url, {
             responseType: 'arraybuffer',
-            timeout: 7000 
+            timeout: 5000 
         });
-
         return await sharp(response.data)
             .resize(300, 300)
             .jpeg({ quality: 60 })
             .toBuffer();
-
     } catch (e) {
         console.log('Thumbnail Error:', e.message);
         return null;
@@ -33,55 +28,57 @@ cmd({
     alias: ["gini", "ginisisila"], 
     react: "📑",
     category: "download",
-    desc: "Search and download cartoons from ginisisilacartoon.net",
+    desc: "Search cartoons using Ginisisila Blogger Feed API",
     filename: __filename
 }, async (conn, mek, m, { from, q, reply }) => {
     try {
         const searchQuery = q ? q.trim() : "";
-        if (!searchQuery) return reply("*Please provide a search query! (e.g., .cartoon gapi)*");
+        if (!searchQuery) return reply("*Please provide a search query! (e.g., .cartoon soora pappa)*");
 
-        // 💡 පියවර 1: වෙබ් අඩවියට POST Request එකක් මඟින් සෙවුම් දත්ත යැවීම
-        const searchUrl = "https://ginisisilacartoon.net/search.php";
-        const postData = qs.stringify({ 'q': searchQuery }); // සයිට් එක බලාපොරොත්තු වන Form Data එක
-
-        const searchResponse = await axios.post(searchUrl, postData, {
+        // 💡 පියවර 1: Cloudflare Bypass කිරීම සඳහා සෘජුවම Blogger Feed API එක භාවිතා කිරීම
+        const feedUrl = `https://ginisisilacartoon.net/feeds/posts/default?q=${encodeURIComponent(searchQuery)}&alt=json&max-results=15`;
+        
+        const response = await axios.get(feedUrl, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://ginisisilacartoon.net/'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
         });
-        
-        const $searchPage = cheerio.load(searchResponse.data);
+
+        const feed = response.data?.feed;
+        const entries = feed?.entry || [];
+
+        if (entries.length === 0) {
+            return reply(`❌ ප්‍රතිඵල කිසිවක් හමු වූයේ නැත: *${searchQuery}*\n\n💡 *Tip:* සිංහලෙන් හෝ නිවැරදි සිංග්ලිෂ් වචන භාවිතා කරන්න (e.g., ගාෆීල්ඩ්, සූර පප්පා, දඩිබිඩි, gapi)`);
+        }
+
         let resultsList = [];
 
-        // දත්ත ලබාගන්නා Selector එක (සයිට් එකේ නවතම ව්‍යුහයට අනුව)
-        $searchPage("div.inner-video-cell, div.video-cell, .video-cell-fixed").each((index, element) => {
-            const titleLinkEl = $searchPage(element).find("div.video-title > a");
-            const title = titleLinkEl.attr('title') || titleLinkEl.text().trim();
-            const postedTime = $searchPage(element).find("div.posted-time").text().trim() || "Unknown";
-            const relativeLink = titleLinkEl.attr("href");
-            let imageUrl = $searchPage(element).find("div.inner-video-thumb-wrapper img, div.video-thumb-wrapper img, img").attr('src');
+        // ලැබෙන JSON දත්ත අපට අවශ්‍ය පරිදි සකස් කර ගැනීම
+        entries.forEach((entry) => {
+            const title = entry.title?.$t;
+            const postedTime = entry.published?.$t ? entry.published.$t.split('T')[0] : "Unknown";
+            
+            // Post Link එක සෙවීම
+            const postLinkObj = entry.link?.find(l => l.rel === 'alternate');
+            const episodeLink = postLinkObj ? postLinkObj.href : null;
+            
+            // Image/Poster URL එක සෙවීම
+            const imageUrl = entry.media$thumbnail?.url || entry.gphoto$thumbnail?.url || null;
 
-            if (title && relativeLink) {
+            if (title && episodeLink) {
                 resultsList.push({
-                    'title': title,
-                    'postedTime': postedTime,
-                    'episodeLink': relativeLink.startsWith('http') ? relativeLink : 'https://ginisisilacartoon.net/' + relativeLink,
-                    'imageUrl': imageUrl
+                    title: title,
+                    postedTime: postedTime,
+                    episodeLink: episodeLink,
+                    imageUrl: imageUrl ? imageUrl.replace('/s72-c/', '/s320/') : null // Thumbnail එක පැහැදිලි මට්ටමකට විශාල කිරීම
                 });
             }
         });
 
-        // ලැයිස්තුව හිස් නම්
-        if (resultsList.length === 0) {
-            return reply(`❌ ප්‍රතිඵල කිසිවක් හමු වූයේ නැත: *${searchQuery}*\n\n💡 *මතක් කිරීම:* සයිට් එකේ සෙවීමට සිංහල හෝ සිංග්ලිෂ් වචන භාවිතා කරන්න.\n\n*Examples:* \n🔹 \`.cartoon gapi\`\n🔹 \`.cartoon ගාෆීල්ඩ්\`\n🔹 \`.cartoon soora pappa\``);
-        }
-
         // පියවර 2: සෙවුම් ප්‍රතිඵල ලැයිස්තුව යැවීම
         let listMessage = "📺 *Ginisisila Cartoon Search Results* 📺\n\n";
-        resultsList.slice(0, 15).forEach((item, index) => { // උපරිම ප්‍රතිඵල 15කට සීමා කර ඇත
-            listMessage += `*${index + 1}.* ${item.title}\n🗓️ Posted: ${item.postedTime}\n\n`;
+        resultsList.forEach((item, index) => {
+            listMessage += `*${index + 1}.* ${item.title}\n🗓️ Date: ${item.postedTime}\n\n`;
         });
         listMessage += "ℹ️ *ඉහත ලැයිස්තුවෙන් අවශ්‍ය කොටසේ අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*";
 
@@ -106,13 +103,12 @@ cmd({
                 return conn.sendMessage(from, { text: "❗ Invalid selection. Please choose a valid number from the list." }, { quoted: msg });
             }
 
-            // Listener එක Off කිරීම
             conn.ev.off("messages.upsert", cartoonSelectionListener);
             const selectedCartoon = resultsList[selectedIndex];
             await conn.sendMessage(from, { react: { text: '⏳', key: msg.key } });
 
             try {
-                // පියවර 3: Player (Iframe) එක සෙවීම
+                // පියවර 3: තෝරාගත් පිටුව ඇතුලෙන් වීඩියෝ Iframe එක සෙවීම
                 const episodePageResponse = await axios.get(selectedCartoon.episodeLink, {
                     headers: { 'User-Agent': 'Mozilla/5.0' }
                 });
@@ -126,11 +122,11 @@ cmd({
 
                 // පියවර 4: විස්තර තහවුරු කිරීමේ පණිවිඩය
                 let detailMessage = `🎬 *${selectedCartoon.title}*\n\n`;
-                detailMessage += `📅 *Posted:* ${selectedCartoon.postedTime}\n`;
+                detailMessage += `📅 *Date:* ${selectedCartoon.postedTime}\n`;
                 detailMessage += `🔗 *Page:* ${selectedCartoon.episodeLink}\n\n`;
                 detailMessage += `📥 *බාගත කර ගැනීමට සූදානම් කිරීමට '1' ලෙස මෙම පණිවිඩයට Reply කරන්න.*`;
 
-                const validImgUrl = selectedCartoon.imageUrl ? (selectedCartoon.imageUrl.startsWith('http') ? selectedCartoon.imageUrl : 'https://ginisisilacartoon.net/' + selectedCartoon.imageUrl) : config.IMG_URL;
+                const validImgUrl = selectedCartoon.imageUrl || config.IMG_URL;
 
                 const detailSentMsg = await conn.sendMessage(from, {
                     image: { url: validImgUrl },
@@ -156,7 +152,7 @@ cmd({
                     await conn.sendMessage(from, { react: { text: '📥', key: dlMsg.key } });
 
                     try {
-                        // api-dylux හරහා GDrive Download දත්ත ලබා ගැනීම
+                        // api-dylux (fg) මඟින් GDrive ලින්ක් එක ඩවුන්ලෝඩ් කිරීම
                         const gdriveData = await fg.GDriveDl(iframeSrc);
 
                         if (gdriveData && gdriveData.downloadUrl) {
