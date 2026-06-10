@@ -179,7 +179,7 @@ cmd({
                                 document: { url: gdriveData.downloadUrl },
                                 mimetype: gdriveData.mimetype || "video/mp4",
                                 fileName: `Ginisisila | ${selectedCartoon.title}.mp4`,
-                                jpegThumbnail: thumb ? thumb : undefined,
+                               // jpegThumbnail: thumb ? thumb : undefined,
                                 caption: `🎬 \`${selectedCartoon.title}\`\n⚖️ Size: ${gdriveData.fileSize || 'Unknown'}\n\n> *© ⎝⧹ 𝙿𝙾𝚆𝙴𝚁𝙴𝙳 𝙱𝚈 𝚃𝙾𝙷𝙸𝙳_𝙼𝙳 ⧸⎠*`
                             }, { quoted: dlMsg });
 
@@ -213,3 +213,4 @@ cmd({
         return reply(`❗ Error: ${e.message}`);
     }
 });
+
