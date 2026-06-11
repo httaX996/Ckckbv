@@ -1,5 +1,6 @@
 const { cmd } = require('../command');
 const axios = require('axios');
+const sharp = require('sharp'); // 🛠️ Sharp library එක උඩින්ම require කළා
 const config = require('../config');
 
 // Fake Quoted Message Object
@@ -16,6 +17,20 @@ const ck = {
         }
     }
 };
+
+// 🛠️ Thumbnail එක බෆර් එකක් විදියට හදන Function එක
+async function createThumbnail(url) {
+    try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        return await sharp(response.data)
+            .resize(300, 300)
+            .jpeg({ quality: 80 })
+            .toBuffer();
+    } catch (e) {
+        console.log('Thumbnail Error:', e);
+        return null;
+    }
+}
 
 cmd({
     pattern: "cartoon",
@@ -38,7 +53,7 @@ async (conn, mek, m, { from, q, reply }) => {
             return reply("❌ No cartoons found.");
         }
 
-        let searchText = `🧸 \`𝗖𝗞 𝗖𝗔𝗥𝗧𝗢𝗢𝗡 𝗦𝗘𝗔Ｒ𝗖𝗛\`\n\n`;
+        let searchText = `🧸 \`𝗖𝗞 𝗖𝗔𝗥𝗧𝗢𝗢𝗡 𝗦𝗘𝗔𝗥𝗖𝗛\` 🧸\n\n`;
         searchText += `*🔎 Search:* \`${q}\`\n\n`;
 
         searchData.results.forEach((cartoon, index) => {
@@ -77,11 +92,11 @@ async (conn, mek, m, { from, q, reply }) => {
                     return reply("❌ Failed to fetch cartoon details from API.");
                 }
 
-                let infoText = `TITLE: ${cartoonInfo.title || "N/A"}\n`;
-                infoText += `YEAR: ${cartoonInfo.year || "N/A"}\n`;
-                infoText += `IMDB: ${cartoonInfo.imdb_rating || "N/A"}\n`;
-                infoText += `QUALITY: ${cartoonInfo.quality || "N/A"}\n\n`;
-                infoText += `📥 Fetching download links... Please wait...`;
+                let infoText = `\`${cartoonInfo.title || "N/A"}\`\n\n`;
+                infoText += `📆 \`YEAR:\` *${cartoonInfo.year || "N/A"}*\n`;
+                infoText += `⭐ \`IMDB:\` *${cartoonInfo.imdb_rating || "N/A"}*\n`;
+                infoText += `💿 \`QUALITY:\` *${cartoonInfo.quality || "N/A"}*\n\n`;
+                infoText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 await conn.sendMessage(from, {
                     image: { url: cartoonInfo.image || config.IMG_URL },
@@ -113,7 +128,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     dlText += `\`${index + 1}\` *|* ❭❭◦ *${linkObj.name}*\n`;
                 });
 
-                dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀଡᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 const sentLinksMsg = await conn.sendMessage(from, {
                     image: { url: cartoonInfo.image || config.IMG_URL },
@@ -135,8 +150,6 @@ async (conn, mek, m, { from, q, reply }) => {
                         }
 
                         const finalSelectedLink = directLinks[selectedLinkIndex];
-                        
-                        // 🛠️ FIX 1: API එකෙන් එන්නේ url ද link ද කියලා check කරනවා
                         const finalDownloadUrl = finalSelectedLink.url || finalSelectedLink.link;
 
                         if (!finalDownloadUrl) {
@@ -145,21 +158,23 @@ async (conn, mek, m, { from, q, reply }) => {
 
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
-                        // 🛠️ FIX 2: Direct link එක සමහරවිට කෙලින්ම සෙන්ඩ් වෙන්න බ්ලොක් නම්, Axios හරහා stream එකක් විදියට පාස් කරනවා
+                        // 🛠️ FIX: කාටූන් ඉමේජ් එකෙන් Thumbnail බෆර් එකක් හදනවා
+                        const thumb = cartoonInfo.image ? await createThumbnail(cartoonInfo.image) : null;
+
+                        // Document එක jpegThumbnail එකත් එක්ක යැවීම
                         await conn.sendMessage(from, {
-                            document: { 
-                                url: finalDownloadUrl 
-                            },
+                            document: { url: finalDownloadUrl },
                             mimetype: "video/mp4",
-                            fileName: `${cartoonInfo.title || "Cartoon"} - ${finalSelectedLink.name}.mp4`,
-                            caption: `🎬 *${cartoonInfo.title || "Cartoon"}*\n📌 *Episode:* ${finalSelectedLink.name}\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                            fileName: `${finalSelectedLink.name}.mp4`,
+                            jpegThumbnail: thumb, // 🛠️ මෙතනට Thumbnail බෆර් එක පාස් කළා
+                            caption: `🎬 \`${finalSelectedLink.name}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                         }, { quoted: ck });
 
                         await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
 
                     } catch (err) {
                         console.log("Error in link selection:", err);
-                        reply("❌ Error while sending the document file. Link might be expired or protected.");
+                        reply("❌ Error while sending the document file.");
                     }
                 };
 
