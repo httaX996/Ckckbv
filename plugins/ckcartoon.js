@@ -1,216 +1,174 @@
 const { cmd } = require('../command');
 const axios = require('axios');
-const cheerio = require('cheerio');
-const sharp = require('sharp'); 
-const fg = require("api-dylux"); 
 const config = require('../config');
 
-// 🖼️ Thumbnail සාදන ශ්‍රිතය
-async function createThumbnail(url) {
-    try {
-        if (!url) return null;
-        const validUrl = url.startsWith('http') ? url : 'https://ginisisilacartoon.net/' + url;
-        
-        const response = await axios.get(validUrl, {
-            responseType: 'arraybuffer',
-            timeout: 5000 
-        });
-
-        return await sharp(response.data)
-            .resize(300, 300)
-            .jpeg({ quality: 60 })
-            .toBuffer();
-
-    } catch (e) {
-        console.log('Thumbnail Error:', e.message);
-        return null;
+// Fake Quoted Message Object
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nORG:META AI;\nTEL;type=CELL;type=VOICE;waid=13135550002:+13135550002\nEND:VCARD`
+        }
     }
-}
+};
 
 cmd({
-    pattern: "cartoon", 
-    alias: ["gini", "ginisisila"], 
-    react: "📑",
+    pattern: "cartoon",
+    desc: "Search and download cartoons",
     category: "download",
-    desc: "Search and download cartoons from ginisisilacartoon.net",
+    react: "🧸",
     filename: __filename
-}, async (conn, mek, m, { from, q, reply }) => {
+},
+async (conn, mek, m, { from, q, reply }) => {
     try {
-        const searchQuery = q ? q.trim() : "";
-        if (!searchQuery) return reply("*Please provide a search query! (e.g., .cartoon garfield)*");
-
-        // 💡 පියවර 1: ඔයා කිව්වා වගේම නිවැරදි සෙවුම් URL එක භාවිතා කිරීම
-        const searchUrl = "https://ginisisilacartoon.net/search.php?q=" + encodeURIComponent(searchQuery);
-        
-        const searchResponse = await axios.get(searchUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
-        });
-        
-        const $searchPage = cheerio.load(searchResponse.data);
-        let resultsList = [];
-
-        // 🛠️ පින්තූරයේ පෙනෙන ආකාරයට සයිට් එකේ Table Cells (td) හරහා දත්ත ඇල්ලීම
-        $searchPage("table td, div.inner-video-cell, .video-cell").each((index, element) => {
-            // ලිංක් එක සහ මාතෘකාව ඇල්ලීම
-            const titleLinkEl = $searchPage(element).find("a").first();
-            let relativeLink = titleLinkEl.attr("href");
-            
-            // Text එක ඇතුලේ තියෙන අනවශ්‍ය "view all items" වැනි දේවල් අයින් කර නම පිරිසිදු කිරීම
-            let title = titleLinkEl.text().trim() || $searchPage(element).find("b").text().trim();
-            title = title.replace("view all items", "").replace(/\n/g, "").trim();
-
-            // පින්තූරය ඇල්ලීම
-            let imageUrl = $searchPage(element).find("img").attr('src');
-
-            // වලංගු දත්ත පමණක් ලිස්ට් එකට එකතු කිරීම
-            if (title && relativeLink && !relativeLink.includes("search.php") && relativeLink !== "#") {
-                // සමහරවිට සයිට් එකේ පල්ලෙහා තියෙන Playlist links මඟහැරීමට
-                if (title.length > 3) {
-                    resultsList.push({
-                        'title': title,
-                        'episodeLink': relativeLink.startsWith('http') ? relativeLink : 'https://ginisisilacartoon.net/' + relativeLink,
-                        'imageUrl': imageUrl
-                    });
-                }
-            }
-        });
-
-        // 💡 Array එක ඇතුලේ තියෙන Duplicate (එකම දේ දෙපාරක් ආපුවා) අයින් කිරීම
-        let uniqueResults = [];
-        let linksSeen = new Set();
-        for (const item of resultsList) {
-            if (!linksSeen.has(item.episodeLink)) {
-                linksSeen.add(item.episodeLink);
-                uniqueResults.push(item);
-            }
+        if (!q) {
+            return reply("🧸 Please provide a cartoon name.\n\nExample:\n.cartoon ben 10");
         }
 
-        // ප්‍රතිඵල නැතිනම් ක්‍රියාවලිය නවත්වයි
-        if (uniqueResults.length === 0) {
-            return reply(`❌ ප්‍රතිඵල කිසිවක් හමු වූයේ නැත: *${searchQuery}*\n\n💡 *Tip:* සිංහලෙන් හෝ නිවැරදි ඉංග්‍රීසි වචන භාවිතා කරන්න.`);
+        // 1. Search Request
+        const searchUrl = `https://ck-api-v1.vercel.app/movie/cartoon/search?q=${encodeURIComponent(q)}`;
+        const { data: searchData } = await axios.get(searchUrl);
+
+        if (!searchData.success || !searchData.results || !searchData.results.length) {
+            return reply("❌ No cartoons found.");
         }
 
-        // පියවර 2: සෙවුම් ප්‍රතිඵල ලැයිස්තුව යැවීම
-        let listMessage = "📺 *Ginisisila Cartoon Search Results* 📺\n\n";
-        uniqueResults.slice(0, 20).forEach((item, index) => {
-            listMessage += `*${index + 1}.* ${item.title}\n\n`;
+        let searchText = `🧸 \`𝗖𝗞 𝗖𝗔𝗥𝗧𝗢𝗢𝗡 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
+        searchText += `*🔎 Search:* \`${q}\`\n\n`;
+
+        searchData.results.forEach((cartoon, index) => {
+            searchText += `\`${index + 1}\` *|* ❭❭◦ *${cartoon.title}*\n`;
         });
-        listMessage += "ℹ️ *ඉහත ලැයිස්තුවෙන් අවශ්‍ය කොටසේ අංකය (e.g. 1) මෙම පණිවිඩයට Reply කරන්න.*";
 
-        const sentListMsg = await conn.sendMessage(from, {
-            image: { url: config.IMG_URL || `https://i.ibb.co/zHLW3WL/044e155205d4f11c.jpg` },
-            caption: listMessage,
-            contextInfo: { forwardingScore: 999, isForwarded: false }
-        }, { quoted: mek });
+        searchText += `\n💡 Reply to this message with the cartoon number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
+        // පළමු මැසේජ් එක (config.IMG_URL එකෙන් යන්නේ)
+        const sentSearchMsg = await conn.sendMessage(from, {
+            image: { url: config.IMG_URL },
+            caption: searchText
+        }, { quoted: ck });
 
-        // 1 වන Listener එක: කාටූන් එක තේරීම
+        // LISTENER 1: Cartoon එකක් තෝරාගැනීම ඇල්ලීමට
         const cartoonSelectionListener = async (update) => {
-            const msg = update.messages[0];
-            if (!msg.message || !msg.message.extendedTextMessage) return;
-            if (msg.message.extendedTextMessage.contextInfo.stanzaId !== sentListMsg.key.id) return;
-
-            const userReply = msg.message.extendedTextMessage.text.trim();
-            const selectedIndex = parseInt(userReply) - 1;
-
-            if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= uniqueResults.length) {
-                await conn.sendMessage(from, { react: { text: '❌', key: msg.key } });
-                return conn.sendMessage(from, { text: "❗ Invalid selection. Please choose a valid number from the list." }, { quoted: msg });
-            }
-
-            conn.ev.off("messages.upsert", cartoonSelectionListener);
-            const selectedCartoon = uniqueResults[selectedIndex];
-            await conn.sendMessage(from, { react: { text: '⏳', key: msg.key } });
-
             try {
-                // පියවර 3: Player (Iframe) එක සෙවීම
-                const episodePageResponse = await axios.get(selectedCartoon.episodeLink, {
-                    headers: { 'User-Agent': 'Mozilla/5.0' }
-                });
-                const $episodePage = cheerio.load(episodePageResponse.data);
-                
-                const iframeSrc = $episodePage("div#player-holder iframe").attr("src") || $episodePage("iframe").attr("src");
+                const msg = update.messages[0];
+                if (!msg.message?.extendedTextMessage) return;
+                if (msg.message.extendedTextMessage.contextInfo?.stanzaId !== sentSearchMsg.key.id) return;
 
-                if (!iframeSrc) {
-                    return conn.sendMessage(from, { text: "❌ මෙම කොටස සඳහා වීඩියෝ ලින්ක් එකක් හමු වූයේ නැත." }, { quoted: msg });
+                const userReply = msg.message.extendedTextMessage.text.trim();
+                const selectedIndex = parseInt(userReply) - 1;
+
+                if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= searchData.results.length) {
+                    return reply("❌ Invalid number. Please select a valid number from the list.");
                 }
 
-                // පියවර 4: විස්තර තහවුරු කිරීමේ පණිවිඩය
-                let detailMessage = `🎬 *${selectedCartoon.title}*\n\n`;
-                detailMessage += `🔗 *Page:* ${selectedCartoon.episodeLink}\n\n`;
-                detailMessage += `📥 *බාගත කර ගැනීමට සූදානම් කිරීමට '1' ලෙස මෙම පණිවිඩයට Reply කරන්න.*`;
+                const selectedCartoon = searchData.results[selectedIndex];
+                
+                // 2. Info Request
+                const infoUrl = `https://ck-api-v1.vercel.app/movie/cartoon/info?url=${encodeURIComponent(selectedCartoon.url)}`;
+                const { data: infoData } = await axios.get(infoUrl);
 
-                const validImgUrl = selectedCartoon.imageUrl ? (selectedCartoon.imageUrl.startsWith('http') ? selectedCartoon.imageUrl : 'https://ginisisilacartoon.net/' + selectedCartoon.imageUrl) : config.IMG_URL;
+                if (!infoData.success) {
+                    return reply("❌ Failed to fetch cartoon details.");
+                }
 
-                const detailSentMsg = await conn.sendMessage(from, {
-                    image: { url: validImgUrl },
-                    caption: detailMessage,
-                    contextInfo: { forwardingScore: 999, isForwarded: false }
-                }, { quoted: msg });
+                const cartoonInfo = infoData.results;
 
+                let infoText = `TITLE: ${cartoonInfo.title || "N/A"}\n`;
+                infoText += `YEAR: ${cartoonInfo.year || "N/A"}\n`;
+                infoText += `IMDB: ${cartoonInfo.imdb_rating || "N/A"}\n`;
+                infoText += `QUALITY: ${cartoonInfo.quality || "N/A"}\n\n`;
+                infoText += `📥 Fetching download links... Please wait...`;
 
-                // 2 වන Listener එක: බාගත කිරීම තහවුරු කිරීම
-                const downloadListener = async (dlUpdate) => {
-                    const dlMsg = dlUpdate.messages[0];
-                    if (!dlMsg.message || !dlMsg.message.extendedTextMessage) return;
-                    if (dlMsg.message.extendedTextMessage.contextInfo.stanzaId !== detailSentMsg.key.id) return;
+                // කාටූන් එකේ පෝස්ටර් එකත් එක්ක විස්තර ටික යවනවා
+                const sentInfoMsg = await conn.sendMessage(from, {
+                    image: { url: cartoonInfo.image },
+                    caption: infoText
+                }, { quoted: ck });
 
-                    const dlUserReply = dlMsg.message.extendedTextMessage.text.trim();
+                // 3. DL API Request (Links ඇද ගැනීමට)
+                // සාමාන්‍යයෙන් info api එකේ 'links' යටතේ එන url එකක් මෙතනට දාන්න ඕනේ නිසා අපි cartoonInfo.links[0].url හෝ අදාළ link එක ගන්නවා
+                const cartoonLink = cartoonInfo.links && cartoonInfo.links[0] ? cartoonInfo.links[0].url : selectedCartoon.url; 
+                
+                const dlUrl = `https://ck-api-v1.vercel.app/movie/cartoon/dl?url=${encodeURIComponent(cartoonLink)}`;
+                const { data: dlData } = await axios.get(dlUrl);
 
-                    if (dlUserReply !== "1") {
-                        await conn.sendMessage(from, { react: { text: '❌', key: dlMsg.key } });
-                        return conn.sendMessage(from, { text: "❗ Invalid option. Reply with '1' to download." }, { quoted: dlMsg });
-                    }
+                if (!dlData.success || !dlData.results || !dlData.results.direct_links) {
+                    return reply("❌ Download links not found for this cartoon.");
+                }
 
-                    conn.ev.off("messages.upsert", downloadListener);
-                    await conn.sendMessage(from, { react: { text: '📥', key: dlMsg.key } });
+                const directLinks = dlData.results.direct_links;
 
+                let dlText = `🎬 \`${cartoonInfo.title}\`\n\n`;
+                dlText += `📥 \`𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗘𝗣𝗜𝗦𝗢𝗗𝗘𝗦 / 𝗟𝗜𝗡𝗞𝗦\`\n\n`;
+
+                directLinks.forEach((linkObj, index) => {
+                    dlText += `\`${index + 1}\` *|* ❭❭◦ *${linkObj.name}*\n`;
+                });
+
+                dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+
+                // Links ටික සේරම ලිස්ට් එකක් විදියට යවනවා
+                const sentLinksMsg = await conn.sendMessage(from, {
+                    image: { url: cartoonInfo.image },
+                    caption: dlText
+                }, { quoted: ck });
+
+                // LISTENER 2: Episode එක හෝ Quality Link එක තෝරාගැනීම ඇල්ලීමට
+                const linkSelectionListener = async (update2) => {
                     try {
-                        // GDrive එකෙන් ඩවුන්ලෝඩ් කිරීම
-                        const gdriveData = await fg.GDriveDl(iframeSrc);
+                        const msg2 = update2.messages[0];
+                        if (!msg2.message?.extendedTextMessage) return;
+                        if (msg2.message.extendedTextMessage.contextInfo?.stanzaId !== sentLinksMsg.key.id) return;
 
-                        if (gdriveData && gdriveData.downloadUrl) {
-                            const thumb = await createThumbnail(selectedCartoon.imageUrl);
+                        const linkReply = msg2.message.extendedTextMessage.text.trim();
+                        const selectedLinkIndex = parseInt(linkReply) - 1;
 
-                            // පියවර 5: වීඩියෝව Document එකක් ලෙස යැවීම
-                            await conn.sendMessage(from, {
-                                document: { url: gdriveData.downloadUrl },
-                                mimetype: gdriveData.mimetype || "video/mp4",
-                                fileName: `Ginisisila | ${selectedCartoon.title}.mp4`,
-                               // jpegThumbnail: thumb ? thumb : undefined,
-                                caption: `🎬 \`${selectedCartoon.title}\`\n⚖️ Size: ${gdriveData.fileSize || 'Unknown'}\n\n> *© ⎝⧹ 𝙿𝙾𝚆𝙴𝚁𝙴𝙳 𝙱𝚈 𝚃𝙾𝙷𝙸𝙳_𝙼𝙳 ⧸⎠*`
-                            }, { quoted: dlMsg });
-
-                            await conn.sendMessage(from, { react: { text: '✅', key: dlMsg.key } });
-                        } else {
-                            await conn.sendMessage(from, { text: "❌ මෙම Google Drive ලින්ක් එක බාගත කිරීමට නොහැකි විය." }, { quoted: dlMsg });
+                        if (isNaN(selectedLinkIndex) || selectedLinkIndex < 0 || selectedLinkIndex >= directLinks.length) {
+                            return reply("❌ Invalid number. Please select a valid episode/link number.");
                         }
 
+                        const finalSelectedLink = directLinks[selectedLinkIndex];
+
+                        // Downloading React
+                        await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
+
+                        // Document එකක් විදියට File එක යැවීම
+                        await conn.sendMessage(from, {
+                            document: { url: finalSelectedLink.url },
+                            mimetype: "video/mp4",
+                            fileName: `${cartoonInfo.title} - ${finalSelectedLink.name}.mp4`,
+                            caption: `🎬 *${cartoonInfo.title}*\n📌 *Episode:* ${finalSelectedLink.name}\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                        }, { quoted: ck });
+
+                        // Success React
+                        await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
+
                     } catch (err) {
-                        console.error('Error sending document:', err);
-                        await conn.sendMessage(from, { react: { text: '❌', key: dlMsg.key } });
-                        return conn.sendMessage(from, { text: "❗ සන්නිවේදන දෝෂයකි. වීඩියෝව බාගත කිරීමට නොහැකි විය." }, { quoted: dlMsg });
+                        console.log("Error in link selection:", err);
+                        reply("❌ Error while sending the document file.");
                     }
                 };
 
-                conn.ev.on("messages.upsert", downloadListener);
-                setTimeout(() => { conn.ev.off("messages.upsert", downloadListener); }, 60000); 
+                // දෙවැනි ලිස්නර් එක Register කිරීම (Expire වෙන්නේ නෑ)
+                conn.ev.on("messages.upsert", linkSelectionListener);
 
-            } catch (scrapeError) {
-                console.error(scrapeError);
-                return conn.sendMessage(from, { text: "❌ මෙම පිටුවේ දත්ත කියවීමට නොහැකි විය." }, { quoted: msg });
+            } catch (err) {
+                console.log("Error in cartoon selection:", err);
+                reply("❌ Error while fetching cartoon info or download links.");
             }
         };
 
+        // පළමු ලිස්නර් එක Register කිරීම (Expire වෙන්නේ නෑ)
         conn.ev.on("messages.upsert", cartoonSelectionListener);
-        setTimeout(() => { conn.ev.off("messages.upsert", cartoonSelectionListener); }, 60000); 
 
-    } catch (e) {
-        console.log(e);
-        await conn.sendMessage(from, { react: { text: '❌', key: mek.key } });
-        return reply(`❗ Error: ${e.message}`);
+    } catch (err) {
+        console.log("Global Error:", err);
+        reply("❌ An error occurred while processing the request.");
     }
 });
-
