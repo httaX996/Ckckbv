@@ -38,14 +38,14 @@ async (conn, mek, m, { from, q, reply }) => {
             return reply("❌ No cartoons found.");
         }
 
-        let searchText = `🧸 \`𝗖𝗞 𝗖𝗔𝗥𝗧𝗢𝗢𝗡 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
+        let searchText = `🧸 \`𝗖𝗞 𝗖𝗔𝗥𝗧𝗢𝗢𝗡 𝗦𝗘𝗔Ｒ𝗖𝗛\`\n\n`;
         searchText += `*🔎 Search:* \`${q}\`\n\n`;
 
         searchData.results.forEach((cartoon, index) => {
             searchText += `\`${index + 1}\` *|* ❭❭◦ *${cartoon.title}*\n`;
         });
 
-        searchText += `\n💡 Reply to this message with the cartoon number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        searchText += `\n💡 Reply to this message with the cartoon number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍිනා ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentSearchMsg = await conn.sendMessage(from, {
             image: { url: config.IMG_URL },
@@ -68,46 +68,55 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const selectedCartoon = searchData.results[selectedIndex];
                 
-                // 🛠️ FIX 1: URL එක encodeURIComponent කිරීම අනිවාර්යයි
-                const infoUrl = `https://ck-api-v1.vercel.app/movie/cartoon/info?url=${encodeURIComponent(selectedCartoon.url)}`;
-                const { data: infoData } = await axios.get(infoUrl);
+                // 🛠️ FIX: encodeURIComponent නොකර, Plain URL එක කෙලින්ම පාස් කරනවා ඔයා ඉල්ලපු විදියටම
+                const infoUrl = `https://ck-api-v1.vercel.app/movie/cartoon/info?url=${selectedCartoon.url}`;
+                const { data: infoResponse } = await axios.get(infoUrl);
 
-                if (!infoData.success || !infoData.results) {
+                // සාමාන්‍යයෙන් ඔයාගේ API එකේ Response එක එන්නේ infoResponse.results ඇතුළේ හෝ කෙලින්ම infoResponse එකේ වෙන්න පුළුවන් නිසා safe check එකක් දානවා
+                const cartoonInfo = infoResponse.results || infoResponse.data || infoResponse;
+
+                if (!cartoonInfo || (!cartoonInfo.title && !cartoonInfo.success)) {
                     return reply("❌ Failed to fetch cartoon details from API.");
                 }
 
-                const cartoonInfo = infoData.results;
-
+                // ඔයා ඉල්ලපු විදියටම Caption Format එක
                 let infoText = `TITLE: ${cartoonInfo.title || "N/A"}\n`;
                 infoText += `YEAR: ${cartoonInfo.year || "N/A"}\n`;
                 infoText += `IMDB: ${cartoonInfo.imdb_rating || "N/A"}\n`;
                 infoText += `QUALITY: ${cartoonInfo.quality || "N/A"}\n\n`;
                 infoText += `📥 Fetching download links... Please wait...`;
 
-                const sentInfoMsg = await conn.sendMessage(from, {
+                // API එකෙන් එන image url එක පාවිච්චි කරලා මැසේජ් එක යැවීම
+                await conn.sendMessage(from, {
                     image: { url: cartoonInfo.image || config.IMG_URL },
                     caption: infoText
                 }, { quoted: ck });
 
-                // 🛠️ FIX 2: API එකේ links array එකක් එන්නේ නැත්නම් crash නොවෙන්න selectedCartoon.url එක safe fallback එකක් විදියට ගන්නවා
+                // 2. DL API Request (Links ඇද ගැනීමට)
+                // info එකෙන් එන links ඇතුළේ පළමු url එක ගන්නවා, නැත්නම් safe-side එකට selectedCartoon.url එක දානවා
                 let cartoonLink = selectedCartoon.url;
-                if (cartoonInfo.links && cartoonInfo.links.length > 0 && cartoonInfo.links[0].url) {
-                    cartoonLink = cartoonInfo.links[0].url;
+                if (cartoonInfo.links && cartoonInfo.links.length > 0) {
+                    cartoonLink = cartoonInfo.links[0].url || cartoonInfo.links[0];
+                } else if (cartoonInfo.url) {
+                    cartoonLink = cartoonInfo.url;
                 }
                 
-                // 🛠️ FIX 3: DL URL එකත් encodeURIComponent කළා
-                const dlUrl = `https://ck-api-v1.vercel.app/movie/cartoon/dl?url=${encodeURIComponent(cartoonLink)}`;
-                const { data: dlData } = await axios.get(dlUrl);
+                // 🛠️ FIX: DL URL එකටත් Plain URL එක කෙලින්ම පාස් කරනවා
+                const dlUrl = `https://ck-api-v1.vercel.app/movie/cartoon/dl?url=${cartoonLink}`;
+                const { data: dlResponse } = await axios.get(dlUrl);
 
-                if (!dlData.success || !dlData.results || !dlData.results.direct_links) {
+                const dlData = dlResponse.results || dlResponse.data || dlResponse;
+
+                if (!dlData || !dlData.direct_links) {
                     return reply("❌ Download links not found for this cartoon.");
                 }
 
-                const directLinks = dlData.results.direct_links;
+                const directLinks = dlData.direct_links;
 
                 let dlText = `🎬 \`${cartoonInfo.title || "Cartoon"}\`\n\n`;
                 dlText += `📥 \`𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗘𝗣𝗜𝗦𝗢𝗗𝗘𝗦 / 𝗟𝗜𝗡𝗞𝗦\`\n\n`;
 
+                // 1,2,3... විදියට direct_links ඇතුළේ තියෙන name එක send කරනවා
                 directLinks.forEach((linkObj, index) => {
                     dlText += `\`${index + 1}\` *|* ❭❭◦ *${linkObj.name}*\n`;
                 });
@@ -137,6 +146,7 @@ async (conn, mek, m, { from, q, reply }) => {
 
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
+                        // Document එකක් විදියට file එක send කිරීම (finalSelectedLink.url එක පාවිච්චි කරලා)
                         await conn.sendMessage(from, {
                             document: { url: finalSelectedLink.url },
                             mimetype: "video/mp4",
@@ -152,14 +162,16 @@ async (conn, mek, m, { from, q, reply }) => {
                     }
                 };
 
+                // Expire නොවෙන්න Register කිරීම
                 conn.ev.on("messages.upsert", linkSelectionListener);
 
             } catch (err) {
                 console.log("Error in cartoon selection:", err);
-                reply("❌ Error while fetching cartoon info or download links.");
+                reply("❌ Error while processing cartoon details. Please try again.");
             }
         };
 
+        // Expire නොවෙන්න Register කිරීම
         conn.ev.on("messages.upsert", cartoonSelectionListener);
 
     } catch (err) {
