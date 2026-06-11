@@ -47,7 +47,6 @@ async (conn, mek, m, { from, q, reply }) => {
 
         searchText += `\n💡 Reply to this message with the cartoon number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
-        // පළමු මැසේජ් එක (config.IMG_URL එකෙන් යන්නේ)
         const sentSearchMsg = await conn.sendMessage(from, {
             image: { url: config.IMG_URL },
             caption: searchText
@@ -69,12 +68,12 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const selectedCartoon = searchData.results[selectedIndex];
                 
-                // 2. Info Request
+                // 🛠️ FIX 1: URL එක encodeURIComponent කිරීම අනිවාර්යයි
                 const infoUrl = `https://ck-api-v1.vercel.app/movie/cartoon/info?url=${encodeURIComponent(selectedCartoon.url)}`;
                 const { data: infoData } = await axios.get(infoUrl);
 
-                if (!infoData.success) {
-                    return reply("❌ Failed to fetch cartoon details.");
+                if (!infoData.success || !infoData.results) {
+                    return reply("❌ Failed to fetch cartoon details from API.");
                 }
 
                 const cartoonInfo = infoData.results;
@@ -85,16 +84,18 @@ async (conn, mek, m, { from, q, reply }) => {
                 infoText += `QUALITY: ${cartoonInfo.quality || "N/A"}\n\n`;
                 infoText += `📥 Fetching download links... Please wait...`;
 
-                // කාටූන් එකේ පෝස්ටර් එකත් එක්ක විස්තර ටික යවනවා
                 const sentInfoMsg = await conn.sendMessage(from, {
-                    image: { url: cartoonInfo.image },
+                    image: { url: cartoonInfo.image || config.IMG_URL },
                     caption: infoText
                 }, { quoted: ck });
 
-                // 3. DL API Request (Links ඇද ගැනීමට)
-                // සාමාන්‍යයෙන් info api එකේ 'links' යටතේ එන url එකක් මෙතනට දාන්න ඕනේ නිසා අපි cartoonInfo.links[0].url හෝ අදාළ link එක ගන්නවා
-                const cartoonLink = cartoonInfo.links && cartoonInfo.links[0] ? cartoonInfo.links[0].url : selectedCartoon.url; 
+                // 🛠️ FIX 2: API එකේ links array එකක් එන්නේ නැත්නම් crash නොවෙන්න selectedCartoon.url එක safe fallback එකක් විදියට ගන්නවා
+                let cartoonLink = selectedCartoon.url;
+                if (cartoonInfo.links && cartoonInfo.links.length > 0 && cartoonInfo.links[0].url) {
+                    cartoonLink = cartoonInfo.links[0].url;
+                }
                 
+                // 🛠️ FIX 3: DL URL එකත් encodeURIComponent කළා
                 const dlUrl = `https://ck-api-v1.vercel.app/movie/cartoon/dl?url=${encodeURIComponent(cartoonLink)}`;
                 const { data: dlData } = await axios.get(dlUrl);
 
@@ -104,7 +105,7 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const directLinks = dlData.results.direct_links;
 
-                let dlText = `🎬 \`${cartoonInfo.title}\`\n\n`;
+                let dlText = `🎬 \`${cartoonInfo.title || "Cartoon"}\`\n\n`;
                 dlText += `📥 \`𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗘𝗣𝗜𝗦𝗢𝗗𝗘𝗦 / 𝗟𝗜𝗡𝗞𝗦\`\n\n`;
 
                 directLinks.forEach((linkObj, index) => {
@@ -113,13 +114,12 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
-                // Links ටික සේරම ලිස්ට් එකක් විදියට යවනවා
                 const sentLinksMsg = await conn.sendMessage(from, {
-                    image: { url: cartoonInfo.image },
+                    image: { url: cartoonInfo.image || config.IMG_URL },
                     caption: dlText
                 }, { quoted: ck });
 
-                // LISTENER 2: Episode එක හෝ Quality Link එක තෝරාගැනීම ඇල්ලීමට
+                // LISTENER 2: Episode එක තෝරාගැනීම ඇල්ලීමට
                 const linkSelectionListener = async (update2) => {
                     try {
                         const msg2 = update2.messages[0];
@@ -135,18 +135,15 @@ async (conn, mek, m, { from, q, reply }) => {
 
                         const finalSelectedLink = directLinks[selectedLinkIndex];
 
-                        // Downloading React
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
-                        // Document එකක් විදියට File එක යැවීම
                         await conn.sendMessage(from, {
                             document: { url: finalSelectedLink.url },
                             mimetype: "video/mp4",
-                            fileName: `${cartoonInfo.title} - ${finalSelectedLink.name}.mp4`,
-                            caption: `🎬 *${cartoonInfo.title}*\n📌 *Episode:* ${finalSelectedLink.name}\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                            fileName: `${cartoonInfo.title || "Cartoon"} - ${finalSelectedLink.name}.mp4`,
+                            caption: `🎬 *${cartoonInfo.title || "Cartoon"}*\n📌 *Episode:* ${finalSelectedLink.name}\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                         }, { quoted: ck });
 
-                        // Success React
                         await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
 
                     } catch (err) {
@@ -155,7 +152,6 @@ async (conn, mek, m, { from, q, reply }) => {
                     }
                 };
 
-                // දෙවැනි ලිස්නර් එක Register කිරීම (Expire වෙන්නේ නෑ)
                 conn.ev.on("messages.upsert", linkSelectionListener);
 
             } catch (err) {
@@ -164,7 +160,6 @@ async (conn, mek, m, { from, q, reply }) => {
             }
         };
 
-        // පළමු ලිස්නර් එක Register කිරීම (Expire වෙන්නේ නෑ)
         conn.ev.on("messages.upsert", cartoonSelectionListener);
 
     } catch (err) {
