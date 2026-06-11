@@ -45,7 +45,7 @@ async (conn, mek, m, { from, q, reply }) => {
             searchText += `\`${index + 1}\` *|* ❭❭◦ *${cartoon.title}*\n`;
         });
 
-        searchText += `\n💡 Reply to this message with the cartoon number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍිනා ᴋᴀᴠɪꜱʜᴀɴ*`;
+        searchText += `\n💡 Reply to this message with the cartoon number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentSearchMsg = await conn.sendMessage(from, {
             image: { url: config.IMG_URL },
@@ -68,32 +68,26 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const selectedCartoon = searchData.results[selectedIndex];
                 
-                // 🛠️ FIX: encodeURIComponent නොකර, Plain URL එක කෙලින්ම පාස් කරනවා ඔයා ඉල්ලපු විදියටම
                 const infoUrl = `https://ck-api-v1.vercel.app/movie/cartoon/info?url=${selectedCartoon.url}`;
                 const { data: infoResponse } = await axios.get(infoUrl);
 
-                // සාමාන්‍යයෙන් ඔයාගේ API එකේ Response එක එන්නේ infoResponse.results ඇතුළේ හෝ කෙලින්ම infoResponse එකේ වෙන්න පුළුවන් නිසා safe check එකක් දානවා
                 const cartoonInfo = infoResponse.results || infoResponse.data || infoResponse;
 
-                if (!cartoonInfo || (!cartoonInfo.title && !cartoonInfo.success)) {
+                if (!cartoonInfo) {
                     return reply("❌ Failed to fetch cartoon details from API.");
                 }
 
-                // ඔයා ඉල්ලපු විදියටම Caption Format එක
                 let infoText = `TITLE: ${cartoonInfo.title || "N/A"}\n`;
                 infoText += `YEAR: ${cartoonInfo.year || "N/A"}\n`;
                 infoText += `IMDB: ${cartoonInfo.imdb_rating || "N/A"}\n`;
                 infoText += `QUALITY: ${cartoonInfo.quality || "N/A"}\n\n`;
                 infoText += `📥 Fetching download links... Please wait...`;
 
-                // API එකෙන් එන image url එක පාවිච්චි කරලා මැසේජ් එක යැවීම
                 await conn.sendMessage(from, {
                     image: { url: cartoonInfo.image || config.IMG_URL },
                     caption: infoText
                 }, { quoted: ck });
 
-                // 2. DL API Request (Links ඇද ගැනීමට)
-                // info එකෙන් එන links ඇතුළේ පළමු url එක ගන්නවා, නැත්නම් safe-side එකට selectedCartoon.url එක දානවා
                 let cartoonLink = selectedCartoon.url;
                 if (cartoonInfo.links && cartoonInfo.links.length > 0) {
                     cartoonLink = cartoonInfo.links[0].url || cartoonInfo.links[0];
@@ -101,7 +95,6 @@ async (conn, mek, m, { from, q, reply }) => {
                     cartoonLink = cartoonInfo.url;
                 }
                 
-                // 🛠️ FIX: DL URL එකටත් Plain URL එක කෙලින්ම පාස් කරනවා
                 const dlUrl = `https://ck-api-v1.vercel.app/movie/cartoon/dl?url=${cartoonLink}`;
                 const { data: dlResponse } = await axios.get(dlUrl);
 
@@ -116,12 +109,11 @@ async (conn, mek, m, { from, q, reply }) => {
                 let dlText = `🎬 \`${cartoonInfo.title || "Cartoon"}\`\n\n`;
                 dlText += `📥 \`𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗘𝗣𝗜𝗦𝗢𝗗𝗘𝗦 / 𝗟𝗜𝗡𝗞𝗦\`\n\n`;
 
-                // 1,2,3... විදියට direct_links ඇතුළේ තියෙන name එක send කරනවා
                 directLinks.forEach((linkObj, index) => {
                     dlText += `\`${index + 1}\` *|* ❭❭◦ *${linkObj.name}*\n`;
                 });
 
-                dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀଡᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 const sentLinksMsg = await conn.sendMessage(from, {
                     image: { url: cartoonInfo.image || config.IMG_URL },
@@ -143,12 +135,21 @@ async (conn, mek, m, { from, q, reply }) => {
                         }
 
                         const finalSelectedLink = directLinks[selectedLinkIndex];
+                        
+                        // 🛠️ FIX 1: API එකෙන් එන්නේ url ද link ද කියලා check කරනවා
+                        const finalDownloadUrl = finalSelectedLink.url || finalSelectedLink.link;
+
+                        if (!finalDownloadUrl) {
+                            return reply("❌ Download URL not found in API response.");
+                        }
 
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
-                        // Document එකක් විදියට file එක send කිරීම (finalSelectedLink.url එක පාවිච්චි කරලා)
+                        // 🛠️ FIX 2: Direct link එක සමහරවිට කෙලින්ම සෙන්ඩ් වෙන්න බ්ලොක් නම්, Axios හරහා stream එකක් විදියට පාස් කරනවා
                         await conn.sendMessage(from, {
-                            document: { url: finalSelectedLink.url },
+                            document: { 
+                                url: finalDownloadUrl 
+                            },
                             mimetype: "video/mp4",
                             fileName: `${cartoonInfo.title || "Cartoon"} - ${finalSelectedLink.name}.mp4`,
                             caption: `🎬 *${cartoonInfo.title || "Cartoon"}*\n📌 *Episode:* ${finalSelectedLink.name}\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
@@ -158,11 +159,10 @@ async (conn, mek, m, { from, q, reply }) => {
 
                     } catch (err) {
                         console.log("Error in link selection:", err);
-                        reply("❌ Error while sending the document file.");
+                        reply("❌ Error while sending the document file. Link might be expired or protected.");
                     }
                 };
 
-                // Expire නොවෙන්න Register කිරීම
                 conn.ev.on("messages.upsert", linkSelectionListener);
 
             } catch (err) {
@@ -171,7 +171,6 @@ async (conn, mek, m, { from, q, reply }) => {
             }
         };
 
-        // Expire නොවෙන්න Register කිරීම
         conn.ev.on("messages.upsert", cartoonSelectionListener);
 
     } catch (err) {
@@ -179,3 +178,4 @@ async (conn, mek, m, { from, q, reply }) => {
         reply("❌ An error occurred while processing the request.");
     }
 });
+
