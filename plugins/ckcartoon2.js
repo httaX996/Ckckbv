@@ -176,4 +176,30 @@ async (conn, mek, m, { from, q, reply }) => {
 
             } catch (err) {
                 console.log(err);
-                reply("❌ Error while fetching movie
+                reply("❌ Error while fetching movie details.");
+            }
+        };
+
+        conn.ev.on("messages.upsert", movieSelectionListener);
+        setTimeout(() => { conn.ev.off("messages.upsert", movieSelectionListener); }, 120000);
+
+    } catch (err) {
+        console.log(err);
+        reply("❌ Error while searching movie.");
+    }
+});
+
+const ck = {
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nORG:META AI;\nTEL;type=CELL;type=VOICE;waid=13135550002:+13135550002\nEND:VCARD`
+        }
+    }
+};
+
