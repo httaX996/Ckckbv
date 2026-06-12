@@ -30,8 +30,11 @@ async (conn, mek, m, { from, q, reply }) => {
             return reply("🎬 Please provide a movie name.\n\nExample:\n.pupil tentigo");
         }
 
+        // 1. Movie Search API Call
         const searchUrl = `https://ck-api-v1.vercel.app/movie/pupil/search?q=${encodeURIComponent(q)}`;
-        const { data } = await axios.get(searchUrl);
+        const { data } = await axios.get(searchUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+        });
 
         const results = data.result || data.data || [];
         if (!results.length) {
@@ -50,7 +53,7 @@ async (conn, mek, m, { from, q, reply }) => {
         const sentMsg = await conn.sendMessage(
             from,
             {
-                image: { url: config.IMG_URL },
+                image: { url: config.IMG_URL || "https://i.ibb.co/689v0p7/movie-default.jpg" },
                 caption: text
             },
             { quoted: ck }
@@ -76,34 +79,39 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const selectedMovie = results[selectedMovieIndex];
 
-                // 2. Movie Info API Request
-                const infoUrl = `https://ck-api-v1.vercel.app/movie/pupil/info?url=${encodeURIComponent(selectedMovie.link)}`;
-                const infoResponse = await axios.get(infoUrl);
-                
-                // 🛠️ API එකෙන් එන දත්ත ටික ලොග් එකේ බලාගන්න (Debugging)
-                console.log("=== API RESPONSE FOR INFO ===");
-                console.log(JSON.stringify(infoResponse.data, null, 2));
+                // 🛠️ මෙතන තමයි වැදගත්ම දේ: ලින්ක් එක සම්පූර්ණයෙන්ම encode කරනවා
+                const encodedMovieLink = encodeURIComponent(selectedMovie.link);
+                const infoUrl = `https://ck-api-v1.vercel.app/movie/pupil/info?url=${encodedMovieLink}`;
 
-                const movieInfo = infoResponse.data.result || infoResponse.data.data || infoResponse.data;
+                // 2. Movie Info API Call (With Headers)
+                const infoResponse = await axios.get(infoUrl, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+                });
+                
+                // ලැබෙන Response එක ලොග් එකේ දමාගැනීම
+                console.log("=== DETAIL API RESPONSE ===", JSON.stringify(infoResponse.data));
+
+                // දත්ත වෙනස්ම විදිහකට ආවොත් fallback හැදීම
+                const movieInfo = infoResponse.data?.result || infoResponse.data?.data || infoResponse.data;
+                
                 if (!movieInfo) {
-                    return reply("❌ Failed to fetch movie details from API.");
+                    return reply("❌ API එකෙන් දත්ත ලැබුණේ නැත.");
                 }
 
-                // API එකෙන් එන්න පුළුවන් විවිධ keys check කිරීම (`drive_1` හෝ `links` හෝ `download_links`)
-                const downloadLinks = movieInfo.drive_1 || movieInfo.links || movieInfo.download_links || [];
+                const downloadLinks = movieInfo.drive_1 || movieInfo.links || [];
 
                 let caption = `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n`;
                 caption += `📥 \`AVAILABLE DOWNLOAD LINKS\`\n\n`;
 
-                if (downloadLinks.length === 0) {
-                    caption += `❌ No links found in API Response.\n`;
+                if (!downloadLinks || downloadLinks.length === 0) {
+                    caption += `❌ No links found inside drive_1.\n`;
                 } else {
                     downloadLinks.forEach((dl, i) => {
-                        caption += `\`${i + 1}\` *|* ❭❭◦ *${dl.name || dl.quality} - ${dl.size || "Unknown Size"}*\n`;
+                        caption += `\`${i + 1}\` *|* ❭❭◦ *${dl.name || "Link"} - ${dl.size || "N/A"}*\n`;
                     });
                 }
 
-                caption += `\n💡 Reply with the link number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                caption += `\n💡 Reply with the link number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜ─ᴍɪɴᴀ*`;
 
                 const moviePoster = movieInfo.image || selectedMovie.image || config.IMG_URL;
 
@@ -116,11 +124,10 @@ async (conn, mek, m, { from, q, reply }) => {
                     { quoted: ck }
                 );
 
-                // ලින්ක්ස් තිබුනොත් විතරක් ඊළඟ Listener එක වැඩ කරන්න සලස්වමු
-                if (downloadLinks.length === 0) return;
+                if (!downloadLinks || downloadLinks.length === 0) return;
 
                 // -------------------------------------------------------------------
-                // LISTENER 2: Quality/Link එක තෝරාගෙන Download කිරීම
+                // LISTENER 2: Download කිරීම
                 // -------------------------------------------------------------------
                 const downloadListener = async (update2) => {
                     try {
@@ -138,11 +145,11 @@ async (conn, mek, m, { from, q, reply }) => {
                         }
 
                         const selectedLinkObj = downloadLinks[linkIndex];
-                        
-                        // ලින්ක් එක තිබෙන්නේ .link ද නැතහොත් .url ද කියා බැලීම
                         const rawLink = selectedLinkObj.link || selectedLinkObj.url;
-                        if (!rawLink) return reply("❌ Download link not found in object.");
+                        
+                        if (!rawLink) return reply("❌ Link property not found.");
 
+                        // අගට &download=true එකතු කිරීම
                         const directDownloadLink = `${rawLink}&download=true`;
 
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
@@ -153,8 +160,6 @@ async (conn, mek, m, { from, q, reply }) => {
                         let mimetype = "video/mp4";
                         if (fileName.toLowerCase().endsWith('.mkv')) {
                             mimetype = "video/x-matroska";
-                        } else if (fileName.toLowerCase().endsWith('.zip')) {
-                            mimetype = "application/zip";
                         }
 
                         await conn.sendMessage(
@@ -173,7 +178,7 @@ async (conn, mek, m, { from, q, reply }) => {
 
                     } catch (err) {
                         console.log(err);
-                        reply("❌ Error while processing your download.");
+                        reply("❌ Error while downloading.");
                     }
                 };
 
@@ -196,11 +201,7 @@ async (conn, mek, m, { from, q, reply }) => {
 });
 
 const ck = {
-    key: {
-        fromMe: false,
-        participant: "0@s.whatsapp.net",
-        remoteJid: "status@broadcast"
-    },
+    key: { fromMe: false, participant: "0@s.whatsapp.net", remoteJid: "status@broadcast" },
     message: {
         contactMessage: {
             displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
