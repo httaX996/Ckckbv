@@ -17,7 +17,12 @@ const ck = {
     message: {
         contactMessage: {
             displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nORG:META AI;\nTEL;type=CELL;type=VOICE;waid=13135550002:+13135550002\nEND:VCARD`
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
         }
     }
 };
@@ -38,7 +43,7 @@ async function createThumbnail(url) {
 
 
 // ==========================================
-// 1️⃣ Main .sinhala Command
+// 1️⃣ Main .sinhala Command (SILENT TRIGGER)
 // ==========================================
 cmd({
     pattern: "sinhala",
@@ -58,35 +63,54 @@ async (conn, mek, m, { from, q, reply, isCmd }) => {
         menuText += `2. pupil video\n\n`;
         menuText += `select you want website`;
 
-        const sentMenuMsg = await conn.sendMessage(from, { text: menuText }, { quoted: ck });
-
+        const sentMenuMsg = await conn.sendMessage(from, {
+            image: { url: config.IMG_URL },
+            caption: menuText
+        }, { quoted: ck });
         // Website එක තෝරාගන්නා තෙක් බලා සිටින Listener එක
         const siteSelectionListener = async (update) => {
             try {
                 const msg = update.messages[0];
-                if (!msg.message?.extendedTextMessage) return;
-                if (msg.message.extendedTextMessage.contextInfo?.stanzaId !== sentMenuMsg.key.id) return;
+                if (!msg.message) return;
 
-                const userReply = msg.message.extendedTextMessage.text.trim();
+                const contextInfo = msg.message.extendedTextMessage?.contextInfo;
+                if (contextInfo?.stanzaId !== sentMenuMsg.key.id) return;
 
-                if (userReply === '1') {
-                    // Listener එක off කරලා cktoon1 command එක run කරනවා
+                const userReply = (msg.message.extendedTextMessage?.text || msg.message.conversation || "").trim();
+
+                if (userReply === '1' || userReply === '2') {
+                    // Listener එක off කරනවා
                     conn.ev.off("messages.upsert", siteSelectionListener);
-                    const cartoonCmd = cmd.list.find(c => c.pattern === 'cktoon1');
-                    if (cartoonCmd) {
-                        return cartoonCmd.function(conn, mek, m, { from, q, reply, isCmd });
+
+                    // තෝරගත්ත අංකය අනුව command pattern එක තීරණය කරනවා
+                    const targetPattern = userReply === '1' ? 'cktoon1' : 'cktoon2';
+                    
+                    // බෝට් එකේ register වෙලා තියෙන command ලැයිස්තුවෙන් අදාල එක සොයාගන්නවා
+                    const targetCmd = cmd.list.find(c => c.pattern === targetPattern);
+                    
+                    if (targetCmd) {
+                        // 🛠️ බෝට් එකේ main handler එක රැවටීමට, background එකෙන් message object එක modify කරනවා
+                        let modifiedMek = JSON.parse(JSON.stringify(mek)); // Object එක clone කර ගැනීම
+                        
+                        if (modifiedMek.message?.extendedTextMessage) {
+                            modifiedMek.message.extendedTextMessage.text = `.${targetPattern} ${q}`;
+                        } else if (modifiedMek.message?.conversation) {
+                            modifiedMek.message.conversation = `.${targetPattern} ${q}`;
+                        } else {
+                            modifiedMek.message = { conversation: `.${targetPattern} ${q}` };
+                        }
+
+                        // Chat එකට කිසිම text එකක් send කරන්නේ නැතුව backend එකෙන්ම කෙලින්ම run කරවනවා
+                        return await targetCmd.function(conn, modifiedMek, m, { 
+                            from, 
+                            q, 
+                            reply, 
+                            isCmd: true, 
+                            body: `.${targetPattern} ${q}`, 
+                            command: targetPattern 
+                        });
                     } else {
-                        return reply("❌ cktoon1 command not found.");
-                    }
-                } 
-                else if (userReply === '2') {
-                    // Listener එක off කරලා cktoon2 command එක run කරනවා
-                    conn.ev.off("messages.upsert", siteSelectionListener);
-                    const movieCmd = cmd.list.find(c => c.pattern === 'cktoon2');
-                    if (movieCmd) {
-                        return movieCmd.function(conn, mek, m, { from, q, reply, isCmd });
-                    } else {
-                        return reply("❌ cktoon2 command not found.");
+                        return reply(`❌ ${targetPattern} command not found.`);
                     }
                 } 
                 else {
@@ -99,7 +123,7 @@ async (conn, mek, m, { from, q, reply, isCmd }) => {
         };
 
         conn.ev.on("messages.upsert", siteSelectionListener);
-        // විනාඩි 2කින් automatic listener එක අයින් වෙන්න timeout එකක් (Memory leaks වලකින්න)
+        // විනාඩි 2කින් automatic listener එක අයින් වෙන්න timeout එකක්
         setTimeout(() => { conn.ev.off("messages.upsert", siteSelectionListener); }, 120000);
 
     } catch (err) {
@@ -157,7 +181,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     return reply("❌ Invalid number. Please select a valid number from the list.");
                 }
 
-                conn.ev.off("messages.upsert", cartoonSelectionListener); // Off inside to avoid leaks
+                conn.ev.off("messages.upsert", cartoonSelectionListener); 
 
                 const selectedCartoon = searchData.results[selectedIndex];
                 const infoUrl = `https://ck-api-v1.vercel.app/movie/cartoon/info?url=${selectedCartoon.url}`;
@@ -170,7 +194,7 @@ async (conn, mek, m, { from, q, reply }) => {
                 infoText += `📆 \`YEAR:\` *${cartoonInfo.year || "N/A"}*\n`;
                 infoText += `⭐ \`IMDB:\` *${cartoonInfo.imdb_rating || "N/A"}*\n`;
                 infoText += `💿 \`QUALITY:\` *${cartoonInfo.quality || "N/A"}*\n\n`;
-                infoText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                infoText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠิꜱʜᴀɴ*`;
 
                 await conn.sendMessage(from, {
                     image: { url: cartoonInfo.image || config.IMG_URL },
@@ -198,7 +222,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     dlText += `\`${index + 1}\` *|* ❭❭◦ *${linkObj.name}*\n`;
                 });
 
-                dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠิꜱʜᴀɴ*`;
 
                 const sentLinksMsg = await conn.sendMessage(from, {
                     image: { url: cartoonInfo.image || config.IMG_URL },
@@ -233,7 +257,7 @@ async (conn, mek, m, { from, q, reply }) => {
                             mimetype: "video/mp4",
                             fileName: `${finalSelectedLink.name}.mp4`,
                             jpegThumbnail: thumb,
-                            caption: `🎬 \`${finalSelectedLink.name}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                            caption: `🎬 \`${finalSelectedLink.name}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠิꜱʜᴀɴ*`
                         }, { quoted: ck });
 
                         await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
@@ -290,7 +314,7 @@ async (conn, mek, m, { from, q, reply }) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply to this message with the movie number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        text += `\n💡 Reply to this message with the movie number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠิꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(from, {
             image: { url: config.IMG_URL || "https://i.ibb.co/689v0p7/movie-default.jpg" },
@@ -324,7 +348,7 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const downloadLinks = movieInfo.downloads || [];
                 let caption = `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n`;
-                caption += `📥 \`𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞𝗦\`\n\n`;
+                caption += `📥 \`𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜NK𝗦\`\n\n`;
 
                 if (downloadLinks.length === 0) {
                     caption += `❌ No links found in API Response.\n`;
@@ -334,7 +358,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     });
                 }
 
-                caption += `\n💡 Reply with the link number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                caption += `\n💡 Reply with the link number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠิꜱʜᴀɴ*`;
                 const moviePoster = movieInfo.image || selectedMovie.image || config.IMG_URL;
 
                 const movieDetailsMessage = await conn.sendMessage(from, {
@@ -381,7 +405,7 @@ async (conn, mek, m, { from, q, reply }) => {
                             mimetype: "video/mp4",
                             fileName: fileName,
                             jpegThumbnail: thumb,
-                            caption: `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n🎞️ \`Quality:\` *${selectedLinkObj.quality}*\n📦 \`Size:\` *${selectedLinkObj.size || "N/A"}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                            caption: `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n🎞️ \`Quality:\` *${selectedLinkObj.quality}*\n📦 \`Size:\` *${selectedLinkObj.size || "N/A"}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠิꜱʜᴀɴ*`
                         }, { quoted: ck });
 
                         await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
@@ -409,3 +433,4 @@ async (conn, mek, m, { from, q, reply }) => {
         reply("❌ Error while searching movie.");
     }
 });
+
