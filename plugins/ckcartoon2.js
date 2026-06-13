@@ -33,7 +33,7 @@ async (conn, mek, m, { from, q, reply }) => {
         // 1. Movie Search API Call
         const searchUrl = `https://ck-api-v1.vercel.app/movie/pupil/search?q=${encodeURIComponent(q)}`;
         const { data } = await axios.get(searchUrl, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+            headers: { 'User-Agent': 'Mozilla/5.0' }
         });
 
         const results = data.result || data.data || [];
@@ -79,39 +79,36 @@ async (conn, mek, m, { from, q, reply }) => {
 
                 const selectedMovie = results[selectedMovieIndex];
 
-                // 🛠️ මෙතන තමයි වැදගත්ම දේ: ලින්ක් එක සම්පූර්ණයෙන්ම encode කරනවා
-                const encodedMovieLink = encodeURIComponent(selectedMovie.link);
-                const infoUrl = `https://ck-api-v1.vercel.app/movie/pupil/info?url=${encodedMovieLink}`;
-
-                // 2. Movie Info API Call (With Headers)
+                // 2. Movie Info API Call
+                const infoUrl = `https://ck-api-v1.vercel.app/movie/pupil/info?url=${encodeURIComponent(selectedMovie.link)}`;
                 const infoResponse = await axios.get(infoUrl, {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+                    headers: { 'User-Agent': 'Mozilla/5.0' }
                 });
                 
-                // ලැබෙන Response එක ලොග් එකේ දමාගැනීම
-                console.log("=== DETAIL API RESPONSE ===", JSON.stringify(infoResponse.data));
-
-                // දත්ත වෙනස්ම විදිහකට ආවොත් fallback හැදීම
-                const movieInfo = infoResponse.data?.result || infoResponse.data?.data || infoResponse.data;
+                const apiResponse = infoResponse.data;
                 
+                // 🛠️ ඔයා එවපු අලුත් JSON එකට අනුව data Object එක ඇතුලට යනවා
+                const movieInfo = apiResponse.data || apiResponse.result || apiResponse;
                 if (!movieInfo) {
-                    return reply("❌ API එකෙන් දත්ත ලැබුණේ නැත.");
+                    return reply("❌ Failed to fetch movie details.");
                 }
 
-                const downloadLinks = movieInfo.drive_1 || movieInfo.links || [];
+                // 🛠️ අලුත් JSON එකේ තියෙන්නේ `downloads` කියන array එකයි
+                const downloadLinks = movieInfo.downloads || [];
 
                 let caption = `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n`;
                 caption += `📥 \`AVAILABLE DOWNLOAD LINKS\`\n\n`;
 
-                if (!downloadLinks || downloadLinks.length === 0) {
-                    caption += `❌ No links found inside drive_1.\n`;
+                if (downloadLinks.length === 0) {
+                    caption += `❌ No links found in API Response.\n`;
                 } else {
                     downloadLinks.forEach((dl, i) => {
-                        caption += `\`${i + 1}\` *|* ❭❭◦ *${dl.name || "Link"} - ${dl.size || "N/A"}*\n`;
+                        // 🛠️ JSON එකේ තියෙන quality සහ size ලබා ගැනීම
+                        caption += `\`${i + 1}\` *|* ❭❭◦ *${dl.quality} - ${dl.size || "Unknown Size"}*\n`;
                     });
                 }
 
-                caption += `\n💡 Reply with the link number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜ─ᴍɪɴᴀ*`;
+                caption += `\n💡 Reply with the link number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 const moviePoster = movieInfo.image || selectedMovie.image || config.IMG_URL;
 
@@ -124,7 +121,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     { quoted: ck }
                 );
 
-                if (!downloadLinks || downloadLinks.length === 0) return;
+                if (downloadLinks.length === 0) return;
 
                 // -------------------------------------------------------------------
                 // LISTENER 2: Download කිරීම
@@ -145,22 +142,26 @@ async (conn, mek, m, { from, q, reply }) => {
                         }
 
                         const selectedLinkObj = downloadLinks[linkIndex];
-                        const rawLink = selectedLinkObj.link || selectedLinkObj.url;
                         
-                        if (!rawLink) return reply("❌ Link property not found.");
+                        // 🛠️ අලුත් JSON එකට අනුව ලින්ක් එක ගන්නේ `direct_link` වලින්
+                        let rawLink = selectedLinkObj.direct_link || selectedLinkObj.link || selectedLinkObj.url;
+                        if (!rawLink) return reply("❌ Download link not found.");
 
-                        // අගට &download=true එකතු කිරීම
-                        const directDownloadLink = `${rawLink}&download=true`;
+                        // ඔයාගේ API එකේ දැනටමත් &download=true තියෙන නිසා, නැවත එකතු නොවී තිබේ නම් පමණක් එකතු කරයි
+                        let directDownloadLink = rawLink;
+                        if (!directDownloadLink.includes('&download=true')) {
+                            directDownloadLink = `${directDownloadLink}&download=true`;
+                        }
 
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
                         const thumb = await createThumbnail(moviePoster);
 
-                        const fileName = selectedLinkObj.name || `${movieInfo.title || "Movie"}.mp4`;
+                        // File name එක විදියට movie title එක සහ quality එක සකසමු
+                        const cleanTitle = (movieInfo.title || "Movie").replace(/[\\/:*?"<>|]/g, ""); // වැරදි අකුරු අයින් කරන්න
+                        const fileName = `${cleanTitle} - ${selectedLinkObj.quality}.mp4`;
+                        
                         let mimetype = "video/mp4";
-                        if (fileName.toLowerCase().endsWith('.mkv')) {
-                            mimetype = "video/x-matroska";
-                        }
 
                         await conn.sendMessage(
                             from,
@@ -169,7 +170,7 @@ async (conn, mek, m, { from, q, reply }) => {
                                 mimetype: mimetype,
                                 fileName: fileName,
                                 jpegThumbnail: thumb,
-                                caption: `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n🎞️ \`File:\` *${fileName}*\n📦 \`Size:\` *${selectedLinkObj.size || "N/A"}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                                caption: `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n🎞️ \`Quality:\` *${selectedLinkObj.quality}*\n📦 \`Size:\` *${selectedLinkObj.size || "N/A"}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                             },
                             { quoted: ck }
                         );
