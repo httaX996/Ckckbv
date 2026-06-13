@@ -57,7 +57,7 @@ async (conn, mek, m, { from, q, reply }) => {
         menuText += `\`2\` *|* ❭❭◦ *_pupilvideo.blogspot.com_*\n`;
         menuText += `* *කාටුන් හා සිංහල චිත්‍රපට ඇත.*\n\n`;
         menuText += `💡 ඔයාට අවශ්‍ය website එකට අදාල අංකය මෙම massage එකට reply කරන්න.\n\n`;
-        mrnuText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        menuText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
 
         // 🛠️ ඔයා ඉල්ලපු විදියට config.IMG_URL එකත් එක්කම Menu මැසේජ් එක යැවීම
