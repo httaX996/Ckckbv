@@ -51,10 +51,14 @@ async (conn, mek, m, { from, q, reply }) => {
             return reply("🎬 Please provide a movie name.\n\nExample:\n.sinhala ben 10");
         }
 
-        let menuText = `CK SINHALA MOVIES SEARCH\n\n`;
-        menuText += `1. cartoon.com site\n`;
-        menuText += `2. pupil video\n\n`;
-        menuText += `select you want website`;
+        let menuText = `🎬 \`𝗖𝗞 𝗦𝗜𝗡𝗛𝗔𝗟𝗔 𝗠𝗢𝗩𝗜𝗘𝗦 */* 𝗖𝗔𝗥𝗧𝗢𝗢𝗡𝗦 𝗦𝗘𝗔𝗥𝗖𝗛\` 🎬\n\n`;
+        menuText += `\`1\` *|* ❭❭◦ *_sinhalacartoons.com_*\n`;
+        menuText += `* *කාටුන් පමණක් ඇත.*\n\n`;
+        menuText += `\`2\` *|* ❭❭◦ *_pupilvideo.blogspot.com_*\n`;
+        menuText += `* *කාටුන් හා සිංහල චිත්‍රපට ඇත.*\n\n`;
+        menuText += `💡 ඔයාට අවශ්‍ය website එකට අදාල අංකය මෙම massage එකට reply කරන්න.\n\n`;
+        mrnuText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+
 
         // 🛠️ ඔයා ඉල්ලපු විදියට config.IMG_URL එකත් එක්කම Menu මැසේජ් එක යැවීම
         const sentMenuMsg = await conn.sendMessage(from, { 
