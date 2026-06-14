@@ -188,7 +188,7 @@ async (conn, mek, m, { from, q, reply }) => {
                                 mimetype: "video/mp4",
                                 fileName: `${finalSelectedLink.name}.mp4`,
                                 jpegThumbnail: thumb,
-                                caption: `🎬 \`${finalSelectedLink.name}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪ<b>ꜱ</b>ʜᴀɴ*`
+                                caption: `🎬 \`${finalSelectedLink.name}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                             }, { quoted: ck });
 
                             await conn.sendMessage(from, { react: { text: "⚽", key: msg2.key } });
