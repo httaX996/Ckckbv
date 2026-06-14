@@ -36,7 +36,7 @@ async function createThumbnail(url) {
 
 
 // ==========================================
-// 🎬 MAIN .SINHALA COMMAND
+// 🎬 MAIN .SINHALA COMMAND (3-MIN TIMEOUT)
 // ==========================================
 cmd({
     pattern: "sinhala",
@@ -60,7 +60,6 @@ async (conn, mek, m, { from, q, reply }) => {
         menuText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
 
-        // 🛠️ ඔයා ඉල්ලපු විදියට config.IMG_URL එකත් එක්කම Menu මැසේජ් එක යැවීම
         const sentMenuMsg = await conn.sendMessage(from, { 
             image: { url: config.IMG_URL }, 
             caption: menuText 
@@ -78,7 +77,7 @@ async (conn, mek, m, { from, q, reply }) => {
                 const userReply = (msg.message.extendedTextMessage?.text || msg.message.conversation || "").trim();
 
                 if (userReply === '1') {
-                    conn.ev.off("messages.upsert", siteSelectionListener); // Listener එක off කරනවා
+                    // Multi-reply වැඩ කරන්න conn.ev.off එක මෙතනින් අයින් කරලා තියෙන්නේ.
                     
                     // ==========================================
                     // RUNNING CARTOONS.COM CODE DIRECTLY
@@ -156,64 +155,64 @@ async (conn, mek, m, { from, q, reply }) => {
                             });
                             dlText += `\n💡 Reply with the link/episode number to get the document.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
-                            const sentLinksMsg = await conn.sendMessage(from, {
-                                image: { url: cartoonInfo.image || config.IMG_URL },
-                                caption: dlText
+                    const sentLinksMsg = await conn.sendMessage(from, {
+                        image: { url: cartoonInfo.image || config.IMG_URL },
+                        caption: dlText
+                    }, { quoted: ck });
+
+                    const linkSelectionListener = async (updateLinks) => {
+                        try {
+                            const msg2 = updateLinks.messages[0];
+                            if (!msg2.message?.extendedTextMessage) return;
+                            if (msg2.message.extendedTextMessage.contextInfo?.stanzaId !== sentLinksMsg.key.id) return;
+
+                            const linkReply = msg2.message.extendedTextMessage.text.trim();
+                            const selectedLinkIndex = parseInt(linkReply) - 1;
+
+                            if (isNaN(selectedLinkIndex) || selectedLinkIndex < 0 || selectedLinkIndex >= directLinks.length) {
+                                return reply("❌ Invalid number.");
+                            }
+
+                            conn.ev.off("messages.upsert", linkSelectionListener);
+
+                            const finalSelectedLink = directLinks[selectedLinkIndex];
+                            const finalDownloadUrl = finalSelectedLink.url || finalSelectedLink.link;
+
+                            if (!finalDownloadUrl) return reply("❌ Download URL not found.");
+
+                            await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
+                            const thumb = cartoonInfo.image ? await createThumbnail(cartoonInfo.image) : null;
+
+                            await conn.sendMessage(from, {
+                                document: { url: finalDownloadUrl },
+                                mimetype: "video/mp4",
+                                fileName: `${finalSelectedLink.name}.mp4`,
+                                jpegThumbnail: thumb,
+                                caption: `🎬 \`${finalSelectedLink.name}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪ<b>ꜱ</b>ʜᴀɴ*`
                             }, { quoted: ck });
 
-                            const linkSelectionListener = async (updateLinks) => {
-                                try {
-                                    const msg2 = updateLinks.messages[0];
-                                    if (!msg2.message?.extendedTextMessage) return;
-                                    if (msg2.message.extendedTextMessage.contextInfo?.stanzaId !== sentLinksMsg.key.id) return;
-
-                                    const linkReply = msg2.message.extendedTextMessage.text.trim();
-                                    const selectedLinkIndex = parseInt(linkReply) - 1;
-
-                                    if (isNaN(selectedLinkIndex) || selectedLinkIndex < 0 || selectedLinkIndex >= directLinks.length) {
-                                        return reply("❌ Invalid number.");
-                                    }
-
-                                    conn.ev.off("messages.upsert", linkSelectionListener);
-
-                                    const finalSelectedLink = directLinks[selectedLinkIndex];
-                                    const finalDownloadUrl = finalSelectedLink.url || finalSelectedLink.link;
-
-                                    if (!finalDownloadUrl) return reply("❌ Download URL not found.");
-
-                                    await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
-                                    const thumb = cartoonInfo.image ? await createThumbnail(cartoonInfo.image) : null;
-
-                                    await conn.sendMessage(from, {
-                                        document: { url: finalDownloadUrl },
-                                        mimetype: "video/mp4",
-                                        fileName: `${finalSelectedLink.name}.mp4`,
-                                        jpegThumbnail: thumb,
-                                        caption: `🎬 \`${finalSelectedLink.name}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪَنᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
-                                    }, { quoted: ck });
-
-                                    await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
-
-                                } catch (err) {
-                                    reply("❌ Error while sending the file.");
-                                }
-                            };
-
-                            conn.ev.on("messages.upsert", linkSelectionListener);
-                            setTimeout(() => { conn.ev.off("messages.upsert", linkSelectionListener); }, 120000);
+                            await conn.sendMessage(from, { react: { text: "⚽", key: msg2.key } });
 
                         } catch (err) {
-                            reply("❌ Error while processing details.");
+                            reply("❌ Error while sending the file.");
                         }
                     };
 
-                    conn.ev.on("messages.upsert", cartoonSelectionListener);
-                    setTimeout(() => { conn.ev.off("messages.upsert", cartoonSelectionListener); }, 120000);
+                    conn.ev.on("messages.upsert", linkSelectionListener);
+                    setTimeout(() => { conn.ev.off("messages.upsert", linkSelectionListener); }, 180000); // ⏱️ විනාඩි 3
 
-                } 
-                else if (userReply === '2') {
-                    conn.ev.off("messages.upsert", siteSelectionListener); // Listener එක off කරනවා
+                } catch (err) {
+                    reply("❌ Error while processing details.");
+                }
+            };
 
+            conn.ev.on("messages.upsert", cartoonSelectionListener);
+            setTimeout(() => { conn.ev.off("messages.upsert", cartoonSelectionListener); }, 180000); // ⏱️ විනාඩි 3
+
+        } 
+        else if (userReply === '2') {
+                    // Multi-reply වැඩ කරන්න conn.ev.off එක මෙතනිනුත් අයින් කළා.
+                    
                     // ==========================================
                     // RUNNING PUPILVIDEO CODE DIRECTLY
                     // ==========================================
@@ -321,7 +320,7 @@ async (conn, mek, m, { from, q, reply }) => {
                                         caption: `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n🎞️ \`Quality:\` *${selectedLinkObj.quality}*\n📦 \`Size:\` *${selectedLinkObj.size || "N/A"}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                                     }, { quoted: ck });
 
-                                    await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
+                                    await conn.sendMessage(from, { react: { text: "⚽", key: msg2.key } });
 
                                 } catch (err) {
                                     reply("❌ Error while downloading.");
@@ -329,7 +328,7 @@ async (conn, mek, m, { from, q, reply }) => {
                             };
 
                             conn.ev.on("messages.upsert", downloadListener);
-                            setTimeout(() => { conn.ev.off("messages.upsert", downloadListener); }, 120000);
+                            setTimeout(() => { conn.ev.off("messages.upsert", downloadListener); }, 180000); // ⏱️ විනාඩි 3
 
                         } catch (err) {
                             reply("❌ Error while fetching movie details.");
@@ -337,10 +336,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     };
 
                     conn.ev.on("messages.upsert", movieSelectionListener);
-                    setTimeout(() => { conn.ev.off("messages.upsert", movieSelectionListener); }, 120000);
-                } 
-                else {
-                    return reply("❌ Invalid selection. Please reply with 1 or 2.");
+                    setTimeout(() => { conn.ev.off("messages.upsert", movieSelectionListener); }, 180000); // ⏱️ විනාඩි 3
                 }
 
             } catch (err) {
@@ -349,10 +345,12 @@ async (conn, mek, m, { from, q, reply }) => {
         };
 
         conn.ev.on("messages.upsert", siteSelectionListener);
-        setTimeout(() => { conn.ev.off("messages.upsert", siteSelectionListener); }, 120000);
+        // ⏱️ මුළු Menu එකේ Timeout කාලය විනාඩි 3යි (180000 ms). මේ විනාඩි 3 ඇතුලත ඕනම වාර ගණනක් reply කරන්න පුළුවන්.
+        setTimeout(() => { conn.ev.off("messages.upsert", siteSelectionListener); }, 300000);
 
     } catch (err) {
         console.log("Sinhala Command Error:", err);
         reply("❌ An error occurred.");
     }
 });
+
