@@ -73,7 +73,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -167,16 +167,18 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
-                        const finalDownloadUrl = selectedSource.downloadUrl;
+                        
+                        // 🌟 FIX: Worker එකේ ලින්ක් එක වෙනුවට, ඔරිජිනල්ම වීඩියෝ ලින්ක් එක (directUrl) කෙලින්ම ගන්නවා!
+                        const finalDownloadUrl = selectedSource.directUrl || selectedSource.downloadUrl;
 
                         if (!finalDownloadUrl) {
-                            return reply("❌ Download URL not found.");
+                            return reply("❌ Video link not found.");
                         }
 
                         // Downloading reaction
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
-                        // 🌟 FIX: Axios හරහා මුළු ෆයිල් එකම සර්වර් එකට ArrayBuffer එකක් විදිහට බාගන්නවා (ටෙලිග්‍රෑම් බොට් වගේම)
+                        // බොට් රන් වෙන සර්වර් එක ඇතුළට සම්පූර්ණ ෆයිල් එකම බෆර් එකක් විදිහට බානවා (ටෙලිග්‍රෑම් එක වගේම)
                         const downloadResponse = await axios.get(finalDownloadUrl, {
                             responseType: 'arraybuffer',
                             headers: {
@@ -189,7 +191,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const thumb = await createThumbnail(imageUrl);
 
-                        // 🌟 FIX: බාගත්ත Buffer එක කෙලින්ම WhatsApp එකට යවනවා (Baileys ලින්ක් කේස් එක සම්පූර්ණයෙන්ම ඉවරයි)
+                        // බාගත්ත පිරිසිදු දත්ත (Buffer) එක කෙලින්ම WhatsApp එකට දෙනවා
                         await conn.sendMessage(
                             from,
                             {
