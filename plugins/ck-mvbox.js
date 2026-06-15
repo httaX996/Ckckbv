@@ -56,7 +56,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
         const searchUrl = `https://apiv1.freehandyflix.online/api/search/${encodeURIComponent(q)}`;
         const { data: searchData } = await axios.get(searchUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, healthiest Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
         });
 
@@ -167,29 +167,48 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
-                        
-                        // 🌟 FIX 1: වැඩ කරන එකම ලින්ක් එක downloadUrl නිසා ඒක කෙලින්ම ගන්නවා
                         const workingDownloadUrl = selectedSource.downloadUrl;
 
                         if (!workingDownloadUrl) {
-                            return reply("❌ Working download link not found.");
+                            return reply("❌ Download link not found.");
                         }
 
                         // Downloading reaction
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
+                        // 🌟 FIX: Cloudflare Worker එක රවට්ටන්න සම්පූර්ණ බ්‍රවුසර් හෙඩර්ස් ටික දෙනවා.
+                        // සර්වර් එක Timeout වෙන එක නවත්තන්න timeout: 0 දානවා.
+                        const downloadResponse = await axios.get(workingDownloadUrl, {
+                            responseType: 'arraybuffer',
+                            timeout: 0, // 🎯 Timeout වීම් සදහටම නවත්තන්න
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                                'Accept-Language': 'en-US,en;q=0.9',
+                                'Accept-Encoding': 'gzip, deflate, br',
+                                'Connection': 'keep-alive'
+                            },
+                            maxContentLength: Infinity,
+                            maxBodyLength: Infinity
+                        });
+
+                        // බාගත්ත දත්ත ඇත්තම වීඩියෝවක්ද නැත්නම් අර HTML එකමද කියලා ඩබල් චෙක් කරනවා
+                        const firstFewBytes = Buffer.from(downloadResponse.data).toString('utf-8', 0, 100);
+                        if (firstFewBytes.includes('<!DOCTYPE html>') || firstFewBytes.includes('<html')) {
+                            return reply("❌ Access Denied by Worker Shield. Please try another quality.");
+                        }
+
                         const thumb = await createThumbnail(imageUrl);
 
-                        // 🌟 FIX 2: Axios වලින් සර්වර් එකට බාන්නේ නැතුව, CineSubz එකේ වගේ ලින්ක් එක කෙලින්ම WhatsApp එකට දෙනවා.
-                        // එතකොට 0.2KB එන්නේ නෑ, සම්පූර්ණ ෆයිල් එකම WhatsApp එකෙන් ලෝඩ් කරලා යවනවා.
+                        // හැමදේම හරි නම් වීඩියෝ බෆර් එක WhatsApp දෙනවා
                         await conn.sendMessage(
                             from,
                             {
-                                document: { url: workingDownloadUrl }, // 🎯 Directly passing URL like CineSubz script
+                                document: Buffer.from(downloadResponse.data), 
                                 mimetype: "video/mp4",
                                 fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
                                 jpegThumbnail: thumb,
-                                caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                                caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪණᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                             },
                             { quoted: ck }
                         );
@@ -246,3 +265,4 @@ END:VCARD`
         }
     }
 };
+
