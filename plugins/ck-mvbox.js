@@ -21,7 +21,7 @@ async function createThumbnail(url) {
     }
 }
 
-// මිනිත්තු ගණන පැය සහ මිනිත්තු වලට හැරවීම (e.g., 8940 -> 149h 0m)
+// මිනිත්තු ගණන පැය සහ මිනිත්තු වලට හැරවීම (e.g., 140 -> 2h 20m)
 function convertDuration(mins) {
     if (!mins) return "N/A";
     const hours = Math.floor(mins / 60);
@@ -66,14 +66,14 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             return reply("❌ No movies found.");
         }
 
-        let text = `🎬 \`Alternative MOVIEBOX SEARCH\`\n\n`;
+        let text = `🎬 \`𝗠𝗢𝗩𝗜𝗘𝗕𝗢𝗫 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
         text += `*🔎 Search:* \`${q}\`\n\n`;
 
         moviesList.forEach((movie, index) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪส์ʜᴀɴ*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -84,13 +84,13 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             { quoted: ck }
         );
 
-        // Movie Selection Listener (Expires වෙන්නේ නැහැ)
+        // Movie Selection Listener (Expires වෙන්නේ නැහැ - Multi-reply)
         const movieSelectionListener = async (update) => {
             try {
                 const msg = update.messages[0];
                 if (!msg.message?.extendedTextMessage) return;
 
-                // මැසේජ් එක reply කරපු එකක්ද සහ ඒක මේ බොට් යවපු ලැයිස්තුවටමද කියලා විතරක් බලනවා (වැඩියෙන්ම සාර්ථක ක්‍රමය)
+                // බොට් යවපු ලිස්ට් එකටමද රිප්ලයි කරේ බලනවා
                 const contextInfo = msg.message.extendedTextMessage.contextInfo;
                 if (contextInfo?.stanzaId !== sentMsg.key.id) return;
 
@@ -98,7 +98,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 const selectedMovieIndex = parseInt(userReply) - 1;
 
                 if (isNaN(selectedMovieIndex) || selectedMovieIndex < 0 || selectedMovieIndex >= moviesList.length) {
-                    return; // Number එකක් නෙවෙයි නම් Ignore කරනවා
+                    return; 
                 }
 
                 const selectedMovie = moviesList[selectedMovieIndex];
@@ -116,7 +116,6 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     axios.get(sourcesUrl)
                 ]);
 
-                // දත්ත හරියාකාරව Object එකක් විදිහට ගැනීම
                 const infoJson = typeof infoRes.data === 'string' ? JSON.parse(infoRes.data) : infoRes.data;
                 const sourcesJson = typeof sourcesRes.data === 'string' ? JSON.parse(sourcesRes.data) : sourcesRes.data;
 
@@ -134,13 +133,13 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 caption += `⏳ *Duration:* ${convertDuration(movieInfo.duration)}\n`;
                 caption += `🌍 *Country:* ${movieInfo.countryName || "N/A"}\n`;
                 caption += `🎭 *Genre:* ${movieInfo.genre || "N/A"}\n\n`;
-                caption += `📥 *𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟Ｅ 𝗤𝗨𝗔𝗟𝗜𝗧𝗜𝗘𝗦*\n\n`;
+                caption += `📥 *𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗤𝗨𝗔𝗟𝗜𝗧𝗜𝗘𝗦*\n\n`;
 
                 movieSources.forEach((src, i) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ *${src.quality}p* - ${convertToGB(src.size)}\n`;
                 });
 
-                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪส์ʜᴀɴ*`;
+                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 const imageUrl = movieInfo.cover?.url || config.IMG_URL;
 
@@ -153,7 +152,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     { quoted: ck }
                 );
 
-                // Quality Listener (Quality තෝරන එක)
+                // Quality Listener (Quality තෝරලා document එක යවන කොටස)
                 const qualityListener = async (update2) => {
                     try {
                         const msg2 = update2.messages[0];
@@ -170,22 +169,29 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
+                        
+                        // 🌟 API එකේ තියෙන සිරාම Direct downloadUrl එක මෙතනට කෙලින්ම ගන්නවා
+                        const finalDownloadUrl = selectedSource.downloadUrl;
 
-                        // Loading reaction
+                        if (!finalDownloadUrl) {
+                            return reply("❌ Direct download link not found in API.");
+                        }
+
+                        // Downloading reaction
                         await conn.sendMessage(from, { react: { text: "⬇️", key: msg2.key } });
 
-                        // Image එකෙන් Thumbnail එකක් සෑදීම
+                        // Cover Image එකෙන් Thumbnail එකක් සෑදීම
                         const thumb = await createThumbnail(imageUrl);
 
-                        // Document එකක් විදිහට Direct Link එක යැවීම
+                        // Document එකක් විදිහට Direct Link එක WhatsApp එකට Upload කිරීම
                         await conn.sendMessage(
                             from,
                             {
-                                document: { url: selectedSource.downloadUrl },
+                                document: { url: finalDownloadUrl },
                                 mimetype: "video/mp4",
                                 fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
                                 jpegThumbnail: thumb,
-                                caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`
+                                caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                             },
                             { quoted: ck }
                         );
