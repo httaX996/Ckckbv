@@ -73,7 +73,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -167,8 +167,6 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
-                        
-                        // 🌟 ඔයා ඉල්ලපු විදිහටම කෙලින්ම 'downloadurl' එක විතරක්ම ගන්නවා
                         const finalDownloadUrl = selectedSource.downloadUrl;
 
                         if (!finalDownloadUrl) {
@@ -176,27 +174,29 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         // Downloading reaction
-                        await conn.sendMessage(from, { react: { text: "⬇️", key: msg2.key } });
+                        await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
+
+                        // 🌟 FIX: Axios හරහා මුළු ෆයිල් එකම සර්වර් එකට ArrayBuffer එකක් විදිහට බාගන්නවා (ටෙලිග්‍රෑම් බොට් වගේම)
+                        const downloadResponse = await axios.get(finalDownloadUrl, {
+                            responseType: 'arraybuffer',
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                'Accept': '*/*'
+                            },
+                            maxContentLength: Infinity,
+                            maxBodyLength: Infinity
+                        });
 
                         const thumb = await createThumbnail(imageUrl);
 
-                        // 🌟 FIX: බ්‍රවුසර් එකක් වගේ Headers සෙට් කරලා ලින්ක් එක කෙලින්ම WhatsApp එකට දෙනවා
+                        // 🌟 FIX: බාගත්ත Buffer එක කෙලින්ම WhatsApp එකට යවනවා (Baileys ලින්ක් කේස් එක සම්පූර්ණයෙන්ම ඉවරයි)
                         await conn.sendMessage(
                             from,
                             {
-                                document: { 
-                                    url: finalDownloadUrl 
-                                },
+                                document: Buffer.from(downloadResponse.data), 
                                 mimetype: "video/mp4",
                                 fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
                                 jpegThumbnail: thumb,
-                                options: {
-                                    headers: {
-                                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                                        'Accept': '*/*',
-                                        'Connection': 'keep-alive'
-                                    }
-                                },
                                 caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                             },
                             { quoted: ck }
@@ -207,7 +207,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                     } catch (err) {
                         console.log("Download Error Log:", err.message);
-                        reply("❌ Error while sending document from URL.");
+                        reply(`❌ Download Failed: ${err.message}`);
                     }
                 };
 
@@ -244,7 +244,7 @@ const ck = {
     },
     message: {
         contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪ率先ᴀ ×͜×",
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
             vcard: `BEGIN:VCARD
 VERSION:3.0
 FN:Meta
@@ -254,4 +254,3 @@ END:VCARD`
         }
     }
 };
-
