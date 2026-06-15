@@ -56,7 +56,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
         const searchUrl = `https://apiv1.freehandyflix.online/api/search/${encodeURIComponent(q)}`;
         const { data: searchData } = await axios.get(searchUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, Introduction/120.0.0.0 Safari/537.36'
             }
         });
 
@@ -66,7 +66,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             return reply("❌ No movies found.");
         }
 
-        let text = `🎬 \`𝗠𝗢𝗩𝗜𝗘𝗕𝗢‍𝗫 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
+        let text = `🎬 \`𝗠𝗢𝗩𝗜𝗘𝗕𝗢𝗫 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
         text += `*🔎 Search:* \`${q}\`\n\n`;
 
         moviesList.forEach((movie, index) => {
@@ -137,7 +137,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ *${src.quality}p* - ${convertToGB(src.size)}\n`;
                 });
 
-                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`;
+                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀଡේ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 const imageUrl = movieInfo.cover?.url || config.IMG_URL;
 
@@ -168,21 +168,21 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const selectedSource = movieSources[qualityIndex];
                         
-                        // 🌟 directurl එක ගන්නවා, එකක් නැත්නම් downloadurl එක ගන්නවා
-                        const finalDownloadUrl = selectedSource.directUrl || selectedSource.downloadUrl;
+                        // 🌟 FIX: directUrl, downloadUrl දෙකම අතෑරලා 'streamurl' එක කෙලින්ම ගන්නවා
+                        const finalDownloadUrl = selectedSource.streamUrl || selectedSource.downloadUrl;
 
                         if (!finalDownloadUrl) {
-                            return reply("❌ Direct download link not found.");
+                            return reply("❌ Stream link not found in API response.");
                         }
 
                         // Downloading reaction
                         await conn.sendMessage(from, { react: { text: "⬇️", key: msg2.key } });
 
-                        // 🌟 FIX: එකපාර Buffer නොකර Stream එකක් විදිහට data ටික pipe කරනවා
+                        // streamurl එකෙන් එන ඩේටා stream එකක් විදිහට ඇදලා ගන්නවා
                         const streamResponse = await axios.get(finalDownloadUrl, {
                             responseType: 'stream',
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                             }
                         });
 
@@ -192,7 +192,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         await conn.sendMessage(
                             from,
                             {
-                                document: streamResponse.data, // මෙතනට stream එක පාස් කරනවා
+                                document: streamResponse.data, 
                                 mimetype: "video/mp4",
                                 fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
                                 jpegThumbnail: thumb,
@@ -206,7 +206,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                     } catch (err) {
                         console.log("Download Error Log:", err.message);
-                        reply("❌ Download Failed. (Stream connection broken or invalid link)");
+                        reply("❌ Download Failed. (Stream connection broken or worker timeout)");
                     }
                 };
 
@@ -253,4 +253,3 @@ END:VCARD`
         }
     }
 };
-
