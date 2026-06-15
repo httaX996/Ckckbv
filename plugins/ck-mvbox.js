@@ -73,7 +73,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        text += `\n💡 Reply with the movie number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -167,7 +167,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
-                        const finalDownloadUrl = selectedSource.downloadurl;
+                        const finalDownloadUrl = selectedSource.downloadUrl;
 
                         if (!finalDownloadUrl) {
                             return reply("❌ Direct download link not found.");
