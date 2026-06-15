@@ -133,7 +133,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 caption += `⏳ *Duration:* ${convertDuration(movieInfo.duration)}\n`;
                 caption += `🌍 *Country:* ${movieInfo.countryName || "N/A"}\n`;
                 caption += `🎭 *Genre:* ${movieInfo.genre || "N/A"}\n\n`;
-                caption += `📥 *𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟Ｅ 𝗤𝗨𝗔𝗟𝗜𝗧𝗜𝗘𝗦*\n\n`;
+                caption += `📥 *𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗤𝗨𝗔𝗟𝗜𝗧𝗜𝗘𝗦*\n\n`;
 
                 movieSources.forEach((src, i) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ *${src.quality}p* - ${convertToGB(src.size)}\n`;
@@ -171,7 +171,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         const selectedSource = movieSources[qualityIndex];
                         
                         // 🌟 FIX: API response එකේ තියෙන්නේ 'downloadurl' (සියල්ල simple අකුරින්)
-                        const finalDownloadUrl = selectedSource.downloadurl;
+                        const finalDownloadUrl = selectedSource.downloadUrl;
 
                         if (!finalDownloadUrl) {
                             return reply("❌ Direct download link not found in API response.");
