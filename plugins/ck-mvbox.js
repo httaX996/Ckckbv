@@ -52,7 +52,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             return reply("📦 Please provide a movie name.\n\nExample:\n.mvbox avengers");
         }
 
-        // 1. Movie Search API (Headers ද සමඟම)
+        // 1. Movie Search API
         const searchUrl = `https://apiv1.freehandyflix.online/api/search/${encodeURIComponent(q)}`;
         const { data: searchData } = await axios.get(searchUrl, {
             headers: {
@@ -60,8 +60,8 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             }
         });
 
-        // 🌟 මෙතනදී API එකෙන් එන 'item' කියන array එක ගන්නවා. නැත්නම් හිස් array එකක් ගන්නවා.
-        const moviesList = searchData.item || searchData.items || (Array.isArray(searchData) ? searchData : []);
+        // 🌟 API එකේ හැටියට items array එක ගන්නේ searchData.data.items වලින්
+        const moviesList = searchData?.data?.items || [];
 
         if (!moviesList || !moviesList.length) {
             return reply("❌ No movies found.");
@@ -102,7 +102,9 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 }
 
                 const selectedMovie = moviesList[selectedMovieIndex];
-                const subjectId = selectedMovie.id; 
+                
+                // 🌟 API එකේ තියෙන්නේ 'subjectId' මිසක් 'id' නෙවෙයි
+                const subjectId = selectedMovie.subjectId; 
 
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
 
@@ -135,7 +137,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ *${src.quality}p* - ${convertToGB(src.size)}\n`;
                 });
 
-                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪส์ʜᴀɴ*`;
 
                 const imageUrl = movieInfo.subject?.cover?.url || config.IMG_URL;
 
@@ -235,3 +237,4 @@ END:VCARD`
         }
     }
 };
+
