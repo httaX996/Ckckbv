@@ -21,7 +21,7 @@ async function createThumbnail(url) {
     }
 }
 
-// මිනිත්තු ගණන පැය සහ මිනිත්තු වලට හැරවීම
+// මිනිත්තු ගණන පැය සහ මිනිත්තු වලට හැරවීම (e.g., 8940 -> 149h 0m)
 function convertDuration(mins) {
     if (!mins) return "N/A";
     const hours = Math.floor(mins / 60);
@@ -29,11 +29,11 @@ function convertDuration(mins) {
     return `${hours}h ${minutes}m`;
 }
 
-// Bytes හෝ Size එක GB වලට හරවා ගැනීම
-function convertToGB(bytesOrSize) {
-    if (!bytesOrSize) return "N/A";
-    const sizeInGB = parseFloat(bytesOrSize) / (1024 * 1024 * 1024);
-    if(isNaN(sizeInGB)) return bytesOrSize; 
+// Bytes අගය GB වලට හරවා ගැනීම (දශමස්ථාන 2කට)
+function convertToGB(bytes) {
+    if (!bytes) return "N/A";
+    const sizeInGB = parseFloat(bytes) / (1024 * 1024 * 1024);
+    if (isNaN(sizeInGB)) return bytes;
     return `${sizeInGB.toFixed(2)} GB`;
 }
 
@@ -60,7 +60,6 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             }
         });
 
-        // 🌟 API එකේ හැටියට items array එක ගන්නේ searchData.data.items වලින්
         const moviesList = searchData?.data?.items || [];
 
         if (!moviesList || !moviesList.length) {
@@ -85,7 +84,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             { quoted: ck }
         );
 
-        // Movie Selection Listener
+        // Movie Selection Listener (Expires වෙන්නේ නැහැ, ඕනෑම වාර ගණනක් reply කරන්න පුළුවන්)
         const movieSelectionListener = async (update) => {
             try {
                 const msg = update.messages[0];
@@ -102,13 +101,11 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 }
 
                 const selectedMovie = moviesList[selectedMovieIndex];
-                
-                // 🌟 API එකේ තියෙන්නේ 'subjectId' මිසක් 'id' නෙවෙයි
                 const subjectId = selectedMovie.subjectId; 
 
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
 
-                // 2. Fetching from 1st & 2nd APIs
+                // 2. Fetching from 1st (Info) & 2nd (Sources) APIs
                 const infoUrl = `https://movieapi.chethmina.workers.dev/api/info/${subjectId}`;
                 const sourcesUrl = `https://movieapi.chethmina.workers.dev/api/sources/${subjectId}`;
 
@@ -117,29 +114,30 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     axios.get(sourcesUrl)
                 ]);
 
-                if (!infoRes.data || !sourcesRes.data) {
+                // API ව්‍යුහයන් නිවැරදිව ලබා ගැනීම
+                const movieInfo = infoRes.data?.data?.subject; 
+                const movieSources = sourcesRes.data?.data?.processedSources || [];
+
+                if (!movieInfo) {
                     return reply("❌ Failed to fetch movie details.");
                 }
 
-                const movieInfo = infoRes.data;
-                const movieSources = sourcesRes.data.processedSources || [];
-
-                // Details Text එක සකස් කිරීම
+                // Details Text එක සකස් කිරීම (User ඉල්ලපු විදිහටම Emojis සමඟ)
                 let caption = `🎬 *${movieInfo.title || "N/A"}*\n\n`;
                 caption += `📅 *Release Date:* ${movieInfo.releaseDate || "N/A"}\n`;
                 caption += `⭐ *IMDb Rating:* ${movieInfo.imdbRatingValue || "N/A"}\n`;
-                caption += `⏳ *Duration:* ${convertDuration(movieInfo.subject?.duration)}\n`;
+                caption += `⏳ *Duration:* ${convertDuration(movieInfo.duration)}\n`;
                 caption += `🌍 *Country:* ${movieInfo.countryName || "N/A"}\n`;
-                caption += `🎭 *Genre:* ${movieInfo.genre || "N/A"}\n\n`;
-                caption += `📥 *𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟Ｅ 𝗤𝗨𝗔𝗟𝗜𝗧𝗜𝗘𝗦*\n\n`;
+                caption += `🎭 *Genre:* ${movieInfo.genre || "N/A"} \n\n`;
+                caption += `📥 *𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗤𝗨𝗔𝗟𝗜𝗧𝗜𝗘𝗦*\n\n`;
 
                 movieSources.forEach((src, i) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ *${src.quality}p* - ${convertToGB(src.size)}\n`;
                 });
 
-                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪส์ʜᴀɴ*`;
+                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
-                const imageUrl = movieInfo.subject?.cover?.url || config.IMG_URL;
+                const imageUrl = movieInfo.cover?.url || config.IMG_URL;
 
                 const movieDetailsMessage = await conn.sendMessage(
                     from,
@@ -150,7 +148,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     { quoted: ck }
                 );
 
-                // Quality Listener
+                // Quality Listener (Quality තෝරන එක)
                 const qualityListener = async (update2) => {
                     try {
                         const msg2 = update2.messages[0];
@@ -168,8 +166,10 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const selectedSource = movieSources[qualityIndex];
 
+                        // Loading reaction
                         await conn.sendMessage(from, { react: { text: "⬇️", key: msg2.key } });
 
+                        // Image එකෙන් Thumbnail එකක් සෑදීම
                         const thumb = await createThumbnail(imageUrl);
 
                         // Document එකක් විදිහට Direct Link එක යැවීම
@@ -185,6 +185,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             { quoted: ck }
                         );
 
+                        // Success reaction
                         await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
 
                     } catch (err) {
@@ -195,6 +196,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                 conn.ev.on("messages.upsert", qualityListener);
 
+                // සර්වර් එක ආරක්ෂා කරගන්න විනාඩි 5කින් Quality listener එක අයින් කරනවා
                 setTimeout(() => {
                     conn.ev.off("messages.upsert", qualityListener);
                 }, 300000);
@@ -207,6 +209,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
         conn.ev.on("messages.upsert", movieSelectionListener);
 
+        // විනාඩි 10කින් ප්‍රධාන movie listener එක අයින් කරනවා
         setTimeout(() => {
             conn.ev.off("messages.upsert", movieSelectionListener);
         }, 600000);
