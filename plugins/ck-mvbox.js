@@ -137,7 +137,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ *${src.quality}p* - ${convertToGB(src.size)}\n`;
                 });
 
-                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪ智慧*`;
 
                 const imageUrl = movieInfo.cover?.url || config.IMG_URL;
 
@@ -168,11 +168,11 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const selectedSource = movieSources[qualityIndex];
                         
-                        // 🌟 API ප්‍රතිචාරයේ ඇති නිවැරදි downloadUrl එක හඳුනා ගැනීම
-                        const workingDownloadUrl = selectedSource.downloadUrl;
+                        // 🌟 සුපිරිම වෙනස: සර්වර් එක ඇතුලට බාන්නේ නැතුව, ඔයාගේම Worker එකේ streamUrl එක කෙලින්ම පාවිච්චි කරනවා!
+                        const finalStreamingUrl = selectedSource.streamUrl;
 
-                        if (!workingDownloadUrl) {
-                            return reply("❌ Download link not found.");
+                        if (!finalStreamingUrl) {
+                            return reply("❌ Stream link not found.");
                         }
 
                         // Downloading reaction
@@ -180,77 +180,25 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const thumb = await createThumbnail(imageUrl);
 
-                        try {
-                            // 🌟 Stream එකක් විදිහට Data කොටස් වශයෙන් ඇදලා ගැනීම (Cloudflare Block වීම් වැලැක්වීමට)
-                            const responseStream = await axios({
-                                method: 'get',
-                                url: workingDownloadUrl,
-                                responseType: 'stream',
-                                timeout: 0,
-                                headers: {
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                                    'Accept-Language': 'en-US,en;q=0.9',
-                                    'Origin': 'https://freehandyflix.online',
-                                    'Referer': 'https://freehandyflix.online/',
-                                    'Connection': 'keep-alive'
-                                }
-                            });
+                        // 🌟 සර්වර් එක ක්‍රෑෂ් වෙන්නේ නැතුව කෙලින්ම WhatsApp එකට URL එක මඟින් අප්ලෝඩ් කරන්න දෙනවා
+                        await conn.sendMessage(
+                            from,
+                            {
+                                document: { url: finalStreamingUrl }, // 🎯 සර්වර් එක ෆ්‍රීස් වෙන්නේ නෑ, කෙලින්ම ලින්ක් එකෙන් අප්ලෝඩ් වෙනවා
+                                mimetype: "video/mp4",
+                                fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
+                                jpegThumbnail: thumb,
+                                caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                            },
+                            { quoted: ck }
+                        );
 
-                            let chunks = [];
-                            let isHtml = false;
-
-                            // Stream එක ගලාගෙන එන විට මුල්ම කොටස HTML ද කියා පරික්ෂා කිරීම
-                            responseStream.data.on('data', (chunk) => {
-                                chunks.push(chunk);
-                                
-                                if (chunks.length === 1) {
-                                    const sample = chunk.toString('utf8', 0, 100);
-                                    if (sample.includes('<!DOCTYPE html>') || sample.includes('<html') || sample.includes('Access Denied')) {
-                                        isHtml = true;
-                                        responseStream.data.destroy(); // HTML පිටුවක් නම් එතනින්ම Stream එක නතර කරයි
-                                    }
-                                }
-                            });
-
-                            responseStream.data.on('end', async () => {
-                                if (isHtml) {
-                                    return reply("❌ Access Denied by Worker Shield. Cloudflare blocked the server IP.");
-                                }
-
-                                // සියලුම Chunks එකතු කර තනි බෆර් එකක් සෑදීම
-                                const videoBuffer = Buffer.concat(chunks);
-
-                                // ලස්සනට WhatsApp එකට Document එකක් විදිහට යැවීම
-                                await conn.sendMessage(
-                                    from,
-                                    {
-                                        document: videoBuffer, 
-                                        mimetype: "video/mp4",
-                                        fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
-                                        jpegThumbnail: thumb,
-                                        caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
-                                    },
-                                    { quoted: ck }
-                                );
-
-                                // Success reaction
-                                await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
-                            });
-
-                            responseStream.data.on('error', (err) => {
-                                console.log("Stream Error:", err.message);
-                                reply(`❌ Stream broken: ${err.message}`);
-                            });
-
-                        } catch (axiosErr) {
-                            console.log("Axios Connection Error:", axiosErr.message);
-                            reply(`❌ Connection Failed: ${axiosErr.message}`);
-                        }
+                        // Success reaction
+                        await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
 
                     } catch (err) {
-                        console.log("General Quality Listener Error:", err.message);
-                        reply(`❌ Download Process Failed.`);
+                        console.log("Quality Listener Error:", err.message);
+                        reply(`❌ Process failed: ${err.message}`);
                     }
                 };
 
