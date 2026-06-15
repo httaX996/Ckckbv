@@ -54,9 +54,16 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             return reply("📦 Please provide a movie name.\n\nExample:\n.mvbox avengers");
         }
 
-        // 1. Movie Search API
-        const searchUrl = `https://apiv1.freehandyflix.online/api/search/${encodeURIComponent(q)}`;
-        const { data: searchData } = await axios.get(searchUrl);
+        // 1. Movie Search API (Headers සමඟ)
+const searchUrl = `https://apiv1.freehandyflix.online/api/search/${encodeURIComponent(q)}`;
+
+const { data: searchData } = await axios.get(searchUrl, {
+    headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+    }
+});
+
 
         if (!searchData || !searchData.length) {
             return reply("❌ No movies found.");
