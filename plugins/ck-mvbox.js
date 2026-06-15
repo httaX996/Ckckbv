@@ -56,7 +56,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
         const searchUrl = `https://apiv1.freehandyflix.online/api/search/${encodeURIComponent(q)}`;
         const { data: searchData } = await axios.get(searchUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, healthiest Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
         });
 
@@ -106,7 +106,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 // Loading Reaction
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
 
-                // 2. Fetching from 1st (Info) & 2nd (Sources) APIs
+                // 2. Fetching from Info & Sources APIs
                 const infoUrl = `https://movieapi.chethmina.workers.dev/api/info/${subjectId}`;
                 const sourcesUrl = `https://movieapi.chethmina.workers.dev/api/sources/${subjectId}`;
 
@@ -168,34 +168,24 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const selectedSource = movieSources[qualityIndex];
                         
-                        // 🌟 FIX: Worker එකේ ලින්ක් එක වෙනුවට, ඔරිජිනල්ම වීඩියෝ ලින්ක් එක (directUrl) කෙලින්ම ගන්නවා!
-                        const finalDownloadUrl = selectedSource.directUrl || selectedSource.downloadUrl;
+                        // 🌟 FIX 1: වැඩ කරන එකම ලින්ක් එක downloadUrl නිසා ඒක කෙලින්ම ගන්නවා
+                        const workingDownloadUrl = selectedSource.downloadUrl;
 
-                        if (!finalDownloadUrl) {
-                            return reply("❌ Video link not found.");
+                        if (!workingDownloadUrl) {
+                            return reply("❌ Working download link not found.");
                         }
 
                         // Downloading reaction
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
-                        // බොට් රන් වෙන සර්වර් එක ඇතුළට සම්පූර්ණ ෆයිල් එකම බෆර් එකක් විදිහට බානවා (ටෙලිග්‍රෑම් එක වගේම)
-                        const downloadResponse = await axios.get(finalDownloadUrl, {
-                            responseType: 'arraybuffer',
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                                'Accept': '*/*'
-                            },
-                            maxContentLength: Infinity,
-                            maxBodyLength: Infinity
-                        });
-
                         const thumb = await createThumbnail(imageUrl);
 
-                        // බාගත්ත පිරිසිදු දත්ත (Buffer) එක කෙලින්ම WhatsApp එකට දෙනවා
+                        // 🌟 FIX 2: Axios වලින් සර්වර් එකට බාන්නේ නැතුව, CineSubz එකේ වගේ ලින්ක් එක කෙලින්ම WhatsApp එකට දෙනවා.
+                        // එතකොට 0.2KB එන්නේ නෑ, සම්පූර්ණ ෆයිල් එකම WhatsApp එකෙන් ලෝඩ් කරලා යවනවා.
                         await conn.sendMessage(
                             from,
                             {
-                                document: Buffer.from(downloadResponse.data), 
+                                document: { url: workingDownloadUrl }, // 🎯 Directly passing URL like CineSubz script
                                 mimetype: "video/mp4",
                                 fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
                                 jpegThumbnail: thumb,
