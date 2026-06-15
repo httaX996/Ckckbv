@@ -66,14 +66,14 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             return reply("❌ No movies found.");
         }
 
-        let text = `🎬 \`𝗠𝗢𝗩𝗜𝗘𝗕𝗢𝗫 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
+        let text = `🎬 \`𝗠𝗢𝗩𝗜𝗘𝗕𝗢‍𝗫 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
         text += `*🔎 Search:* \`${q}\`\n\n`;
 
         moviesList.forEach((movie, index) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -137,7 +137,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ *${src.quality}p* - ${convertToGB(src.size)}\n`;
                 });
 
-                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`;
 
                 const imageUrl = movieInfo.cover?.url || config.IMG_URL;
 
@@ -168,7 +168,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const selectedSource = movieSources[qualityIndex];
                         
-                        // 🌟 FIX: Worker URL එක වෙනුවට ඇත්තම 'directUrl' (කුඩා අකුරින් directurl) එක මෙතනට ගන්නවා
+                        // 🌟 directurl එක ගන්නවා, එකක් නැත්නම් downloadurl එක ගන්නවා
                         const finalDownloadUrl = selectedSource.directUrl || selectedSource.downloadUrl;
 
                         if (!finalDownloadUrl) {
@@ -178,24 +178,21 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         // Downloading reaction
                         await conn.sendMessage(from, { react: { text: "⬇️", key: msg2.key } });
 
-                        // සර්වර් එක ආරක්ෂා කරගන්න Buffer එකක් විදිහට වීඩියෝ එක ඩවුන්ලෝඩ් කිරීම
-                        const videoBufferResponse = await axios.get(finalDownloadUrl, {
-                            responseType: 'arraybuffer',
+                        // 🌟 FIX: එකපාර Buffer නොකර Stream එකක් විදිහට data ටික pipe කරනවා
+                        const streamResponse = await axios.get(finalDownloadUrl, {
+                            responseType: 'stream',
                             headers: {
                                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-                            },
-                            maxContentLength: Infinity,
-                            maxBodyLength: Infinity
+                            }
                         });
 
-                        const videoBuffer = Buffer.from(videoBufferResponse.data);
                         const thumb = await createThumbnail(imageUrl);
 
-                        // Document එකක් විදිහට Buffer එක යැවීම
+                        // Document එකක් විදිහට Stream එක සෘජුවම Baileys වෙත ලබාදීම
                         await conn.sendMessage(
                             from,
                             {
-                                document: videoBuffer,
+                                document: streamResponse.data, // මෙතනට stream එක පාස් කරනවා
                                 mimetype: "video/mp4",
                                 fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
                                 jpegThumbnail: thumb,
@@ -209,7 +206,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                     } catch (err) {
                         console.log("Download Error Log:", err.message);
-                        reply("❌ Error while downloading. (Server timeout or heavy file)");
+                        reply("❌ Download Failed. (Stream connection broken or invalid link)");
                     }
                 };
 
