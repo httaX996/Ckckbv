@@ -66,14 +66,14 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             return reply("❌ No movies found.");
         }
 
-        let text = `🎬 \`𝗠𝗢𝗩𝗜𝗘𝗕𝗢𝗫 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
+        let text = `🎬 \`Alternative MOVIEBOX SEARCH\`\n\n`;
         text += `*🔎 Search:* \`${q}\`\n\n`;
 
         moviesList.forEach((movie, index) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪส์ʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -84,25 +84,27 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             { quoted: ck }
         );
 
-        // Movie Selection Listener (Expires වෙන්නේ නැහැ, ඕනෑම වාර ගණනක් reply කරන්න පුළුවන්)
+        // Movie Selection Listener (Expires වෙන්නේ නැහැ)
         const movieSelectionListener = async (update) => {
             try {
                 const msg = update.messages[0];
                 if (!msg.message?.extendedTextMessage) return;
 
-                if (msg.message.extendedTextMessage.contextInfo?.stanzaId !== sentMsg.key.id) return;
-                if (msg.key.participant !== sender && msg.key.remoteJid !== sender) return; 
+                // මැසේජ් එක reply කරපු එකක්ද සහ ඒක මේ බොට් යවපු ලැයිස්තුවටමද කියලා විතරක් බලනවා (වැඩියෙන්ම සාර්ථක ක්‍රමය)
+                const contextInfo = msg.message.extendedTextMessage.contextInfo;
+                if (contextInfo?.stanzaId !== sentMsg.key.id) return;
 
                 const userReply = msg.message.extendedTextMessage.text.trim();
                 const selectedMovieIndex = parseInt(userReply) - 1;
 
-                if (selectedMovieIndex < 0 || selectedMovieIndex >= moviesList.length) {
-                    return reply("❌ Invalid movie number. Please try again.");
+                if (isNaN(selectedMovieIndex) || selectedMovieIndex < 0 || selectedMovieIndex >= moviesList.length) {
+                    return; // Number එකක් නෙවෙයි නම් Ignore කරනවා
                 }
 
                 const selectedMovie = moviesList[selectedMovieIndex];
                 const subjectId = selectedMovie.subjectId; 
 
+                // Loading Reaction
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
 
                 // 2. Fetching from 1st (Info) & 2nd (Sources) APIs
@@ -114,28 +116,31 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     axios.get(sourcesUrl)
                 ]);
 
-                // API ව්‍යුහයන් නිවැරදිව ලබා ගැනීම
-                const movieInfo = infoRes.data?.data?.subject; 
-                const movieSources = sourcesRes.data?.data?.processedSources || [];
+                // දත්ත හරියාකාරව Object එකක් විදිහට ගැනීම
+                const infoJson = typeof infoRes.data === 'string' ? JSON.parse(infoRes.data) : infoRes.data;
+                const sourcesJson = typeof sourcesRes.data === 'string' ? JSON.parse(sourcesRes.data) : sourcesRes.data;
+
+                const movieInfo = infoJson?.data?.subject; 
+                const movieSources = sourcesJson?.data?.processedSources || [];
 
                 if (!movieInfo) {
                     return reply("❌ Failed to fetch movie details.");
                 }
 
-                // Details Text එක සකස් කිරීම (User ඉල්ලපු විදිහටම Emojis සමඟ)
+                // Details Text එක සකස් කිරීම
                 let caption = `🎬 *${movieInfo.title || "N/A"}*\n\n`;
                 caption += `📅 *Release Date:* ${movieInfo.releaseDate || "N/A"}\n`;
                 caption += `⭐ *IMDb Rating:* ${movieInfo.imdbRatingValue || "N/A"}\n`;
                 caption += `⏳ *Duration:* ${convertDuration(movieInfo.duration)}\n`;
                 caption += `🌍 *Country:* ${movieInfo.countryName || "N/A"}\n`;
-                caption += `🎭 *Genre:* ${movieInfo.genre || "N/A"} \n\n`;
-                caption += `📥 *𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟𝗘 𝗤𝗨𝗔𝗟𝗜𝗧𝗜𝗘𝗦*\n\n`;
+                caption += `🎭 *Genre:* ${movieInfo.genre || "N/A"}\n\n`;
+                caption += `📥 *𝗔𝗩𝗔𝗜𝗟𝗔𝗕𝗟Ｅ 𝗤𝗨𝗔𝗟𝗜𝗧𝗜𝗘𝗦*\n\n`;
 
                 movieSources.forEach((src, i) => {
                     caption += `\`${i + 1}\` *|* ❭❭◦ *${src.quality}p* - ${convertToGB(src.size)}\n`;
                 });
 
-                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                caption += `\n💡 Reply with the quality number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪส์ʜᴀɴ*`;
 
                 const imageUrl = movieInfo.cover?.url || config.IMG_URL;
 
@@ -154,14 +159,14 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         const msg2 = update2.messages[0];
                         if (!msg2.message?.extendedTextMessage) return;
 
-                        if (msg2.message.extendedTextMessage.contextInfo?.stanzaId !== movieDetailsMessage.key.id) return;
-                        if (msg2.key.participant !== sender && msg2.key.remoteJid !== sender) return;
+                        const contextInfo2 = msg2.message.extendedTextMessage.contextInfo;
+                        if (contextInfo2?.stanzaId !== movieDetailsMessage.key.id) return;
 
                         const qualityReply = msg2.message.extendedTextMessage.text.trim();
                         const qualityIndex = parseInt(qualityReply) - 1;
 
-                        if (qualityIndex < 0 || qualityIndex >= movieSources.length) {
-                            return reply("❌ Invalid quality number.");
+                        if (isNaN(qualityIndex) || qualityIndex < 0 || qualityIndex >= movieSources.length) {
+                            return;
                         }
 
                         const selectedSource = movieSources[qualityIndex];
@@ -180,7 +185,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                 mimetype: "video/mp4",
                                 fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
                                 jpegThumbnail: thumb,
-                                caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                                caption: `🎬 *${movieInfo.title}*\n\n🎞️ \`Quality:\` *${selectedSource.quality}p*\n📦 \`Size:\` *${convertToGB(selectedSource.size)}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`
                             },
                             { quoted: ck }
                         );
@@ -196,10 +201,10 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                 conn.ev.on("messages.upsert", qualityListener);
 
-                // සර්වර් එක ආරක්ෂා කරගන්න විනාඩි 5කින් Quality listener එක අයින් කරනවා
+                // විනාඩි 10කින් Quality listener එක off කරනවා
                 setTimeout(() => {
                     conn.ev.off("messages.upsert", qualityListener);
-                }, 300000);
+                }, 600000);
 
             } catch (err) {
                 console.log(err);
@@ -209,10 +214,10 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
         conn.ev.on("messages.upsert", movieSelectionListener);
 
-        // විනාඩි 10කින් ප්‍රධාන movie listener එක අයින් කරනවා
+        // විනාඩි 20කින් ප්‍රධාන movie listener එක off කරනවා
         setTimeout(() => {
             conn.ev.off("messages.upsert", movieSelectionListener);
-        }, 600000);
+        }, 1200000);
 
     } catch (err) {
         console.log("MovieBox Error Log:", err.message);
