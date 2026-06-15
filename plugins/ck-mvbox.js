@@ -29,7 +29,7 @@ function convertDuration(mins) {
     return `${hours}h ${minutes}m`;
 }
 
-// Bytes ਅගය GB වලට හරවා ගැනීම
+// Bytes අගය GB වලට හරවා ගැනීම
 function convertToGB(bytes) {
     if (!bytes) return "N/A";
     const sizeInGB = parseFloat(bytes) / (1024 * 1024 * 1024);
@@ -73,7 +73,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -167,7 +167,9 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
-                        const finalDownloadUrl = selectedSource.downloadUrl;
+                        
+                        // 🌟 FIX: Worker URL එක වෙනුවට ඇත්තම 'directUrl' (කුඩා අකුරින් directurl) එක මෙතනට ගන්නවා
+                        const finalDownloadUrl = selectedSource.directUrl || selectedSource.downloadUrl;
 
                         if (!finalDownloadUrl) {
                             return reply("❌ Direct download link not found.");
@@ -176,7 +178,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         // Downloading reaction
                         await conn.sendMessage(from, { react: { text: "⬇️", key: msg2.key } });
 
-                        // 🌟 සිරාම වෙනස: Worker ලින්ක් එකෙන් වීඩියෝ එක මුලින්ම බොට්ගේ සර්වර් එකට බාගන්නවා (Buffer)
+                        // සර්වර් එක ආරක්ෂා කරගන්න Buffer එකක් විදිහට වීඩියෝ එක ඩවුන්ලෝඩ් කිරීම
                         const videoBufferResponse = await axios.get(finalDownloadUrl, {
                             responseType: 'arraybuffer',
                             headers: {
@@ -187,11 +189,9 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         });
 
                         const videoBuffer = Buffer.from(videoBufferResponse.data);
-
-                        // Cover Image එකෙන් Thumbnail එකක් සෑදීම
                         const thumb = await createThumbnail(imageUrl);
 
-                        // Buffer එක කෙලින්ම WhatsApp එකට යැවීම (දැන් 0.2KB වෙන්න ක්‍රමයක්ම නැත!)
+                        // Document එකක් විදිහට Buffer එක යැවීම
                         await conn.sendMessage(
                             from,
                             {
@@ -209,7 +209,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                     } catch (err) {
                         console.log("Download Error Log:", err.message);
-                        reply("❌ Error while downloading or uploading the movie. (Server timeout or invalid stream)");
+                        reply("❌ Error while downloading. (Server timeout or heavy file)");
                     }
                 };
 
@@ -238,7 +238,6 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
 });
 
-// Fake Quoted Context Template
 const ck = {
     key: {
         fromMe: false,
