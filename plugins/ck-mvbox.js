@@ -21,7 +21,7 @@ async function createThumbnail(url) {
     }
 }
 
-// මිනිත්තු ගණන පැය සහ මිනිත්තු වලට හැරවීම (e.g., 140 -> 2h 20m)
+// මිනිත්තු ගණන පැය සහ මිනිත්තු වලට හැරවීම
 function convertDuration(mins) {
     if (!mins) return "N/A";
     const hours = Math.floor(mins / 60);
@@ -29,7 +29,7 @@ function convertDuration(mins) {
     return `${hours}h ${minutes}m`;
 }
 
-// Bytes අගය GB වලට හරවා ගැනීම (දශමස්ථාන 2කට)
+// Bytes ਅගය GB වලට හරවා ගැනීම
 function convertToGB(bytes) {
     if (!bytes) return "N/A";
     const sizeInGB = parseFloat(bytes) / (1024 * 1024 * 1024);
@@ -84,13 +84,12 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             { quoted: ck }
         );
 
-        // Movie Selection Listener (Expires වෙන්නේ නැහැ - Multi-reply)
+        // Movie Selection Listener
         const movieSelectionListener = async (update) => {
             try {
                 const msg = update.messages[0];
                 if (!msg.message?.extendedTextMessage) return;
 
-                // බොට් යවපු ලිස්ට් එකටමද රිප්ලයි කරේ බලනවා
                 const contextInfo = msg.message.extendedTextMessage.contextInfo;
                 if (contextInfo?.stanzaId !== sentMsg.key.id) return;
 
@@ -126,7 +125,6 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     return reply("❌ Failed to fetch movie details.");
                 }
 
-                // Details Text එක සකස් කිරීම
                 let caption = `🎬 *${movieInfo.title || "N/A"}*\n\n`;
                 caption += `📅 *Release Date:* ${movieInfo.releaseDate || "N/A"}\n`;
                 caption += `⭐ *IMDb Rating:* ${movieInfo.imdbRatingValue || "N/A"}\n`;
@@ -152,7 +150,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     { quoted: ck }
                 );
 
-                // Quality Listener (Quality තෝරලා document එක යවන කොටස)
+                // Quality Listener
                 const qualityListener = async (update2) => {
                     try {
                         const msg2 = update2.messages[0];
@@ -169,25 +167,35 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
-                        
-                        // 🌟 FIX: API response එකේ තියෙන්නේ 'downloadurl' (සියල්ල simple අකුරින්)
-                        const finalDownloadUrl = selectedSource.downloadUrl;
+                        const finalDownloadUrl = selectedSource.downloadurl;
 
                         if (!finalDownloadUrl) {
-                            return reply("❌ Direct download link not found in API response.");
+                            return reply("❌ Direct download link not found.");
                         }
 
                         // Downloading reaction
                         await conn.sendMessage(from, { react: { text: "⬇️", key: msg2.key } });
 
+                        // 🌟 සිරාම වෙනස: Worker ලින්ක් එකෙන් වීඩියෝ එක මුලින්ම බොට්ගේ සර්වර් එකට බාගන්නවා (Buffer)
+                        const videoBufferResponse = await axios.get(finalDownloadUrl, {
+                            responseType: 'arraybuffer',
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+                            },
+                            maxContentLength: Infinity,
+                            maxBodyLength: Infinity
+                        });
+
+                        const videoBuffer = Buffer.from(videoBufferResponse.data);
+
                         // Cover Image එකෙන් Thumbnail එකක් සෑදීම
                         const thumb = await createThumbnail(imageUrl);
 
-                        // Document එකක් විදිහට Direct Link එක WhatsApp එකට Upload කිරීම
+                        // Buffer එක කෙලින්ම WhatsApp එකට යැවීම (දැන් 0.2KB වෙන්න ක්‍රමයක්ම නැත!)
                         await conn.sendMessage(
                             from,
                             {
-                                document: { url: finalDownloadUrl },
+                                document: videoBuffer,
                                 mimetype: "video/mp4",
                                 fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
                                 jpegThumbnail: thumb,
@@ -200,14 +208,13 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
 
                     } catch (err) {
-                        console.log(err);
-                        reply("❌ Error while uploading the document.");
+                        console.log("Download Error Log:", err.message);
+                        reply("❌ Error while downloading or uploading the movie. (Server timeout or invalid stream)");
                     }
                 };
 
                 conn.ev.on("messages.upsert", qualityListener);
 
-                // විනාඩි 10කින් Quality listener එක off කරනවා
                 setTimeout(() => {
                     conn.ev.off("messages.upsert", qualityListener);
                 }, 600000);
@@ -220,7 +227,6 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
         conn.ev.on("messages.upsert", movieSelectionListener);
 
-        // විනාඩි 20කින් ප්‍රධාන movie listener එක off කරනවා
         setTimeout(() => {
             conn.ev.off("messages.upsert", movieSelectionListener);
         }, 1200000);
