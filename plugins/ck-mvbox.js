@@ -108,8 +108,8 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 // Loading Reaction
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
 
-                // 2. Vercel API එක පාවිච්චි කරලා Info සහ Sources ගන්නවා
-                const infoUrl = `https://moviebox-api-pi.vercel.app/api/info/${subjectId}`;
+                // 🌟 Info එක Worker එකෙනුත්, Sources එක Vercel එකෙනුත් ගන්නවා
+                const infoUrl = `https://movieapi.chethmina.workers.dev/api/info/${subjectId}`;
                 const sourcesUrl = `https://moviebox-api-pi.vercel.app/api/sources/${subjectId}`;
 
                 const [infoRes, sourcesRes] = await Promise.all([
@@ -120,16 +120,16 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 const infoJson = typeof infoRes.data === 'string' ? JSON.parse(infoRes.data) : infoRes.data;
                 const sourcesJson = typeof sourcesRes.data === 'string' ? JSON.parse(sourcesRes.data) : sourcesRes.data;
 
-                // 🎯 𝗙𝗜𝗫𝗘𝗗: Vercel API එකේ 'data' කී එකක් නැති නිසා කෙලින්ම subject එක සහ downloads එක ගන්නවා
-                const movieInfo = infoJson?.subject || infoJson?.data?.subject; 
+                // 🎯 𝗙𝗜𝗫𝗘𝗗: Worker එකේ data.subject තියෙන්නේ, Vercel එකේ downloads තියෙන්නේ
+                const movieInfo = infoJson?.data?.subject || infoJson?.subject; 
                 const movieSources = sourcesJson?.downloads || sourcesJson?.data?.downloads || [];
 
                 if (!movieInfo) {
-                    return reply("❌ Failed to fetch movie details from Vercel API.");
+                    return reply("❌ Failed to fetch movie details from Worker API.");
                 }
                 
                 if (!movieSources || !movieSources.length) {
-                    return reply("❌ No download links available for this movie.");
+                    return reply("❌ No download links available from Vercel API.");
                 }
 
                 // 🌟 ඔයාගේම Original ලස්සන සිංහල Layout එක
@@ -188,7 +188,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const thumb = await createThumbnail(imageUrl);
                         
-                        // Temporary File Method to stream safely
+                        // Storage Stream method
                         const tempFilePath = path.join(__dirname, `temp_${Date.now()}.mp4`);
                         const writer = fs.createWriteStream(tempFilePath);
 
@@ -231,7 +231,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                 let videoCaption = `*🎬 ${movieInfo.title} *\n\n`;
                                 videoCaption += `*🎞️ Quality :* ${finalRes}p\n`;
                                 videoCaption += `*📦 Size :* ${convertToGB(selectedSource.size)}\n\n`;
-                                videoCaption += `> 👨🏻‍💻 *ᴄʜᴇ🇹ʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                                videoCaption += `> 👨🏻‍💻 *ᴄʜᴇ🇹ʜᴍɪɴᴀ ᴋᴀᴠɪส์ʜᴀɴ*`;
 
                                 await conn.sendMessage(
                                     from,
@@ -245,7 +245,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                     { quoted: ck }
                                 );
 
-                                // Clean up temporary file
+                                // Temp file එක මකා දැමීම
                                 fs.unlinkSync(tempFilePath);
 
                                 // Success reaction
@@ -302,13 +302,9 @@ const ck = {
     },
     message: {
         contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
+            displayName: "〴ᴄʜᴇ🇹ʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nEND:VCARD`
         }
     }
 };
+
