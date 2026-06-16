@@ -75,7 +75,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇ🇹ʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -108,7 +108,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 // Loading Reaction
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
 
-                // 2. 🌟 ඔයා දීපු Vercel API එක පාවිච්චි කරලා Info සහ Sources ගන්නවා
+                // 2. Vercel API එක පාවිච්චි කරලා Info සහ Sources ගන්නවා
                 const infoUrl = `https://moviebox-api-pi.vercel.app/api/info/${subjectId}`;
                 const sourcesUrl = `https://moviebox-api-pi.vercel.app/api/sources/${subjectId}`;
 
@@ -120,16 +120,19 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 const infoJson = typeof infoRes.data === 'string' ? JSON.parse(infoRes.data) : infoRes.data;
                 const sourcesJson = typeof sourcesRes.data === 'string' ? JSON.parse(sourcesRes.data) : sourcesRes.data;
 
-                const movieInfo = infoJson?.data?.subject || infoJson?.subject; 
-                
-                // 🎯 Vercel API එකෙන් එන්නේ 'downloads' කියන Array එකයි
+                // 🎯 𝗙𝗜𝗫𝗘𝗗: Vercel API එකේ 'data' කී එකක් නැති නිසා කෙලින්ම subject එක සහ downloads එක ගන්නවා
+                const movieInfo = infoJson?.subject || infoJson?.data?.subject; 
                 const movieSources = sourcesJson?.downloads || sourcesJson?.data?.downloads || [];
 
-                if (!movieInfo || !movieSources.length) {
+                if (!movieInfo) {
                     return reply("❌ Failed to fetch movie details from Vercel API.");
                 }
+                
+                if (!movieSources || !movieSources.length) {
+                    return reply("❌ No download links available for this movie.");
+                }
 
-                // 🌟 𝗢𝗥𝗜𝗚𝗜𝗡𝗔𝗟 𝗖𝗔𝗣𝗧𝗜𝗢𝗡 𝗗𝗘𝗦𝗜𝗚𝗡 (ඔයාගේ ලස්සන සිංහල Layout එක)
+                // 🌟 ඔයාගේම Original ලස්සන සිංහල Layout එක
                 let caption = `*🎬 MOVIE DETAILS 🎬*\n\n`;
                 caption += `*🏷️ Title :* ${movieInfo.title || "N/A"}\n`;
                 caption += `*📆 Release :* ${movieInfo.releaseDate || "N/A"}\n`;
@@ -140,12 +143,11 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 caption += `*📥 DOWNLOAD LINKS 📥*\n\n`;
 
                 movieSources.forEach((src, i) => {
-                    // 🎯 MovieBox එකේ resolution එක ගන්නවා (undefinedp වීම මෙතනින් සදහටම ඉවරයි)
                     const resQuality = src.resolution || "Unknown";
                     caption += `*${i + 1} ||* ${resQuality}p (${convertToGB(src.size)})\n`;
                 });
 
-                caption += `\n*Reply With Number To Download Video* 📥\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                caption += `\n*Reply With Number To Download Video* 📥\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇ🇹ʜᴍɪɴᴀ ᴋᴀᴠɪส์ʜᴀɴ*`;
 
                 const imageUrl = movieInfo.cover?.url || config.IMG_URL;
 
@@ -175,8 +177,6 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
-                        
-                        // 🎯 MovieBox ඔරිජිනල් වීඩියෝ ලින්ක් එක තියෙන්නේ 'src.url' එකේ
                         const directDownloadUrl = selectedSource.url;
 
                         if (!directDownloadUrl) {
@@ -188,12 +188,12 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const thumb = await createThumbnail(imageUrl);
                         
-                        // RAM එක බේරගන්න සර්වර් එකේ Hard Disk එකට Temporary File එකක් ලියනවා
+                        // Temporary File Method to stream safely
                         const tempFilePath = path.join(__dirname, `temp_${Date.now()}.mp4`);
                         const writer = fs.createWriteStream(tempFilePath);
 
                         try {
-                            // 🌟 ඔයා දීපු 100% වැඩ කරන MovieBox App Headers ටික කෙලින්ම මෙතනට දැම්මා
+                            // 🌟 ඔයා දීපු 100% වැඩ කරන MovieBox App Headers
                             const responseStream = await axios({
                                 method: 'get',
                                 url: directDownloadUrl,
@@ -204,7 +204,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                     'X-Client-Info': '{"timezone":"Africa/Nairobi"}',
                                     'Accept-Language': 'en-US,en;q=0.5',
                                     'Accept': 'application/json',
-                                    'User-Agent': 'okhttp/4.12.0', // 🎯 App එක විදිහටම සර්වර් එකට Request එක යනවා
+                                    'User-Agent': 'okhttp/4.12.0', // 🎯 Android App Spoofing
                                     'Referer': 'https://h5.aoneroom.com',
                                     'Host': 'h5.aoneroom.com',
                                     'Connection': 'keep-alive',
@@ -219,10 +219,10 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             writer.on('finish', async () => {
                                 const stats = fs.statSync(tempFilePath);
                                 
-                                // 0.2 KB බ්ලොක් එකක්ද (HTML error එකක්ද) කියලා පරික්ෂා කිරීම
+                                // 0.2 KB Blocked HTML check
                                 if (stats.size < 5000) { 
                                     fs.unlinkSync(tempFilePath);
-                                    return reply("❌ Access Denied: MovieBox server rejected the download request.");
+                                    return reply("❌ Access Denied: MovieBox server rejected the stream request.");
                                 }
 
                                 const finalRes = selectedSource.resolution || "Unknown";
@@ -231,7 +231,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                 let videoCaption = `*🎬 ${movieInfo.title} *\n\n`;
                                 videoCaption += `*🎞️ Quality :* ${finalRes}p\n`;
                                 videoCaption += `*📦 Size :* ${convertToGB(selectedSource.size)}\n\n`;
-                                videoCaption += `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                                videoCaption += `> 👨🏻‍💻 *ᴄʜᴇ🇹ʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                                 await conn.sendMessage(
                                     from,
@@ -245,7 +245,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                     { quoted: ck }
                                 );
 
-                                // වැඩේ ඉවර වුණාම සර්වර් එක ක්ලීන් කරන්න ෆයිල් එක මකනවා
+                                // Clean up temporary file
                                 fs.unlinkSync(tempFilePath);
 
                                 // Success reaction
@@ -255,7 +255,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             writer.on('error', (err) => {
                                 console.log("Writer Error:", err.message);
                                 if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-                                reply(`❌ File System Error while saving video.`);
+                                reply(`❌ Local file system write error.`);
                             });
 
                         } catch (axiosErr) {
@@ -303,8 +303,12 @@ const ck = {
     message: {
         contactMessage: {
             displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nEND:VCARD`
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
         }
     }
 };
-
