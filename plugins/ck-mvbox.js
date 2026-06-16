@@ -31,7 +31,7 @@ function convertDuration(mins) {
     return `${hours}h ${minutes}m`;
 }
 
-// Bytes අගය GB වලට හරවා ගැනීම (ඔයාගේ මුල්ම ක්‍රමය)
+// Bytes අගය GB වලට හරවා ගැනීම
 function convertToGB(bytes) {
     if (!bytes) return "N/A";
     const sizeInGB = parseFloat(bytes) / (1024 * 1024 * 1024);
@@ -75,7 +75,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀଡᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -127,7 +127,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     return reply("❌ Failed to fetch movie details.");
                 }
 
-                // 🌟 𝗢𝗥𝗜𝗚𝗜𝗡𝗔𝗟 𝗗𝗘𝗦𝗜𝗚𝗡 𝗖𝗔𝗣𝗧𝗜𝗢𝗡 (ඔයාගේ මුල්ම ලස්සන මැසේජ් එක එහෙම්මම හැදුවා)
+                // 🌟 ඔයාගේ මුල්ම ලස්සන මැසේජ් එක (Original Style)
                 let caption = `*🎬 MOVIE DETAILS 🎬*\n\n`;
                 caption += `*🏷️ Title :* ${movieInfo.title || "N/A"}\n`;
                 caption += `*📆 Release :* ${movieInfo.releaseDate || "N/A"}\n`;
@@ -149,7 +149,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                     from,
                     {
                         image: { url: imageUrl },
-                        caption: caption // ඔයාගේම කැප්ෂන් එක මෙතනට සෙට් කළා
+                        caption: caption
                     },
                     { quoted: ck }
                 );
@@ -171,9 +171,11 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                         }
 
                         const selectedSource = movieSources[qualityIndex];
-                        const workingDownloadUrl = selectedSource.downloadUrl;
+                        
+                        // 🌟 Worker එක හරහා යන ලින්ක් එක වෙනුවට කෙලින්ම Direct Link එක ඇදලා ගන්නවා
+                        const directDownloadUrl = selectedSource.directUrl || selectedSource.downloadUrl;
 
-                        if (!workingDownloadUrl) {
+                        if (!directDownloadUrl) {
                             return reply("❌ Download link not found.");
                         }
 
@@ -182,23 +184,29 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const thumb = await createThumbnail(imageUrl);
                         
-                        // සර්වර් එක ක්‍රෑෂ් නොවී ආරක්ෂිතව බාන්න Temp ෆයිල් එකක් සකසයි
+                        // සර්වර් එකේ RAM එක පිරෙන්නේ නැතිවෙන්න Disk එකට Temporary File එකක් හදනවා
                         const tempFilePath = path.join(__dirname, `temp_${Date.now()}.mp4`);
                         const writer = fs.createWriteStream(tempFilePath);
 
                         try {
-                            // 🌟 MovieBox App එකේ ඔරිජිනල් Android Headers දාලා, Redirects Follow කරලා ඩිස්ක් එකට ලියනවා
+                            // 🌟 ඔයා දීපු 100% ක් නිවැරදි මුල්ම Headers ටික කෙලින්ම මෙතනට දැම්මා!
                             const responseStream = await axios({
                                 method: 'get',
-                                url: workingDownloadUrl,
+                                url: directDownloadUrl,
                                 responseType: 'stream',
                                 timeout: 0,
-                                maxRedirects: 10,
+                                maxRedirects: 5,
                                 headers: {
-                                    'User-Agent': 'okhttp/4.12.0', // 🎯 Android App එකක් විදිහට රවට්ටනවා
                                     'X-Client-Info': '{"timezone":"Africa/Nairobi"}',
-                                    'Accept': '*/*',
-                                    'Connection': 'keep-alive'
+                                    'Accept-Language': 'en-US,en;q=0.5',
+                                    'Accept': 'application/json',
+                                    'User-Agent': 'okhttp/4.12.0', // 🎯 App එක විදිහටම රික්වෙස්ට් එක යනවා
+                                    'Referer': 'https://h5.aoneroom.com',
+                                    'Host': 'h5.aoneroom.com',
+                                    'Connection': 'keep-alive',
+                                    'X-Forwarded-For': '1.1.1.1',
+                                    'CF-Connecting-IP': '1.1.1.1',
+                                    'X-Real-IP': '1.1.1.1'
                                 }
                             });
 
@@ -207,13 +215,13 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             writer.on('finish', async () => {
                                 const stats = fs.statSync(tempFilePath);
                                 
-                                // 0.2 KB ලෙඩේ (HTML error එකක්ද කියලා) ඩබල් චෙක් කරනවා සයිස් එකෙන්
+                                // වැරදිලාවත් Cloudflare Block එකක් ආවොත් (5KB ට අඩුයි නම්)
                                 if (stats.size < 5000) { 
                                     fs.unlinkSync(tempFilePath);
-                                    return reply("❌ Access Denied: MovieBox server blocked this stream request.");
+                                    return reply("❌ Server rejected the headers. Please try again.");
                                 }
 
-                                // 🌟 𝗢𝗥𝗜𝗚𝗜𝗡𝗔𝗟 𝗩𝗜𝗗𝗘𝗢 𝗖𝗔𝗣𝗧𝗜𝗢𝗡 (වීඩියෝ එක යද්දී වැටෙන මැසේජ් එක)
+                                // වීඩියෝ එක යද්දී වැටෙන මැසේජ් එක (Original Style)
                                 let videoCaption = `*🎬 ${movieInfo.title} *\n\n`;
                                 videoCaption += `*🎞️ Quality :* ${selectedSource.quality}p\n`;
                                 videoCaption += `*📦 Size :* ${convertToGB(selectedSource.size)}\n\n`;
@@ -231,7 +239,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                     { quoted: ck }
                                 );
 
-                                // Temp file එක ක්ලීන් කිරීම
+                                // වැඩේ ඉවර වුණාම සර්වර් එකෙන් Temp ෆයිල් එක මකනවා
                                 fs.unlinkSync(tempFilePath);
 
                                 // Success reaction
@@ -241,13 +249,13 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             writer.on('error', (err) => {
                                 console.log("Writer Error:", err.message);
                                 if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-                                reply(`❌ File System Error.`);
+                                reply(`❌ File System Write Error.`);
                             });
 
                         } catch (axiosErr) {
                             console.log("Axios Error:", axiosErr.message);
                             if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-                            reply(`❌ Connection Failed with Video Server.`);
+                            reply(`❌ Connection Failed with MovieBox Server.`);
                         }
 
                     } catch (err) {
