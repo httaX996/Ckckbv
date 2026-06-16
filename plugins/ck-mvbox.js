@@ -54,7 +54,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             return reply("📦 Please provide a movie name.\n\nExample:\n.mvbox avengers");
         }
 
-        // 1. Movie Search API
+        // 1. Movie Search API (Freehandyflix)
         const searchUrl = `https://apiv1.freehandyflix.online/api/search/${encodeURIComponent(q)}`;
         const { data: searchData } = await axios.get(searchUrl, {
             headers: {
@@ -68,7 +68,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             return reply("❌ No movies found.");
         }
 
-        let text = `🎬 \`𝗠𝗢𝗩𝗜𝗘𝗕𝗢𝗫 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
+        let text = `🎬 \`ＭＯＶＩＥＢＯＸ  ＳＥＡＲＣＨ\`\n\n`;
         text += `*🔎 Search:* \`${q}\`\n\n`;
 
         moviesList.forEach((movie, index) => {
@@ -108,9 +108,9 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 // Loading Reaction
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
 
-                // 2. Fetching from Info & Sources APIs
-                const infoUrl = `https://movieapi.chethmina.workers.dev/api/info/${subjectId}`;
-                const sourcesUrl = `https://movieapi.chethmina.workers.dev/api/sources/${subjectId}`;
+                // 2. 🌟 ඔයා දීපු Vercel API එක පාවිච්චි කරලා Info සහ Sources ගන්නවා
+                const infoUrl = `https://moviebox-api-pi.vercel.app/api/info/${subjectId}`;
+                const sourcesUrl = `https://moviebox-api-pi.vercel.app/api/sources/${subjectId}`;
 
                 const [infoRes, sourcesRes] = await Promise.all([
                     axios.get(infoUrl),
@@ -120,16 +120,16 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 const infoJson = typeof infoRes.data === 'string' ? JSON.parse(infoRes.data) : infoRes.data;
                 const sourcesJson = typeof sourcesRes.data === 'string' ? JSON.parse(sourcesRes.data) : sourcesRes.data;
 
-                const movieInfo = infoJson?.data?.subject; 
+                const movieInfo = infoJson?.data?.subject || infoJson?.subject; 
                 
-                // 🌟 වැදගත්: ඔයාගේ Worker එකේ තියෙන්නේ downloads කියන Array එකයි
-                const movieSources = sourcesJson?.data?.downloads || sourcesJson?.data?.processedSources || [];
+                // 🎯 Vercel API එකෙන් එන්නේ 'downloads' කියන Array එකයි
+                const movieSources = sourcesJson?.downloads || sourcesJson?.data?.downloads || [];
 
-                if (!movieInfo) {
-                    return reply("❌ Failed to fetch movie details.");
+                if (!movieInfo || !movieSources.length) {
+                    return reply("❌ Failed to fetch movie details from Vercel API.");
                 }
 
-                // 🌟 𝗢𝗥𝗜𝗚𝗜𝗡𝗔𝗟 𝗖𝗔𝗣𝗧𝗜𝗢𝗡 𝗗𝗘𝗦𝗜𝗚𝗡 (ඔයාගේ මුල්ම ලස්සන සිංහල Layout එක)
+                // 🌟 𝗢𝗥𝗜𝗚𝗜𝗡𝗔𝗟 𝗖𝗔𝗣𝗧𝗜𝗢𝗡 𝗗𝗘𝗦𝗜𝗚𝗡 (ඔයාගේ ලස්සන සිංහල Layout එක)
                 let caption = `*🎬 MOVIE DETAILS 🎬*\n\n`;
                 caption += `*🏷️ Title :* ${movieInfo.title || "N/A"}\n`;
                 caption += `*📆 Release :* ${movieInfo.releaseDate || "N/A"}\n`;
@@ -140,8 +140,8 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 caption += `*📥 DOWNLOAD LINKS 📥*\n\n`;
 
                 movieSources.forEach((src, i) => {
-                    // resolution හෝ quality කියන දෙකෙන් තියෙන එකක් තෝරා ගනී (undefinedp වීම වැළැක්වීමට)
-                    const resQuality = src.resolution || src.quality || "Unknown";
+                    // 🎯 MovieBox එකේ resolution එක ගන්නවා (undefinedp වීම මෙතනින් සදහටම ඉවරයි)
+                    const resQuality = src.resolution || "Unknown";
                     caption += `*${i + 1} ||* ${resQuality}p (${convertToGB(src.size)})\n`;
                 });
 
@@ -176,11 +176,11 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const selectedSource = movieSources[qualityIndex];
                         
-                        // 🌟 Worker එකේ තියෙන Direct වීඩියෝ ලින්ක් එක (url හෝ directUrl)
-                        const directDownloadUrl = selectedSource.url || selectedSource.directUrl || selectedSource.downloadUrl;
+                        // 🎯 MovieBox ඔරිජිනල් වීඩියෝ ලින්ක් එක තියෙන්නේ 'src.url' එකේ
+                        const directDownloadUrl = selectedSource.url;
 
                         if (!directDownloadUrl) {
-                            return reply("❌ Download link not found.");
+                            return reply("❌ Download link not found in this quality.");
                         }
 
                         // Downloading reaction
@@ -188,12 +188,12 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const thumb = await createThumbnail(imageUrl);
                         
-                        // සර්වර් එක Crash වෙන්නේ නැති වෙන්න Temporary ෆයිල් එකක් හදනවා
+                        // RAM එක බේරගන්න සර්වර් එකේ Hard Disk එකට Temporary File එකක් ලියනවා
                         const tempFilePath = path.join(__dirname, `temp_${Date.now()}.mp4`);
                         const writer = fs.createWriteStream(tempFilePath);
 
                         try {
-                            // 🌟 ඔයා දීපු 100% ක් සාර්ථක නිවැරදි Android Headers ටික කෙලින්ම මෙතනට දැම්මා!
+                            // 🌟 ඔයා දීපු 100% වැඩ කරන MovieBox App Headers ටික කෙලින්ම මෙතනට දැම්මා
                             const responseStream = await axios({
                                 method: 'get',
                                 url: directDownloadUrl,
@@ -204,7 +204,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                     'X-Client-Info': '{"timezone":"Africa/Nairobi"}',
                                     'Accept-Language': 'en-US,en;q=0.5',
                                     'Accept': 'application/json',
-                                    'User-Agent': 'okhttp/4.12.0', // 🎯 App එක විදිහටම රික්වෙස්ට් එක යනවා
+                                    'User-Agent': 'okhttp/4.12.0', // 🎯 App එක විදිහටම සර්වර් එකට Request එක යනවා
                                     'Referer': 'https://h5.aoneroom.com',
                                     'Host': 'h5.aoneroom.com',
                                     'Connection': 'keep-alive',
@@ -219,13 +219,13 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             writer.on('finish', async () => {
                                 const stats = fs.statSync(tempFilePath);
                                 
-                                // බ්ලොක් එකක්ද කියලා පරික්ෂා කිරීම
+                                // 0.2 KB බ්ලොක් එකක්ද (HTML error එකක්ද) කියලා පරික්ෂා කිරීම
                                 if (stats.size < 5000) { 
                                     fs.unlinkSync(tempFilePath);
-                                    return reply("❌ Access Denied: Video server rejected the download stream.");
+                                    return reply("❌ Access Denied: MovieBox server rejected the download request.");
                                 }
 
-                                const finalRes = selectedSource.resolution || selectedSource.quality || "Unknown";
+                                const finalRes = selectedSource.resolution || "Unknown";
 
                                 // වීඩියෝ එක යද්දී වැටෙන මැසේජ් එක (Original Style)
                                 let videoCaption = `*🎬 ${movieInfo.title} *\n\n`;
@@ -245,7 +245,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                     { quoted: ck }
                                 );
 
-                                // වැඩේ ඉවර වුණාම සර්වර් එකෙන් Temp ෆයිල් එක මකනවා
+                                // වැඩේ ඉවර වුණාම සර්වර් එක ක්ලීන් කරන්න ෆයිල් එක මකනවා
                                 fs.unlinkSync(tempFilePath);
 
                                 // Success reaction
@@ -255,17 +255,17 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             writer.on('error', (err) => {
                                 console.log("Writer Error:", err.message);
                                 if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-                                reply(`❌ File write error.`);
+                                reply(`❌ File System Error while saving video.`);
                             });
 
                         } catch (axiosErr) {
                             console.log("Axios Error:", axiosErr.message);
                             if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-                            reply(`❌ Connection Failed with MovieBox Server.`);
+                            reply(`❌ Connection Failed with MovieBox Video Server.`);
                         }
 
                     } catch (err) {
-                        console.log("General Quality Listener Error:", err.message);
+                        console.log("Quality Listener General Error:", err.message);
                     }
                 };
 
@@ -303,12 +303,8 @@ const ck = {
     message: {
         contactMessage: {
             displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nEND:VCARD`
         }
     }
 };
+
