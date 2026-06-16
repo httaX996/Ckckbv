@@ -75,7 +75,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀଡᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        text += `\n💡 Reply with the movie number. (Multi-reply enabled)\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -121,13 +121,15 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 const sourcesJson = typeof sourcesRes.data === 'string' ? JSON.parse(sourcesRes.data) : sourcesRes.data;
 
                 const movieInfo = infoJson?.data?.subject; 
-                const movieSources = sourcesJson?.data?.processedSources || [];
+                
+                // 🌟 වැදගත්: ඔයාගේ Worker එකේ තියෙන්නේ downloads කියන Array එකයි
+                const movieSources = sourcesJson?.data?.downloads || sourcesJson?.data?.processedSources || [];
 
                 if (!movieInfo) {
                     return reply("❌ Failed to fetch movie details.");
                 }
 
-                // 🌟 ඔයාගේ මුල්ම ලස්සන මැසේජ් එක (Original Style)
+                // 🌟 𝗢𝗥𝗜𝗚𝗜𝗡𝗔𝗟 𝗖𝗔𝗣𝗧𝗜𝗢𝗡 𝗗𝗘𝗦𝗜𝗚𝗡 (ඔයාගේ මුල්ම ලස්සන සිංහල Layout එක)
                 let caption = `*🎬 MOVIE DETAILS 🎬*\n\n`;
                 caption += `*🏷️ Title :* ${movieInfo.title || "N/A"}\n`;
                 caption += `*📆 Release :* ${movieInfo.releaseDate || "N/A"}\n`;
@@ -138,7 +140,9 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                 caption += `*📥 DOWNLOAD LINKS 📥*\n\n`;
 
                 movieSources.forEach((src, i) => {
-                    caption += `*${i + 1} ||* ${src.quality}p (${convertToGB(src.size)})\n`;
+                    // resolution හෝ quality කියන දෙකෙන් තියෙන එකක් තෝරා ගනී (undefinedp වීම වැළැක්වීමට)
+                    const resQuality = src.resolution || src.quality || "Unknown";
+                    caption += `*${i + 1} ||* ${resQuality}p (${convertToGB(src.size)})\n`;
                 });
 
                 caption += `\n*Reply With Number To Download Video* 📥\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
@@ -172,8 +176,8 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const selectedSource = movieSources[qualityIndex];
                         
-                        // 🌟 Worker එක හරහා යන ලින්ක් එක වෙනුවට කෙලින්ම Direct Link එක ඇදලා ගන්නවා
-                        const directDownloadUrl = selectedSource.directUrl || selectedSource.downloadUrl;
+                        // 🌟 Worker එකේ තියෙන Direct වීඩියෝ ලින්ක් එක (url හෝ directUrl)
+                        const directDownloadUrl = selectedSource.url || selectedSource.directUrl || selectedSource.downloadUrl;
 
                         if (!directDownloadUrl) {
                             return reply("❌ Download link not found.");
@@ -184,12 +188,12 @@ async (conn, mek, m, { from, sender, q, reply }) => {
 
                         const thumb = await createThumbnail(imageUrl);
                         
-                        // සර්වර් එකේ RAM එක පිරෙන්නේ නැතිවෙන්න Disk එකට Temporary File එකක් හදනවා
+                        // සර්වර් එක Crash වෙන්නේ නැති වෙන්න Temporary ෆයිල් එකක් හදනවා
                         const tempFilePath = path.join(__dirname, `temp_${Date.now()}.mp4`);
                         const writer = fs.createWriteStream(tempFilePath);
 
                         try {
-                            // 🌟 ඔයා දීපු 100% ක් නිවැරදි මුල්ම Headers ටික කෙලින්ම මෙතනට දැම්මා!
+                            // 🌟 ඔයා දීපු 100% ක් සාර්ථක නිවැරදි Android Headers ටික කෙලින්ම මෙතනට දැම්මා!
                             const responseStream = await axios({
                                 method: 'get',
                                 url: directDownloadUrl,
@@ -215,15 +219,17 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             writer.on('finish', async () => {
                                 const stats = fs.statSync(tempFilePath);
                                 
-                                // වැරදිලාවත් Cloudflare Block එකක් ආවොත් (5KB ට අඩුයි නම්)
+                                // බ්ලොක් එකක්ද කියලා පරික්ෂා කිරීම
                                 if (stats.size < 5000) { 
                                     fs.unlinkSync(tempFilePath);
-                                    return reply("❌ Server rejected the headers. Please try again.");
+                                    return reply("❌ Access Denied: Video server rejected the download stream.");
                                 }
+
+                                const finalRes = selectedSource.resolution || selectedSource.quality || "Unknown";
 
                                 // වීඩියෝ එක යද්දී වැටෙන මැසේජ් එක (Original Style)
                                 let videoCaption = `*🎬 ${movieInfo.title} *\n\n`;
-                                videoCaption += `*🎞️ Quality :* ${selectedSource.quality}p\n`;
+                                videoCaption += `*🎞️ Quality :* ${finalRes}p\n`;
                                 videoCaption += `*📦 Size :* ${convertToGB(selectedSource.size)}\n\n`;
                                 videoCaption += `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
@@ -232,7 +238,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                                     {
                                         document: fs.readFileSync(tempFilePath), 
                                         mimetype: "video/mp4",
-                                        fileName: `${movieInfo.title} [${selectedSource.quality}p].mp4`,
+                                        fileName: `${movieInfo.title} [${finalRes}p].mp4`,
                                         jpegThumbnail: thumb,
                                         caption: videoCaption
                                     },
@@ -249,7 +255,7 @@ async (conn, mek, m, { from, sender, q, reply }) => {
                             writer.on('error', (err) => {
                                 console.log("Writer Error:", err.message);
                                 if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-                                reply(`❌ File System Write Error.`);
+                                reply(`❌ File write error.`);
                             });
 
                         } catch (axiosErr) {
@@ -297,7 +303,12 @@ const ck = {
     message: {
         contactMessage: {
             displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nEND:VCARD`
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
         }
     }
 };
