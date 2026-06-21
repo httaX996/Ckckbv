@@ -16,16 +16,10 @@ const ck = {
     message: {
         contactMessage: {
             displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nORG:META AI;\nTEL;type=CELL;type=VOICE;waid=13135550002:+13135550002\nEND:VCARD`
         }
     }
 };
-
 
 async function createThumbnail(url) {
     try {
@@ -65,7 +59,7 @@ async (conn, mek, m, { from, reply }) => {
             caption: menuText 
         }, { quoted: ck });
 
-        // Category වලට අදාළ API Types සහ නම් mapping එක
+        // Category mapping
         const types = {
             '1': { api: 'latest', name: 'LATEST' },
             '2': { api: 'top-rated', name: 'TOP RATED' },
@@ -73,10 +67,9 @@ async (conn, mek, m, { from, reply }) => {
             '4': { api: 'slporn', name: 'SRI LANKAN' }
         };
 
-        // Active listeners track කරන්න flags (Duplicate register වීම් වැලැක්වීමට)
         let activeResultsListeners = new Map();
 
-        // 1️⃣ პირველი මට්ටමේ Listener එක: Category තෝරාගැනීම
+        // 1️⃣ පළමු මට්ටමේ Listener එක: Category තෝරාගැනීම
         const catSelectionListener = async (update) => {
             try {
                 const msg = update.messages[0];
@@ -87,26 +80,46 @@ async (conn, mek, m, { from, reply }) => {
 
                 const userReply = (msg.message.extendedTextMessage?.text || msg.message.conversation || "").trim();
 
-                if (!types[userReply]) return; // වැරදි අංකයක් නම් ignore කරයි (Expire වෙන්නේ නැත)
+                if (!types[userReply]) return; 
 
                 const selected = types[userReply];
                 const searchUrl = `https://ck-api-v1.vercel.app/xxx/jilhub?type=${selected.api}`;
                 
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
+                
                 const { data } = await axios.get(searchUrl);
-                const results = data.results || data.data || [];
+                
+                // 🔄 [FIX] API Response එක ඇතුලේ තියෙන Array එක හරියටම අල්ලගන්න හැදූ Smart Filter එක
+                let results = [];
+                if (Array.isArray(data)) {
+                    results = data;
+                } else if (data && Array.isArray(data.results)) {
+                    results = data.results;
+                } else if (data && Array.isArray(data.data)) {
+                    results = data.data;
+                } else if (data && typeof data === 'object') {
+                    // වෙනත් key එකක හරි array එකක් තියෙනවද බලන්න check කරනවා
+                    const keys = Object.keys(data);
+                    for (let key of keys) {
+                        if (Array.isArray(data[key])) {
+                            results = data[key];
+                            break;
+                        }
+                    }
+                }
 
-                if (!results.length) {
-                    return reply("❌ No videos found in this category.");
+                if (!results || results.length === 0) {
+                    await conn.sendMessage(from, { react: { text: "❌", key: msg.key } });
+                    return reply(`❌ No videos found or API response format changed inside JILHUB ${selected.name}.`);
                 }
 
                 let listText = `🔥 \`JILHUB ${selected.name}\` 🔥\n\n`;
                 results.forEach((vid, index) => {
-                    listText += `\`${index + 1}\` *|* ❭❭◦ *${vid.title}*\n`;
+                    listText += `\`${index + 1}\` *|* ❭❭◦ *${vid.title || "No Title"}*\n`;
                     listText += `📅 _Uploaded:_ ${vid.uploadedOn || "N/A"}  👁️ _Views:_ ${vid.views || "N/A"}\n\n`;
                 });
                 listText += `💡 වීඩියෝ එක ලබා ගැනීමට අදාළ අංකය මෙම message එකට reply කරන්න.\n\n`;
-                listText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+                listText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪ<b>ꜱ</b>ʜᴀɴ*`;
 
                 const sentListMsg = await conn.sendMessage(from, {
                     image: { url: config.IMG_URL },
@@ -128,21 +141,28 @@ async (conn, mek, m, { from, reply }) => {
                         const selectedIdx = parseInt(userReplyVid) - 1;
 
                         if (isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= results.length) {
-                            return; // වැරදි අංකයක් නම් ignore කරයි (Expire වෙන්නේ නැත)
+                            return; 
                         }
 
                         const selectedVideo = results[selectedIdx];
-                        const infoUrl = `https://ck-api-v1.vercel.app/xxx/jilhub?type=info&url=${encodeURIComponent(selectedVideo.url || selectedVideo.link)}`;
+                        const targetUrl = selectedVideo.url || selectedVideo.link || selectedVideo.href;
+                        
+                        if (!targetUrl) return reply("❌ Target video URL not found in list.");
+
+                        const infoUrl = `https://ck-api-v1.vercel.app/xxx/jilhub?type=info&url=${encodeURIComponent(targetUrl)}`;
 
                         await conn.sendMessage(from, { react: { text: "🔍", key: msgVid.key } });
                         const infoResponse = await axios.get(infoUrl);
-                        const videoInfo = infoResponse.data?.data || infoResponse.data?.results || infoResponse.data;
+                        
+                        // Response data එක extract කිරීම
+                        const resData = infoResponse.data;
+                        const videoInfo = resData?.data || resData?.results || resData;
 
                         if (!videoInfo || !videoInfo.download_link) {
-                            return reply("❌ Failed to fetch video download details.");
+                            return reply("❌ Failed to fetch video download details from Info API.");
                         }
 
-                        let caption = `🎬 \`${videoInfo.title || selectedVideo.title}\`\n\n`;
+                        let caption = `🎬 \`${videoInfo.title || selectedVideo.title || "JilHub Video"}\`\n\n`;
                         caption += `⏱️ \`DURATION:\` *${videoInfo.duration || "N/A"}*\n`;
                         caption += `👁️ \`VIEWS:\` *${videoInfo.views || "N/A"}*\n`;
                         caption += `📤 \`SUBMITTED:\` *${videoInfo.submitted || "N/A"}*\n\n`;
@@ -150,23 +170,23 @@ async (conn, mek, m, { from, reply }) => {
 
                         const videoPoster = videoInfo.image || config.IMG_URL;
 
-                        // Info සහ Poster එක යැවීම
+                        // Info & Poster
                         await conn.sendMessage(from, {
                             image: { url: videoPoster },
                             caption: caption
                         }, { quoted: ck });
 
-                        // Status message එක
+                        // Status msg
                         await reply("📥 *Your video is downloading... Please wait!*");
 
                         const thumb = await createThumbnail(videoPoster);
 
-                        // 🔄 මෙතන තමා වෙනස් කලේ: document වෙනුවට video දාලා කෙලින්ම play වෙන්න හැදුවා
+                        // 🎬 වීඩියෝ එකක් විදිහට කෙලින්ම සෙන්ඩ් කිරීම (Streamable video message)
                         await conn.sendMessage(from, {
                             video: { url: videoInfo.download_link },
                             mimetype: "video/mp4",
                             jpegThumbnail: thumb,
-                            caption: `🎬 \`${videoInfo.title || selectedVideo.title}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                            caption: `🎬 \`${videoInfo.title || selectedVideo.title || "Video"}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
                         }, { quoted: ck });
 
                         await conn.sendMessage(from, { react: { text: "⚽", key: msgVid.key } });
@@ -177,16 +197,13 @@ async (conn, mek, m, { from, reply }) => {
                     }
                 };
 
-                // කලින් මේ List Message ID එකටම listener එකක් තිබ්බොත් ඒක අයින් කරනවා (Memory clean)
                 if (activeResultsListeners.has(sentListMsg.key.id)) {
                     conn.ev.off("messages.upsert", activeResultsListeners.get(sentListMsg.key.id));
                 }
 
-                // අලුත් Listener එක register කරලා Map එකට දาනවා
                 conn.ev.on("messages.upsert", videoSelectionListener);
                 activeResultsListeners.set(sentListMsg.key.id, videoSelectionListener);
 
-                // විනාඩි 10කින් මේ නිශ්චිත List message එකට තියෙන listener එක expire කරනවා
                 setTimeout(() => {
                     conn.ev.off("messages.upsert", videoSelectionListener);
                     activeResultsListeners.delete(sentListMsg.key.id);
@@ -198,13 +215,10 @@ async (conn, mek, m, { from, reply }) => {
             }
         };
 
-        // Main Menu එකට listener එක register කිරීම
         conn.ev.on("messages.upsert", catSelectionListener);
 
-        // ⏱️ මුළු Menu එකේම lifetime එක විනාඩි 10යි (600,000 ms).
         setTimeout(() => {
             conn.ev.off("messages.upsert", catSelectionListener);
-            // සියලුම ඇතුලත තියෙන active listeners ද ක්ලීන් කර දැමීම
             for (let [msgId, listenerFunc] of activeResultsListeners.entries()) {
                 conn.ev.off("messages.upsert", listenerFunc);
             }
@@ -216,3 +230,4 @@ async (conn, mek, m, { from, reply }) => {
         reply("❌ An error occurred while starting JilHub.");
     }
 });
+
