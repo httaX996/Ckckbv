@@ -74,8 +74,8 @@ async function handleVideoSelection(conn, from, results, sentListMsg) {
             let caption = `🎬 \`${videoInfo.title || selectedVideo.title || "JilHub Video"}\`\n\n`;
             caption += `⏱️ \`DURATION:\` *${videoInfo.duration || "N/A"}*\n`;
             caption += `👁️ \`VIEWS:\` *${videoInfo.views || "N/A"}*\n`;
-            caption += `📤 \`SUBMITTED:\` *${videoInfo.submitted || "N/A"}*\n\n`;
-            caption += `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+            caption += `📤 \`UPLOADED ON:\` *${videoInfo.submitted || "N/A"}*\n\n`;
+            caption += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
             const videoPoster = videoInfo.image || config.IMG_URL;
 
@@ -95,7 +95,7 @@ async function handleVideoSelection(conn, from, results, sentListMsg) {
                 caption: `🎬 \`${videoInfo.title || selectedVideo.title || "Video"}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
             }, { quoted: ck });
 
-            await conn.sendMessage(from, { react: { text: "⚽", key: msgVid.key } });
+            await conn.sendMessage(from, { react: { text: "✅", key: msgVid.key } });
 
         } catch (err) {
             console.log("Error in video selection:", err);
@@ -134,7 +134,7 @@ async (conn, mek, m, { from, reply }) => {
         menuText += `\`3\` *|* ❭❭◦ *Popular*\n`;
         menuText += `\`4\` *|* ❭❭◦ *Sri Lankan*\n\n`;
         menuText += `💡 ඔයාට අවශ්‍ය category එකට අදාල අංකය මෙම message එකට reply කරන්න.\n\n`;
-        menuText += `> 👨🏻‍💻 ᴍᴀඩᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        menuText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMenuMsg = await conn.sendMessage(from, { 
             image: { url: config.IMG_URL }, 
@@ -142,10 +142,10 @@ async (conn, mek, m, { from, reply }) => {
         }, { quoted: ck });
 
         const types = {
-            '1': { api: 'latest', name: 'LATEST' },
-            '2': { api: 'top-rated', name: 'TOP RATED' },
-            '3': { api: 'popular', name: 'POPULAR' },
-            '4': { api: 'slporn', name: 'SRI LANKAN' }
+            '1': { api: 'latest', name: '𝗟𝗔𝗧𝗘𝗦𝗧' },
+            '2': { api: 'top-rated', name: '𝗧𝗢𝗣 𝗥𝗔𝗧𝗘𝗗' },
+            '3': { api: 'popular', name: '𝗣𝗢𝗣𝗨𝗟𝗔𝗥' },
+            '4': { api: 'slporn', name: '𝗦𝗥𝗜 𝗟𝗔𝗡𝗞𝗔𝗡' }
         };
 
         const catSelectionListener = async (update) => {
@@ -173,10 +173,10 @@ async (conn, mek, m, { from, reply }) => {
                     return reply(`❌ No videos found inside JILHUB ${selected.name}.`);
                 }
 
-                let listText = `🔥 \`JILHUB ${selected.name}\` 🔥\n\n`;
+                let listText = `🔥 \`𝗝𝗜𝗟𝗛𝗨𝗕 ${selected.name}\` 🔥\n\n`;
                 results.forEach((vid, index) => {
                     listText += `\`${index + 1}\` *|* ❭❭◦ *${vid.title || "No Title"}*\n`;
-                    listText += `📅 _Uploaded:_ ${vid.uploadedOn || "N/A"}  👁️ _Views:_ ${vid.views || "N/A"}\n\n`;
+                    listText += `📅 ${vid.uploadedOn || "N/A"} • 👁️ _Views:_ ${vid.views || "N/A"}\n\n`;
                 });
                 listText += `💡 වීඩියෝ එක ලබා ගැනීමට අදාළ අංකය මෙම message එකට reply කරන්න.\n\n`;
                 listText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
@@ -239,16 +239,16 @@ async (conn, mek, m, { from, q, reply }) => {
             return reply(`❌ No videos found for search query: "${q}"`);
         }
 
-        let searchListText = `🔍 \`JILHUB SEARCH RESULTS\` 🔍\n\n`;
+        let searchListText = `🔍 \`𝗝𝗜𝗟𝗛𝗨𝗕 𝗦𝗘𝗔𝗥𝗖𝗛 𝗥𝗘𝗦𝗨𝗟𝗧\` 🔍\n\n`;
         searchListText += `*🔎 Query:* \`${q}\`\n\n`;
         
         results.forEach((vid, index) => {
             searchListText += `\`${index + 1}\` *|* ❭❭◦ *${vid.title || "No Title"}*\n`;
-            searchListText += `📅 _Uploaded:_ ${vid.uploadedOn || "N/A"}  👁️ _Views:_ ${vid.views || "N/A"}\n\n`;
+            searchListText += `📅 ${vid.uploadedOn || "N/A"} • 👁️ _Views:_ ${vid.views || "N/A"}\n\n`;
         });
         
         searchListText += `💡 වීඩියෝ එක ලබා ගැනීමට අදාළ අංකය මෙම message එකට reply කරන්න.\n\n`;
-        searchListText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪ<b>ꜱ</b>ʜᴀัน*`;
+        searchListText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentSearchListMsg = await conn.sendMessage(from, {
             image: { url: config.IMG_URL },
