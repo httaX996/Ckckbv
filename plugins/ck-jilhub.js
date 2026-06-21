@@ -34,12 +34,94 @@ async function createThumbnail(url) {
     }
 }
 
+// Global active results listeners map to clean memory efficiently
+let activeResultsListeners = new Map();
+
+// Dynamic video selection logic shared by both commands
+async function handleVideoSelection(conn, from, results, sentListMsg) {
+    const videoSelectionListener = async (updateVid) => {
+        try {
+            const msgVid = updateVid.messages[0];
+            if (!msgVid.message) return;
+
+            const contextInfoVid = msgVid.message.extendedTextMessage?.contextInfo;
+            if (contextInfoVid?.stanzaId !== sentListMsg.key.id) return;
+
+            const userReplyVid = (msgVid.message.extendedTextMessage?.text || msgVid.message.conversation || "").trim();
+            const selectedIdx = parseInt(userReplyVid) - 1;
+
+            if (isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= results.length) {
+                return; 
+            }
+
+            const selectedVideo = results[selectedIdx];
+            const targetUrl = selectedVideo.url || selectedVideo.link || selectedVideo.href;
+            
+            if (!targetUrl) return conn.sendMessage(from, { text: "❌ Target video URL not found in list." });
+
+            const infoUrl = `https://ck-api-v1.vercel.app/xxx/jilhub?type=info&url=${encodeURIComponent(targetUrl)}`;
+
+            await conn.sendMessage(from, { react: { text: "🔍", key: msgVid.key } });
+            const infoResponse = await axios.get(infoUrl);
+            
+            const resData = infoResponse.data;
+            const videoInfo = resData?.data || resData?.results || resData;
+
+            if (!videoInfo || !videoInfo.download_link) {
+                return conn.sendMessage(from, { text: "❌ Failed to fetch video download details from Info API." });
+            }
+
+            let caption = `🎬 \`${videoInfo.title || selectedVideo.title || "JilHub Video"}\`\n\n`;
+            caption += `⏱️ \`DURATION:\` *${videoInfo.duration || "N/A"}*\n`;
+            caption += `👁️ \`VIEWS:\` *${videoInfo.views || "N/A"}*\n`;
+            caption += `📤 \`SUBMITTED:\` *${videoInfo.submitted || "N/A"}*\n\n`;
+            caption += `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+
+            const videoPoster = videoInfo.image || config.IMG_URL;
+
+            await conn.sendMessage(from, {
+                image: { url: videoPoster },
+                caption: caption
+            }, { quoted: ck });
+
+            await conn.sendMessage(from, { text: "📥 *Your video is downloading... Please wait!*" });
+
+            const thumb = await createThumbnail(videoPoster);
+
+            await conn.sendMessage(from, {
+                video: { url: videoInfo.download_link },
+                mimetype: "video/mp4",
+                jpegThumbnail: thumb,
+                caption: `🎬 \`${videoInfo.title || selectedVideo.title || "Video"}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+            }, { quoted: ck });
+
+            await conn.sendMessage(from, { react: { text: "⚽", key: msgVid.key } });
+
+        } catch (err) {
+            console.log("Error in video selection:", err);
+        }
+    };
+
+    if (activeResultsListeners.has(sentListMsg.key.id)) {
+        conn.ev.off("messages.upsert", activeResultsListeners.get(sentListMsg.key.id));
+    }
+
+    conn.ev.on("messages.upsert", videoSelectionListener);
+    activeResultsListeners.set(sentListMsg.key.id, videoSelectionListener);
+
+    setTimeout(() => {
+        conn.ev.off("messages.upsert", videoSelectionListener);
+        activeResultsListeners.delete(sentListMsg.key.id);
+    }, 600000);
+}
+
+
 // ==========================================
-// 🎬 MAIN .JILHUB COMMAND (10-MIN TIMEOUT)
+// 🎬 1️⃣ MAIN .JILHUB COMMAND (CATEGORY)
 // ==========================================
 cmd({
     pattern: "jilhub",
-    desc: "Search and download videos from JilHub",
+    desc: "Browse videos from JilHub by category",
     category: "download",
     react: "🔞",
     filename: __filename
@@ -52,14 +134,13 @@ async (conn, mek, m, { from, reply }) => {
         menuText += `\`3\` *|* ❭❭◦ *Popular*\n`;
         menuText += `\`4\` *|* ❭❭◦ *Sri Lankan*\n\n`;
         menuText += `💡 ඔයාට අවශ්‍ය category එකට අදාල අංකය මෙම message එකට reply කරන්න.\n\n`;
-        menuText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+        menuText += `> 👨🏻‍💻 ᴍᴀඩᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMenuMsg = await conn.sendMessage(from, { 
             image: { url: config.IMG_URL }, 
             caption: menuText 
         }, { quoted: ck });
 
-        // Category mapping
         const types = {
             '1': { api: 'latest', name: 'LATEST' },
             '2': { api: 'top-rated', name: 'TOP RATED' },
@@ -67,9 +148,6 @@ async (conn, mek, m, { from, reply }) => {
             '4': { api: 'slporn', name: 'SRI LANKAN' }
         };
 
-        let activeResultsListeners = new Map();
-
-        // 1️⃣ පළමු මට්ටමේ Listener එක: Category තෝරාගැනීම
         const catSelectionListener = async (update) => {
             try {
                 const msg = update.messages[0];
@@ -86,31 +164,13 @@ async (conn, mek, m, { from, reply }) => {
                 const searchUrl = `https://ck-api-v1.vercel.app/xxx/jilhub?type=${selected.api}`;
                 
                 await conn.sendMessage(from, { react: { text: "⏳", key: msg.key } });
-                
                 const { data } = await axios.get(searchUrl);
                 
-                // 🔄 [FIX] API Response එක ඇතුලේ තියෙන Array එක හරියටම අල්ලගන්න හැදූ Smart Filter එක
-                let results = [];
-                if (Array.isArray(data)) {
-                    results = data;
-                } else if (data && Array.isArray(data.results)) {
-                    results = data.results;
-                } else if (data && Array.isArray(data.data)) {
-                    results = data.data;
-                } else if (data && typeof data === 'object') {
-                    // වෙනත් key එකක හරි array එකක් තියෙනවද බලන්න check කරනවා
-                    const keys = Object.keys(data);
-                    for (let key of keys) {
-                        if (Array.isArray(data[key])) {
-                            results = data[key];
-                            break;
-                        }
-                    }
-                }
+                let results = Array.isArray(data) ? data : (data.data || data.results || []);
 
                 if (!results || results.length === 0) {
                     await conn.sendMessage(from, { react: { text: "❌", key: msg.key } });
-                    return reply(`❌ No videos found or API response format changed inside JILHUB ${selected.name}.`);
+                    return reply(`❌ No videos found inside JILHUB ${selected.name}.`);
                 }
 
                 let listText = `🔥 \`JILHUB ${selected.name}\` 🔥\n\n`;
@@ -119,7 +179,7 @@ async (conn, mek, m, { from, reply }) => {
                     listText += `📅 _Uploaded:_ ${vid.uploadedOn || "N/A"}  👁️ _Views:_ ${vid.views || "N/A"}\n\n`;
                 });
                 listText += `💡 වීඩියෝ එක ලබා ගැනීමට අදාළ අංකය මෙම message එකට reply කරන්න.\n\n`;
-                listText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪ<b>ꜱ</b>ʜᴀɴ*`;
+                listText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 const sentListMsg = await conn.sendMessage(from, {
                     image: { url: config.IMG_URL },
@@ -128,86 +188,8 @@ async (conn, mek, m, { from, reply }) => {
 
                 await conn.sendMessage(from, { react: { text: "✅", key: msg.key } });
 
-                // 2️⃣ දෙවැනි මට්ටමේ Listener එක: Video එක තෝරාගැනීම
-                const videoSelectionListener = async (updateVid) => {
-                    try {
-                        const msgVid = updateVid.messages[0];
-                        if (!msgVid.message) return;
-
-                        const contextInfoVid = msgVid.message.extendedTextMessage?.contextInfo;
-                        if (contextInfoVid?.stanzaId !== sentListMsg.key.id) return;
-
-                        const userReplyVid = (msgVid.message.extendedTextMessage?.text || msgVid.message.conversation || "").trim();
-                        const selectedIdx = parseInt(userReplyVid) - 1;
-
-                        if (isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= results.length) {
-                            return; 
-                        }
-
-                        const selectedVideo = results[selectedIdx];
-                        const targetUrl = selectedVideo.url || selectedVideo.link || selectedVideo.href;
-                        
-                        if (!targetUrl) return reply("❌ Target video URL not found in list.");
-
-                        const infoUrl = `https://ck-api-v1.vercel.app/xxx/jilhub?type=info&url=${encodeURIComponent(targetUrl)}`;
-
-                        await conn.sendMessage(from, { react: { text: "🔍", key: msgVid.key } });
-                        const infoResponse = await axios.get(infoUrl);
-                        
-                        // Response data එක extract කිරීම
-                        const resData = infoResponse.data;
-                        const videoInfo = resData?.data || resData?.results || resData;
-
-                        if (!videoInfo || !videoInfo.download_link) {
-                            return reply("❌ Failed to fetch video download details from Info API.");
-                        }
-
-                        let caption = `🎬 \`${videoInfo.title || selectedVideo.title || "JilHub Video"}\`\n\n`;
-                        caption += `⏱️ \`DURATION:\` *${videoInfo.duration || "N/A"}*\n`;
-                        caption += `👁️ \`VIEWS:\` *${videoInfo.views || "N/A"}*\n`;
-                        caption += `📤 \`SUBMITTED:\` *${videoInfo.submitted || "N/A"}*\n\n`;
-                        caption += `> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
-
-                        const videoPoster = videoInfo.image || config.IMG_URL;
-
-                        // Info & Poster
-                        await conn.sendMessage(from, {
-                            image: { url: videoPoster },
-                            caption: caption
-                        }, { quoted: ck });
-
-                        // Status msg
-                        await reply("📥 *Your video is downloading... Please wait!*");
-
-                        const thumb = await createThumbnail(videoPoster);
-
-                        // 🎬 වීඩියෝ එකක් විදිහට කෙලින්ම සෙන්ඩ් කිරීම (Streamable video message)
-                        await conn.sendMessage(from, {
-                            video: { url: videoInfo.download_link },
-                            mimetype: "video/mp4",
-                            jpegThumbnail: thumb,
-                            caption: `🎬 \`${videoInfo.title || selectedVideo.title || "Video"}\`\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
-                        }, { quoted: ck });
-
-                        await conn.sendMessage(from, { react: { text: "⚽", key: msgVid.key } });
-
-                    } catch (err) {
-                        console.log("Error in video selection:", err);
-                        reply("❌ Error while fetching/sending the video.");
-                    }
-                };
-
-                if (activeResultsListeners.has(sentListMsg.key.id)) {
-                    conn.ev.off("messages.upsert", activeResultsListeners.get(sentListMsg.key.id));
-                }
-
-                conn.ev.on("messages.upsert", videoSelectionListener);
-                activeResultsListeners.set(sentListMsg.key.id, videoSelectionListener);
-
-                setTimeout(() => {
-                    conn.ev.off("messages.upsert", videoSelectionListener);
-                    activeResultsListeners.delete(sentListMsg.key.id);
-                }, 600000);
+                // Handle nesting using the global logic
+                await handleVideoSelection(conn, from, results, sentListMsg);
 
             } catch (err) {
                 console.log("Error in category switching:", err);
@@ -219,15 +201,68 @@ async (conn, mek, m, { from, reply }) => {
 
         setTimeout(() => {
             conn.ev.off("messages.upsert", catSelectionListener);
-            for (let [msgId, listenerFunc] of activeResultsListeners.entries()) {
-                conn.ev.off("messages.upsert", listenerFunc);
-            }
-            activeResultsListeners.clear();
         }, 600000);
 
     } catch (err) {
         console.log("Jilhub Main Error:", err);
         reply("❌ An error occurred while starting JilHub.");
+    }
+});
+
+
+// ==========================================
+// 🔍 2️⃣ NEW .SEARCHJIL COMMAND (TEXT SEARCH)
+// ==========================================
+cmd({
+    pattern: "searchjil",
+    desc: "Search videos on JilHub by text query",
+    category: "download",
+    react: "🔍",
+    filename: __filename
+},
+async (conn, mek, m, { from, q, reply }) => {
+    try {
+        if (!q) {
+            return reply("❌ Please provide a search query!\n\nExample:\n.searchjil srilankan");
+        }
+
+        await conn.sendMessage(from, { react: { text: "⏳", key: mek.key } });
+
+        const searchUrl = `https://ck-api-v1.vercel.app/xxx/jilhub?type=search&q=${encodeURIComponent(q)}`;
+        const { data } = await axios.get(searchUrl);
+
+        // Screenshot එකේ විදියට data array එක extract කිරීම
+        let results = data.data || data.results || (Array.isArray(data) ? data : []);
+
+        if (!results || results.length === 0) {
+            await conn.sendMessage(from, { react: { text: "❌", key: mek.key } });
+            return reply(`❌ No videos found for search query: "${q}"`);
+        }
+
+        let searchListText = `🔍 \`JILHUB SEARCH RESULTS\` 🔍\n\n`;
+        searchListText += `*🔎 Query:* \`${q}\`\n\n`;
+        
+        results.forEach((vid, index) => {
+            searchListText += `\`${index + 1}\` *|* ❭❭◦ *${vid.title || "No Title"}*\n`;
+            searchListText += `📅 _Uploaded:_ ${vid.uploadedOn || "N/A"}  👁️ _Views:_ ${vid.views || "N/A"}\n\n`;
+        });
+        
+        searchListText += `💡 වීඩියෝ එක ලබා ගැනීමට අදාළ අංකය මෙම message එකට reply කරන්න.\n\n`;
+        searchListText += `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪ<b>ꜱ</b>ʜᴀัน*`;
+
+        const sentSearchListMsg = await conn.sendMessage(from, {
+            image: { url: config.IMG_URL },
+            caption: searchListText
+        }, { quoted: ck });
+
+        await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
+
+        // වීඩියෝ එක select කරලා download කරන nested logic එක ක්‍රියාත්මක කිරීම (10 min expiry)
+        await handleVideoSelection(conn, from, results, sentSearchListMsg);
+
+    } catch (err) {
+        console.log("SearchJil Error:", err);
+        reply("❌ An error occurred while searching JilHub.");
     }
 });
 
