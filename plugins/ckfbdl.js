@@ -1,125 +1,156 @@
-
-
 const config = require('../config')
-const {cmd , commands} = require('../command')
+const { cmd, commands } = require('../command')
 const getFBInfo = require("@xaviabot/fb-downloader");
 
+// ==========================================
+// 1. MAIN FACEBOOK DOWNLOAD COMMAND
+// ==========================================
 cmd({
-  pattern: "fb",
-  alias: ["fbdl"],
-  desc: "Download Facebook videos",
-  category: "download",
-  filename: __filename
+    pattern: "fb",
+    alias: ["fbdl"],
+    use: '.fb <facebook-url>',
+    react: "🧩",
+    desc: "Download Facebook videos using interactive buttons",
+    category: "Download",
+    filename: __filename
 },
-async(conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
-  try {
+async (conn, mek, m, { from, prefix, q, reply }) => {
+    try {
+        if (!q || !q.startsWith("https://")) {
+            return await reply('🔎 *Please provide a valid Facebook video URL!*');
+        }
 
-  if (!q || !q.startsWith("https://")) {
-    return conn.sendMessage(from, { text: "❌ Please provide a valid URL." }, { quoted: mek });
-}
+        await conn.sendMessage(from, { react: { text: "💡", key: mek.key } });
 
-await conn.sendMessage(from, { react: { text: "💡", key: mek.key } });
+        const result = await getFBInfo(q);
+        if (!result || (!result.sd && !result.hd)) return reply("❌ Video not found or private!");
 
-const result = await getFBInfo(q);
+        const title = result.title || "Facebook Video";
+        const wm = config.FOOTER || "👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ";
 
-    const captionHeader = `🧩 \`𝗖𝗞 𝗙𝗕 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗘𝗥\` 🧩
+        let caption = `🧩 *𝗖𝗞 𝗙𝗕 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗘𝗥* 🧩\n\n` +
+                      `*🔖 Title :* *${title}*\n` +
+                      `*🔗 Url :* *${q}*`;
 
-🔖 \`TITLE:\` *${result.title}*
-🔗 \`URL:\` *${q}*
+        // song එකේ වගේම buttonId එකට prefix එක සහ ඩේටා පාස් කරනවා
+        const buttons = [
+            {
+                buttonId: `${prefix}fbsd ${result.sd}`,
+                buttonText: { displayText: 'SD Quality 🪫' },
+                type: 1
+            },
+            {
+                buttonId: `${prefix}fbhd ${result.hd || result.sd}`, // HD නැත්නම් SD වැටෙන්න සේෆ්ටි එකක්
+                buttonText: { displayText: 'HD Quality 🔋' },
+                type: 1
+            },
+            {
+                buttonId: `${prefix}fbaud ${result.sd}`,
+                buttonText: { displayText: 'Audio Format 🎶' },
+                type: 1
+            }
+        ];
 
-🔢 \`ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ɴᴜᴍʙᴇʀ\`
+        const buttonMessage = {
+            image: { url: result.thumbnail || "https://placeholder.com" },
+            caption: caption,
+            footer: wm,
+            buttons: buttons,
+            headerType: 4
+        };
 
-\`1\` *|* ❭❭◦ *SD QULITY* 🪫
-\`2\` *|* ❭❭◦ *HD QULITY* 🔋
-\`3\` *|* ❭❭◦ *AUDIO* 🎶
+        // ඔයාගේ song එකේ තියෙන බටන් මැසේජ් ෆන්ක්ෂන් එකමයි
+        await conn.buttonMessage(from, buttonMessage, mek);
 
-> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*
-`;
+    } catch (e) {
+        console.error(e);
+        reply('❌ *An error occurred while fetching Facebook video.*');
+    }
+});
 
-const sentMsg = await conn.sendMessage(from, {
-  image: { url: result.thumbnail}, // Ensure `img.allmenu` is a valid image URL or base64 encoded image
-  caption: captionHeader
-},
-  { quoted: ck }
-);
-const messageID = sentMsg.key.id; // Save the message ID for later reference
-
-
-// Listen for the user's response
-conn.ev.on('messages.upsert', async (messageUpdate) => {
-    const mek = messageUpdate.messages[0];
-    if (!mek.message) return;
-    const messageType = mek.message.conversation || mek.message.extendedTextMessage?.text;
-    const from = mek.key.remoteJid;
-    const sender = mek.key.participant || mek.key.remoteJid;
-
-    // Check if the message is a reply to the previously sent message
-    const isReplyToSentMsg = mek.message.extendedTextMessage && mek.message.extendedTextMessage.contextInfo.stanzaId === messageID;
-
-    if (isReplyToSentMsg) {
-        // React to the user's reply (the "1" or "2" message)
-        await conn.sendMessage(from, { react: { text: '⬇️', key: mek.key } });
-        
-        
-
-        // React to the upload (sending the file)
+// ==========================================
+// 2. SUB-COMMAND: SD VIDEO DOWNLOADER
+// ==========================================
+cmd({
+    pattern: "fbsd",
+    react: "⬇️",
+    dontAddCommandList: true,
+    filename: __filename
+}, async (conn, mek, m, { from, q, reply }) => {
+    if (!q) return;
+    try {
         await conn.sendMessage(from, { react: { text: '⬆️', key: mek.key } });
 
-        if (messageType === '1') {
-            // Handle option 1 (sd File)
-            await conn.sendMessage(from, {
-              video: { url: result.sd}, // Ensure `img.allmenu` is a valid image URL or base64 encoded image
-              caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*",
+        await conn.sendMessage(
+            from,
+            { 
+                video: { url: q }, 
+                caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*" 
             },
-                                   { quoted: ck }
-              
-            );
-          }
+            { quoted: mek }
+        );
 
-          else if (messageType === '2') {
-            // Handle option 2 (hd File)
-            await conn.sendMessage(from, {
-              video: { url: result.hd}, // Ensure `img.allmenu` is a valid image URL or base64 en",
-              caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*",
+        await conn.sendMessage(from, { react: { text: '✔️', key: mek.key } });
+    } catch (e) {
+        console.log(e);
+        reply('❌ *Error sending SD Video.*');
+    }
+});
+
+// ==========================================
+// 3. SUB-COMMAND: HD VIDEO DOWNLOADER
+// ==========================================
+cmd({
+    pattern: "fbhd",
+    react: "⬇️",
+    dontAddCommandList: true,
+    filename: __filename
+}, async (conn, mek, m, { from, q, reply }) => {
+    if (!q) return;
+    try {
+        await conn.sendMessage(from, { react: { text: '⬆️', key: mek.key } });
+
+        await conn.sendMessage(
+            from,
+            { 
+                video: { url: q }, 
+                caption: "> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*" 
             },
-                                   { quoted: ck }
-            );
-          }
-           
-          else if (messageType === '3') {
-            //Handle option 3 (audio File)  
-          await conn.sendMessage(from, { audio: { url: result.sd }, mimetype: "audio/mpeg" }, { quoted: ck })
-          }
-          
-          
-        // React to the successful completion of the task
-        await conn.sendMessage(from, { react: { text: '✅', key: mek.key } });
+            { quoted: mek }
+        );
 
-        console.log("Response sent successfully");
+        await conn.sendMessage(from, { react: { text: '✔️', key: mek.key } });
+    } catch (e) {
+        console.log(e);
+        reply('❌ *Error sending HD Video.*');
     }
-  });
-} catch (e) {
-console.log(e);
-reply(`${e}`);
-}
-})
+});
 
-const ck = {
-    key: {
-        fromMe: false,
-        participant: "0@s.whatsapp.net",
-        remoteJid: "status@broadcast"
-    },
-    message: {
-        contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:Meta
-ORG:META AI;
-TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
-END:VCARD`
-        }
+// ==========================================
+// 4. SUB-COMMAND: AUDIO DOWNLOADER
+// ==========================================
+cmd({
+    pattern: "fbaud",
+    react: "⬇️",
+    dontAddCommandList: true,
+    filename: __filename
+}, async (conn, mek, m, { from, q, reply }) => {
+    if (!q) return;
+    try {
+        await conn.sendMessage(from, { react: { text: '⬆️', key: mek.key } });
+
+        await conn.sendMessage(
+            from,
+            { 
+                audio: { url: q }, 
+                mimetype: 'audio/mpeg' 
+            },
+            { quoted: mek }
+        );
+
+        await conn.sendMessage(from, { react: { text: '✔️', key: mek.key } });
+    } catch (e) {
+        console.log(e);
+        reply('❌ *Error sending Audio.*');
     }
-};
-
+});
