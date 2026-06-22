@@ -174,6 +174,47 @@ conn.sendMessage(conn.user.id, { image: { url: config.MENU_IMG }, caption: up })
             }
         }
 
+        //=========================== BUTTON SYSTEM ===========================
+        conn.buttonMessage = async (jid, msgData, quotedMessage) => {
+            if (!msgData.buttons || msgData.buttons.length === 0) {
+                return await conn.sendMessage(jid, { text: msgData.text, footer: msgData.footer }, { quoted: quotedMessage });
+            }
+            let buttonText = `${msgData.text}\n\n`;
+            msgData.buttons.forEach((btn, index) => {
+                buttonText += `*${index + 1} |* ${btn.buttonText.displayText}\n`;
+            });
+            if (msgData.footer) buttonText += `\n_${msgData.footer}_`;
+            return await conn.sendMessage(jid, { text: buttonText }, { quoted: quotedMessage });
+        };
+
+        conn.sendButtonMessage3 = async (jid, buttons, quotedMessage, opts = {}) => {
+            let messageContent = {
+                viewOnceMessage: {
+                    message: {
+                        interactiveMessage: proto.Message.InteractiveMessage.fromObject({
+                            body: proto.Message.InteractiveMessage.Body.fromObject({
+                                text: opts.body || ''
+                            }),
+                            footer: proto.Message.InteractiveMessage.Footer.fromObject({
+                                text: opts.footer || ''
+                            }),
+                            header: proto.Message.InteractiveMessage.Header.fromObject({
+                                title: opts.header || '',
+                                hasMediaAttachment: opts.image ? true : false,
+                                ...(opts.image ? { imageMessage: (await prepareWAMessageMedia({ image: { url: opts.image } }, { upload: conn.waUploadToServer })).imageMessage } : {})
+                            }),
+                            nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.fromObject({
+                                buttons: buttons
+                            })
+                        })
+                    }
+                }
+            };
+            let wam = generateWAMessageFromContent(jid, messageContent, { quoted: quotedMessage });
+            return await conn.relayMessage(jid, wam.message, {});
+        };
+        //=====================================================================
+
         //__________________________________________ANTI DELETE_________________________________
     if (!m.id.startsWith("BAE5")) {
     
@@ -583,3 +624,4 @@ app.listen(port, () => console.log(`Server listening on port http://localhost:${
 setTimeout(() => {
     connectToWA();
 }, 4000);
+
