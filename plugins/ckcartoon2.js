@@ -4,14 +4,24 @@ const sharp = require('sharp');
 const config = require('../config');
 
 const ck = {
-    key: { fromMe: false, participant: "0@s.whatsapp.net", remoteJid: "status@broadcast" },
+    key: {
+        fromMe: false,
+        participant: "0@s.whatsapp.net",
+        remoteJid: "status@broadcast"
+    },
     message: {
         contactMessage: {
             displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nORG:META AI;\nTEL;type=CELL;type=VOICE;waid=13135550002:+13135550002\nEND:VCARD`
+            vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:Meta
+ORG:META AI;
+TEL;type=CELL;type=VOICE;waid=13135550002:+13135550002
+END:VCARD`
         }
     }
 };
+
 
 async function createThumbnail(url) {
     try {
@@ -51,14 +61,14 @@ async (conn, mek, m, { from, q, reply }) => {
             return reply("❌ No movies found.");
         }
 
-        let text = `🎬 *PUPIL MOVIE SEARCH*\n\n`;
+        let text = `🎬 \`𝗣𝗨𝗣𝗜𝗟 𝗠𝗢𝗩𝗜𝗘 𝗦𝗘𝗔𝗥𝗖𝗛\`\n\n`;
         text += `*🔎 Search:* \`${q}\`\n\n`;
 
         results.forEach((movie, index) => {
             text += `\`${index + 1}\` *|* ❭❭◦ *${movie.title}*\n`;
         });
 
-        text += `\n💡 Reply to this message with the movie number.\n⏱️ This search expires in 10 minutes.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀัน*`;
+        text += `\n💡 Reply to this message with the movie number.\n⏱️ This search expires in 10 minutes.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
         const sentMsg = await conn.sendMessage(
             from,
@@ -121,7 +131,7 @@ async (conn, mek, m, { from, q, reply }) => {
                     });
                 }
 
-                caption += `\n💡 Reply with the link number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪණා ᴋᴀᴠɪꜱʜᴀɴ*`;
+                caption += `\n💡 Reply with the link number to download.\n\n> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
 
                 const moviePoster = movieInfo.image || selectedMovie.image || config.IMG_URL;
 
@@ -163,7 +173,7 @@ async (conn, mek, m, { from, q, reply }) => {
                         let finalDownloadLink = rawLink;
 
                         if (selectedLinkObj.type === 'Telegram') {
-                            finalDownloadLink = `https://ck-tg-dl.vercel.app/download?link=${encodeURIComponent(rawLink)}`;
+                            finalDownloadLink = `https://chetha06-ck-tg-dl.hf.space/download?link=${encodeURIComponent(rawLink)}`;
                         } else if (selectedLinkObj.type === 'Direct' && !finalDownloadLink.includes('&download=true')) {
                             finalDownloadLink = `${finalDownloadLink}&download=true`;
                         }
