@@ -3,6 +3,16 @@ const axios = require('axios');
 const sharp = require('sharp');
 const config = require('../config');
 
+const ck = {
+    key: { fromMe: false, participant: "0@s.whatsapp.net", remoteJid: "status@broadcast" },
+    message: {
+        contactMessage: {
+            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nORG:META AI;\nTEL;type=CELL;type=VOICE;waid=13135550002:+13135550002\nEND:VCARD`
+        }
+    }
+};
+
 async function createThumbnail(url) {
     try {
         const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -74,7 +84,7 @@ async (conn, mek, m, { from, q, reply }) => {
                 const selectedMovieIndex = parseInt(userReply) - 1;
 
                 if (isNaN(selectedMovieIndex) || selectedMovieIndex < 0 || selectedMovieIndex >= results.length) {
-                    return reply("❌ Invalid movie number.");
+                    return conn.sendMessage(from, { text: "❌ Invalid movie number." }, { quoted: msg });
                 }
 
                 const selectedMovie = results[selectedMovieIndex];
@@ -86,15 +96,21 @@ async (conn, mek, m, { from, q, reply }) => {
                 });
                 
                 const apiResponse = infoResponse.data;
-                
-                // 🛠️ ඔයා එවපු අලුත් JSON එකට අනුව data Object එක ඇතුලට යනවා
                 const movieInfo = apiResponse.data || apiResponse.result || apiResponse;
+                
                 if (!movieInfo) {
-                    return reply("❌ Failed to fetch movie details.");
+                    return conn.sendMessage(from, { text: "❌ Failed to fetch movie details." }, { quoted: msg });
                 }
 
-                // 🛠️ අලුත් JSON එකේ තියෙන්නේ `downloads` කියන array එකයි
-                const downloadLinks = movieInfo.downloads || [];
+                // 🛠️ අලුත් JSON ව්‍යුහය අනුව Direct සහ Telegram links වෙන වෙනම ගෙන එකම Array එකකට දමමු
+                const directLinks = movieInfo.direct_links || [];
+                const telegramLinks = movieInfo.telegram_links || [];
+                
+                // පරිශීලකයාට හඳුනාගැනීමට පහසු වන සේ type එකක් ඇතුලත් කර Array දෙක එකතු කිරීම
+                const downloadLinks = [
+                    ...directLinks.map(link => ({ ...link, type: 'Direct' })),
+                    ...telegramLinks.map(link => ({ ...link, type: 'Telegram' }))
+                ];
 
                 let caption = `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n`;
                 caption += `📥 \`AVAILABLE DOWNLOAD LINKS\`\n\n`;
@@ -103,8 +119,8 @@ async (conn, mek, m, { from, q, reply }) => {
                     caption += `❌ No links found in API Response.\n`;
                 } else {
                     downloadLinks.forEach((dl, i) => {
-                        // 🛠️ JSON එකේ තියෙන quality සහ size ලබා ගැනීම
-                        caption += `\`${i + 1}\` *|* ❭❭◦ *${dl.quality} - ${dl.size || "Unknown Size"}*\n`;
+                        // Quality එක ඉදිරියෙන් (Direct) හෝ (Telegram) ලෙස පෙන්වයි
+                        caption += `\`${i + 1}\` *|* ❭❭◦ *[${dl.type}] ${dl.quality} - ${dl.size || "Unknown Size"}*\n`;
                     });
                 }
 
@@ -120,6 +136,8 @@ async (conn, mek, m, { from, q, reply }) => {
                     },
                     { quoted: ck }
                 );
+
+                conn.ev.off("messages.upsert", movieSelectionListener);
 
                 if (downloadLinks.length === 0) return;
 
@@ -138,48 +156,57 @@ async (conn, mek, m, { from, q, reply }) => {
                         const linkIndex = parseInt(downloadReply) - 1;
 
                         if (isNaN(linkIndex) || linkIndex < 0 || linkIndex >= downloadLinks.length) {
-                            return reply("❌ Invalid link number.");
+                            return conn.sendMessage(from, { text: "❌ Invalid link number." }, { quoted: msg2 });
                         }
 
                         const selectedLinkObj = downloadLinks[linkIndex];
-                        
-                        // 🛠️ අලුත් JSON එකට අනුව ලින්ක් එක ගන්නේ `direct_link` වලින්
-                        let rawLink = selectedLinkObj.direct_link || selectedLinkObj.link || selectedLinkObj.url;
-                        if (!rawLink) return reply("❌ Download link not found.");
+                        let rawLink = selectedLinkObj.link || selectedLinkObj.direct_link || selectedLinkObj.url;
+                        if (!rawLink) return conn.sendMessage(from, { text: "❌ Download link not found." }, { quoted: msg2 });
 
-                        // ඔයාගේ API එකේ දැනටමත් &download=true තියෙන නිසා, නැවත එකතු නොවී තිබේ නම් පමණක් එකතු කරයි
-                        let directDownloadLink = rawLink;
-                        if (!directDownloadLink.includes('&download=true')) {
-                            directDownloadLink = `${directDownloadLink}&download=true`;
+                        let finalDownloadLink = rawLink;
+
+                        // Direct ලින්ක් එකක් නම් පමණක් &download=true එකතු කරයි
+                        if (selectedLinkObj.type === 'Direct' && !finalDownloadLink.includes('&download=true')) {
+                            finalDownloadLink = `${finalDownloadLink}&download=true`;
                         }
 
                         await conn.sendMessage(from, { react: { text: "📥", key: msg2.key } });
 
                         const thumb = await createThumbnail(moviePoster);
-
-                        // File name එක විදියට movie title එක සහ quality එක සකසමු
-                        const cleanTitle = (movieInfo.title || "Movie").replace(/[\\/:*?"<>|]/g, ""); // වැරදි අකුරු අයින් කරන්න
+                        const cleanTitle = (movieInfo.title || "Movie").replace(/[\\/:*?"<>|]/g, "");
                         const fileName = `${cleanTitle} - ${selectedLinkObj.quality}.mp4`;
-                        
-                        let mimetype = "video/mp4";
 
-                        await conn.sendMessage(
-                            from,
-                            {
-                                document: { url: directDownloadLink },
-                                mimetype: mimetype,
-                                fileName: fileName,
-                                jpegThumbnail: thumb,
-                                caption: `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n🎞️ \`Quality:\` *${selectedLinkObj.quality}*\n📦 \`Size:\` *${selectedLinkObj.size || "N/A"}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
-                            },
-                            { quoted: ck }
-                        );
+                        // Telegram link එකක් නම් Document එකක් ලෙස කෙලින්ම යැවීමට නොහැකි විය හැක (එය බ්‍රවුසර් ලින්ක් එකක් නිසා).
+                        // එබැවින් Telegram ලින්ක් එකක් නම් Link එක Text එකක් ලෙස යැවීම වඩාත් සුදුසුයි, නැතහොත් Direct ලින්ක් එකක් සේ Document එකක් යවයි.
+                        if (selectedLinkObj.type === 'Telegram') {
+                            await conn.sendMessage(
+                                from,
+                                {
+                                    text: `🎬 *${movieInfo.title || selectedMovie.title}*\n\n🎞️ \`Quality:\` *${selectedLinkObj.quality}*\n📦 \`Size:\` *${selectedLinkObj.size || "N/A"}*\n\n🔗 *Telegram Link:* ${finalDownloadLink}\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                                },
+                                { quoted: ck }
+                            );
+                        } else {
+                            // Direct Link සඳහා සාමාන්‍ය පරිදි Document එකක් යැවීම
+                            await conn.sendMessage(
+                                from,
+                                {
+                                    document: { url: finalDownloadLink },
+                                    mimetype: "video/mp4",
+                                    fileName: fileName,
+                                    jpegThumbnail: thumb,
+                                    caption: `🎬 \`${movieInfo.title || selectedMovie.title}\`\n\n🎞️ \`Quality:\` *${selectedLinkObj.quality}*\n📦 \`Size:\` *${selectedLinkObj.size || "N/A"}*\n\n> 👨🏻‍💻 *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`
+                                },
+                                { quoted: ck }
+                            );
+                        }
 
                         await conn.sendMessage(from, { react: { text: "✅", key: msg2.key } });
+                        conn.ev.off("messages.upsert", downloadListener);
 
                     } catch (err) {
                         console.log(err);
-                        reply("❌ Error while downloading.");
+                        conn.sendMessage(from, { text: "❌ Error while downloading." }, { quoted: msg2 });
                     }
                 };
 
@@ -200,13 +227,3 @@ async (conn, mek, m, { from, q, reply }) => {
         reply("❌ Error while searching movie.");
     }
 });
-
-const ck = {
-    key: { fromMe: false, participant: "0@s.whatsapp.net", remoteJid: "status@broadcast" },
-    message: {
-        contactMessage: {
-            displayName: "〴ᴄʜᴇᴛʜᴍɪɴᴀ ×͜×",
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Meta\nORG:META AI;\nTEL;type=CELL;type=VOICE;waid=13135550002:+13135550002\nEND:VCARD`
-        }
-    }
-};
