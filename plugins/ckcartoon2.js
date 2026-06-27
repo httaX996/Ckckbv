@@ -138,7 +138,7 @@ async (conn, mek, m, { from, q, reply }) => {
                 const movieDetailsMessage = await conn.sendMessage(
                     from,
                     {
-                        image: { url: moviePoster },
+                        image: { url: moviePoster || config.IMG_URL },
                         caption: caption
                     },
                     { quoted: ck }
